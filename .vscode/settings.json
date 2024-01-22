@@ -1,0 +1,8 @@
+{
+  "python.analysis.extraPaths": ["./chat_gui_server/packages"],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.gitkeep": true,
+    "**/__pycache__": true
+  }
+}

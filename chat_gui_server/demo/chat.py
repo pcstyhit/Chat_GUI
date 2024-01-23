@@ -39,7 +39,7 @@ def sayWithGPT(msg: str, acct: dict = ACCT) -> None:
         ]
     )
 
-    print(response.choices[0].message.content)
+    print(response)
 
 
 def sayWithGPT_Stream(msg: str, acct: dict = ACCT):

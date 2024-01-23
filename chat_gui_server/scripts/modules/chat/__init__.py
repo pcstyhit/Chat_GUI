@@ -1,5 +1,6 @@
-from .common import chatByText
+from .common import chatCore, chatByText
 
 __all__ = [
+    'chatCore',
     'chatByText',
 ]

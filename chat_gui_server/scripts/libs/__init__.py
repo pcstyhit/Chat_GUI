@@ -1,3 +1,6 @@
-from .config import ACCT
+from .config import CONF, getAbsPath
 
-__all__ = ['ACCT']
+__all__ = [
+    'CONF',
+    'getAbsPath'
+]

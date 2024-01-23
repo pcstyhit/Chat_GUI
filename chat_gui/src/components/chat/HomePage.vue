@@ -28,7 +28,7 @@
             <!-- 机器人头像 -->
             <div
               v-if="item.id === 'gpt'"
-              style="width: 5%; height: 5%; margin: 10px 10px 0px 0px"
+              style="width: 2%; height: 2%; margin: 10px 10px 0px 0px"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41">
                 <path
@@ -86,35 +86,18 @@
 
 <script>
 import { ref, onMounted } from "vue";
-
-// 引入marked库美化输出 https://juejin.cn/post/7273685848604885007
-import { marked } from "marked";
-import { markedHighlight } from "marked-highlight";
-import hljs from "highlight.js";
-import "highlight.js/styles/atom-one-dark.css";
-
 // 引入自定义的功能包
+import marked from "../../helper/markdownHelper.js"
 import { postChatByText } from "../../apis/chatAPIs.js";
 
 export default {
   name: "HomePage",
   setup() {
-    onMounted(() => {
-      // 给markdown类型的内容添加样式
-      // https://juejin.cn/post/7314559238720733224
-      marked.use(
-        markedHighlight({
-          langPrefix: "hljs language-",
-          highlight(code, lang) {
-            const language = hljs.getLanguage(lang) ? lang : "shell";
-            return hljs.highlight(code, { language }).value;
-          },
-        })
-      );
-    });
+    onMounted(() => {});
 
     const inputText = ref("");
     const history = ref([]);
+    const tokens = ref(0);
 
     const newChat = () => {
       console.log("New Chat button clicked");
@@ -126,7 +109,7 @@ export default {
 
       history.value.push({ id: "user", text: msg });
       var res = await postChatByText(msg);
-      history.value.push({ id: "gpt", text: marked.parse(res.data) });
+      history.value.push({ id: "gpt", text: marked(res.data.ans) });
     };
 
     return {

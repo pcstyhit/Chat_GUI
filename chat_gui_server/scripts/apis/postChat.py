@@ -1,7 +1,8 @@
 import fastapi
 from pydantic import BaseModel
 
-from scripts.modules.chat import chatByText
+from scripts.libs import str2Dict
+from scripts.modules.chat import chatByText, loadChatMessage, loadChatTokens,setPrompt, setPromptToken, deletChatMessage, deletChatTokens
 
 CHATROUTER = fastapi.APIRouter()
 
@@ -11,9 +12,27 @@ class Chat(BaseModel):
     timeout: int
 
 @CHATROUTER.post('/chat/{parameters}')
-async def chat(parameters: str, item: Chat):
-    '''聊天功能的主入口'''
+async def postCore(parameters: str, item: Chat):
+    rea = None
     if parameters == 'text':
         # 普通的文本响应式
-        rea = await chatByText(item.data)
+        data, _ = str2Dict(item.data)
+        rea = await chatByText(data['name'], data['msg'])
+    
+    if parameters == 'loadChatHistory':
+        rea = await loadChatMessage(item.data)
+    
+    if parameters == 'loadChatTokens':
+        rea = await loadChatTokens(item.data)
+
+    if parameters == 'prompt':
+        # 重置system content和tokens数量
+        data, _ = str2Dict(item.data)
+        await setPrompt(data['name'], data['msg'])
+        await setPromptToken(data['name'])
+    
+    if parameters == 'deleteChat':
+        await deletChatMessage(item.data)
+        await deletChatTokens(item.data)
+    
     return {'name': parameters, 'data': rea}

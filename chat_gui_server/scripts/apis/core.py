@@ -3,10 +3,12 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
 from .postChat import CHATROUTER
+from .getChat import CHATGETROUTE
 
 app = fastapi.FastAPI()
 
 app.include_router(CHATROUTER)
+app.include_router(CHATGETROUTE)
 
 def debug():
     '''设置调试模式下的一些web server的配置'''

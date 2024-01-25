@@ -1,15 +1,13 @@
 '''
 用来处理一些简单的响应式的回答.
-'''
-import json
-from typing import Union  
+''' 
 from openai import AzureOpenAI
 from scripts.libs import CONF
 
-from .messages import updateMessage, writeToFile
-from .tokens import accont
+from .messages import updateMessage, writeMessageToFile
+from .tokens import accont, writeTokenToFile
 
-def chatCore(msg:str, acct:dict = CONF) -> str:
+def chatCore(msg:str, name='test', acct:dict = CONF) -> str:
     '''结合上下文进行对话的核心函数
         https://zhuanlan.zhihu.com/p/618911413
     '''
@@ -25,10 +23,11 @@ def chatCore(msg:str, acct:dict = CONF) -> str:
     ans = response.choices[0].message.content
     usage = accont(response)
     updateMessage('assistant', response.choices[0].message.content)
-    writeToFile('test')
+    writeMessageToFile(name)
+    writeTokenToFile(name)
     # 返回文本信息
     return {'ans':ans, 'usage':usage}
 
-async def chatByText(msg: str) -> str:
+async def chatByText(name:str, msg: str) -> str:
     '''将核心函数变成异步的'''
-    return chatCore(msg)
+    return chatCore(msg, name)

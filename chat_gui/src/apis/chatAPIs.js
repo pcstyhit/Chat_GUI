@@ -20,6 +20,32 @@ export async function postChatByText(msg) {
   }
 }
 
+export async function postChatByStream(msg,streamStartFunc) {
+  try {
+    const response = await axios.post(`${URL}/stream`, {
+      data: JSON.stringify(msg),
+      timeout: 10000,
+      responseType: 'stream'
+    });
+    response.data.on('data', (chunk) => {
+      // logic to process stream data
+      // TBD: chunk的具体格式
+      streamStartFunc(chunk)
+    });
+    response.data.on('end', () => {
+      // logic for stream complete
+    });
+
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: "Network Error" };
+  }
+}
+
 export async function postPrompt(msg) {
   try {
     const response = await axios.post(`${URL}/prompt`, {

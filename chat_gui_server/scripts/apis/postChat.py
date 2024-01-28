@@ -1,15 +1,18 @@
 import fastapi
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from scripts.libs import str2Dict
-from scripts.modules.chat import chatByText, loadChatMessage, loadChatTokens,setPrompt, setPromptToken, deletChatMessage, deletChatTokens
+from scripts.modules.chat import chatByText, chatStream, loadChatMessage, loadChatTokens, setPrompt, setPromptToken, deletChatMessage, deletChatTokens
 
 CHATROUTER = fastapi.APIRouter()
+
 
 class Chat(BaseModel):
     '''前端请求体内的参数'''
     data: str
     timeout: int
+
 
 @CHATROUTER.post('/chat/{parameters}')
 async def postCore(parameters: str, item: Chat):
@@ -18,10 +21,15 @@ async def postCore(parameters: str, item: Chat):
         # 普通的文本响应式
         data, _ = str2Dict(item.data)
         rea = await chatByText(data['name'], data['msg'])
-    
+
+    if parameters == 'stream':
+        # 流式文本
+        data, _ = str2Dict(item.data)
+        return StreamingResponse(chatStream(data['name'], data['msg']), media_type='text/plain')
+
     if parameters == 'loadChatHistory':
         rea = await loadChatMessage(item.data)
-    
+
     if parameters == 'loadChatTokens':
         rea = await loadChatTokens(item.data)
 
@@ -30,9 +38,9 @@ async def postCore(parameters: str, item: Chat):
         data, _ = str2Dict(item.data)
         await setPrompt(data['name'], data['msg'])
         await setPromptToken(data['name'])
-    
+
     if parameters == 'deleteChat':
         await deletChatMessage(item.data)
         await deletChatTokens(item.data)
-    
+
     return {'name': parameters, 'data': rea}

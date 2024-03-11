@@ -1,8 +1,15 @@
 {
-  "python.analysis.extraPaths": ["./chat_gui_server/packages"],
+  "python.analysis.extraPaths": [
+    "./chat_gui_server/packages"
+  ],
   "files.exclude": {
     "**/.git": true,
     "**/.gitkeep": true,
     "**/__pycache__": true
-  }
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "autopep8",
+  "editor.formatOnSave": true,
 }

@@ -1,17 +1,12 @@
 <template>
   <div class="app">
-    <UI />
+    <router-view />
   </div>
 </template>
 
 <script>
-import UI from "./components/chat/HomePage.vue";
-
 export default {
   name: "App",
-  components: {
-    UI,
-  },
 };
 </script>
 
@@ -22,6 +17,7 @@ export default {
   right: 0;
   bottom: 0;
   left: 0;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
 }
 </style>

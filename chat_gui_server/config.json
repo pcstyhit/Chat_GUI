@@ -1,0 +1,9 @@
+{
+  "history_path": "history",
+  "userList": [
+    { "user": "admin", "pwd": "pldz" },
+    { "user": "test1", "pwd": "test1" },
+    { "user": "test2", "pwd": "test2" },
+    { "user": "test3", "pwd": "test3" }
+  ]
+}

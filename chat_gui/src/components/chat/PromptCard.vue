@@ -7,7 +7,12 @@
       </div>
       <div class="prompt-element">
         <el-select v-model="model">
-          <el-option v-for="item in modelTypes" :key="item" :label="item" :value="item" />
+          <el-option
+            v-for="item in modelTypes"
+            :key="item"
+            :label="item"
+            :value="item"
+          />
         </el-select>
       </div>
     </div>
@@ -51,16 +56,20 @@
     <div class="prompt-item">
       <div class="prompt-title" :style="{ width: '60%' }">
         <el-button @click="loadPromptFile" :style="{ width: '80%' }">
-          <el-icon>
-            <FolderOpened />
-          </el-icon>Load file</el-button>
+          <el-icon> <FolderOpened /> </el-icon>Load file</el-button
+        >
       </div>
-      <div class="prompt-element" :style="{
-        width: '40%',
-        display: 'flex',
-        'justify-content': 'flex-end',
-      }">
-        <el-checkbox v-model="useDefaultPromptData" @change="changePromptByFile">Use Prompt Data</el-checkbox>
+      <div
+        class="prompt-element"
+        :style="{
+          width: '40%',
+          display: 'flex',
+          'justify-content': 'flex-end',
+        }"
+      >
+        <el-checkbox v-model="useDefaultPromptData" @change="changePromptByFile"
+          >Use Prompt Data</el-checkbox
+        >
       </div>
     </div>
     <div style="width: 100%; border: 1px solid rgb(167, 167, 167)"></div>
@@ -124,17 +133,24 @@
     </div>
     <div style="width: 100%; margin-top: 20px"></div>
     <div style="width: 100%; border: 1px solid rgb(167, 167, 167)"></div>
-    <div class="prompt-element" :style="{
-      width: '100%',
-      display: 'flex',
-      'justify-content': 'flex-end',
-    }">
-      <el-checkbox v-model="useDefault" @change="customPrompt">Use Default Prompt</el-checkbox>
+    <div
+      class="prompt-element"
+      :style="{
+        width: '100%',
+        display: 'flex',
+        'justify-content': 'flex-end',
+      }"
+    >
+      <el-checkbox v-model="useDefault" @change="customPrompt"
+        >Use Default Prompt</el-checkbox
+      >
     </div>
     <div class="prompt-item">
-      <el-button @click="startChat" :style="{ width: '90%', 'margin-left': '5%' }"><el-icon>
-          <Promotion />
-        </el-icon>Start Chat</el-button>
+      <el-button
+        @click="startChat"
+        :style="{ width: '90%', 'margin-left': '5%' }"
+        ><el-icon> <Promotion /> </el-icon>Start Chat</el-button
+      >
     </div>
   </div>
 </template>
@@ -148,11 +164,7 @@ export default {
   emits: ["startChat"],
   setup(props, context) {
     const model = ref("gpt4-32k");
-    const modelTypes = ref([
-      "gpt4-32k",
-      "gpt4",
-      "gpt3.5-32k-turbo",
-    ]);
+    const modelTypes = ref(["gpt4-32k", "gpt4", "gpt3.5-32k-turbo"]);
     const chatName = ref("");
     const systemContent = ref("");
     const userContent = ref("");
@@ -219,15 +231,16 @@ export default {
       var rea = await newChatAPI(chatName.value);
       if (!rea.flag) {
         ElMessage.error("创建对话失败!");
-        return
+        return;
       }
       // set chat config
-      await setChatParamsAPI(model.value, systemContent.value, passedMsg.value)
+      await setChatParamsAPI(model.value, systemContent.value, passedMsg.value);
       // emit signal to show chat card.
       context.emit("startChat", {
         chatCid: rea.chatCid,
         rea: true,
       });
+      ElMessage.info("参数的修改,暂时支持默认, 敬请期待(2024-03-13)！");
     };
 
     const loadPromptFile = () => {

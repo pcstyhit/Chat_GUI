@@ -63,7 +63,7 @@
               <DeleteFilled />
             </el-icon>
           </el-button>
-          <el-button class="drawer_history_more">
+          <el-button @click="editChatPrompt" class="drawer_history_more">
             <el-icon>
               <MoreFilled />
             </el-icon>
@@ -223,7 +223,7 @@ export default {
     };
 
     const editChatPrompt = () => {
-      ElMessage.info("敬请期待！");
+      ElMessage.info("参数修改, 敬请期待！");
     };
 
     const logout = async () => {

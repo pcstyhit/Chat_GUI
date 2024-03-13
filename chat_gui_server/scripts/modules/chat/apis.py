@@ -27,14 +27,9 @@ class ChatAPI(ChatHandle):
         self.chatCid = ''
         self.chatIid = -1
 
-    async def azureChatAPI(self, msg: str) -> str:
-        '''将核心函数变成异步的'''
-        await self.getMessage(msg)
-        return self.azureChat(self.prompt)
-
-    async def azureChatStreamAPI(self, msg: str):
-        ''''''
-        await self.getMessage(msg)
+    async def azureChatStreamAPI(self):
+        '''进行流式对话,不需要接受meesgae,从数据库获取prompt'''
+        await self.getPrompt()
         response = self.azureChatStream(self.prompt)
 
         collected_chunks = []
@@ -125,29 +120,30 @@ class ChatAPI(ChatHandle):
         self.param.updateChatParam(systemContent, passedMsg)
         await self.setMessage(Params.SYS, systemContent)
 
-    async def getMessage(self, msg: str) -> list:
+    async def setUserMsg(self, msg: str) -> list:
+        '''将用户的消息存入数据库,然后返回对应的item的id'''
+        # 存入数据
+        await self.setMessage(Params.USER, msg)
+        # 查询插入的元素的ID，也就是最后一个元素的ID
+        item: tuple = self.sql.queryLastNChatItems(self.user, self.chatCid, 1)
+        self.chatIid = item[0][0]
+        return self.chatIid
+
+    async def getPrompt(self) -> list:
         '''从数据库中存入要发送的消息,并得到prompt
          msgList中的每个msg的格式是元组 msg = (1, 'user', 'Hello!', 10) type is <class 'tuple'> type is <class 'tuple'>
          其中的 msg[0]是数据库的id位, msg[1]是角色信息, msg[2]是消息, msg[3]是tokens数量
         '''
-        # 存入数据
-        await self.setMessage(Params.USER, msg)
-
         # 获得prompt
         self.prompt = []
         self.tokens = 0
         msgList = self.sql.queryLastNChatItems(
             self.user, self.chatCid, self.param.msgLen)
 
-        # 保证做数组处理
-        if (isinstance(msgList, tuple)):
-            msgList = [msgList]
+        # 提前计算得到chatIid再递增得到数据库下次要存放的数据的chatIid
+        self.chatIid += 1
 
-        # 提前计算得到chatIid
-        length = len(msgList)
-        self.chatIid = msgList[0][0] + 1
-
-        for lenI in range(length - 1, -1, -1):
+        for lenI in range(len(msgList) - 1, -1, -1):
             self.prompt.append(
                 {'role': msgList[lenI][1], 'content':  msgList[lenI][2]})
             self.tokens += msgList[lenI][3]

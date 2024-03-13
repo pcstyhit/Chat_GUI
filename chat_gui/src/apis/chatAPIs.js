@@ -106,9 +106,7 @@ export async function deleteChatAPI(chatCid) {
   }
 }
 
-/**
- * 删除指定chatIid的对话
- */
+/** 删除指定chatIid的对话 */
 export async function deletChatItemAPI(chatIid) {
   try {
     const response = await axios.post(
@@ -132,15 +130,37 @@ export async function deletChatItemAPI(chatIid) {
   }
 }
 
-/**
- * 修改指定chatIid的对话
- */
+/** 修改指定chatIid的对话 */
 export async function editChatItemAPI(chatIid, msg) {
   try {
     const response = await axios.post(
       `${URL}/chat/editChatItem`,
       {
         chatIid: chatIid,
+        msg: msg,
+        timeout: 10000,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: "Network Error" };
+  }
+}
+
+/** 获得用户发出消息的chatIid */
+export async function setUserMsgAPI(msg) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/setUserMsg`,
+      {
         msg: msg,
         timeout: 10000,
       },

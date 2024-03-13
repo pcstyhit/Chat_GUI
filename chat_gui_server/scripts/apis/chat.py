@@ -95,6 +95,19 @@ class DeleteChatItemResponse(BaseModel):
     log: str = ''
 
 
+class SetUserMsgRequest(BaseModel):
+    '''Chat的中user的消息的请求体, 接受消息存入数据库, 并返回对话的唯一chatIid'''
+    msg: str
+    timeout: int
+
+
+class SetUserMsgResponse(BaseModel):
+    '''Chat的中user的消息的应答体, 返回对话的唯一chatIid'''
+    flag: bool = False
+    chatIid: int = -1
+    log: str = ''
+
+
 class ChatResponse(BaseModel):
     '''Chat对话的应答体'''
     flag: bool = False  # 是否输出完成的开关量
@@ -142,10 +155,22 @@ async def loadChatHistoryAPI(item: LoadChatHistoryRequest, user: str = fastapi.D
 
 
 @CHAT_ROUTE.post('/chat/deleteChat')
-async def deleteChatAPI(item: DeleteChatItemRequest, user: str = fastapi.Depends(authenticateUser)):
+async def deleteChatAPI(item: DeleteChatRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = DeleteChatResponse()
     handle = getChatHandle(user)
-    rea.flag = await handle.deleteChatItemByID(item.chatCid)
+    rea.flag = await handle.deleteChat(item.chatCid)
+    return rea
+
+
+@CHAT_ROUTE.post('/chat/setUserMsg')
+async def setUserMsgAPI(item: SetUserMsgRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = SetUserMsgResponse()
+    handle = getChatHandle(user)
+    try:
+        rea.chatIid = await handle.setUserMsg(item.msg)
+        rea.flag = True
+    except Exception as eMsg:
+        print(f"Set User Msg failed! {eMsg}")
     return rea
 
 
@@ -186,11 +211,12 @@ async def websocket_endpoint(websocket: fastapi.WebSocket,
             data = await websocket.receive_text()
 
             item = str2Dict(data)
-            msg = item.get('data')
+            # 如果正常通讯, 暂时不对消息内容进行判断，后续可以通过字符来判断是否要主动关闭ws
+            _ = item.get('data')
             rea = ChatResponse()
             handle = getChatHandle(user)
 
-            async for (chunk, tokens, chatIid) in handle.azureChatStreamAPI(msg):
+            async for (chunk, tokens, chatIid) in handle.azureChatStreamAPI():
                 # print(f'{chunk}')
                 rea.data = f'{chunk}'
                 rea.tokens = tokens

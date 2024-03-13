@@ -64,7 +64,7 @@
                   </template>
                 </el-dropdown>
               </div>
-              <div v-html="marked(item.text)" />
+              <div v-html="item.id == 'gpt' ? marked(item.text) : item.text" />
             </div>
           </div>
 
@@ -118,7 +118,11 @@ import { ref, onMounted, nextTick, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
 import { chatStreamAPI } from "../../apis/chatStream.js";
-import { editChatItemAPI, deletChatItemAPI } from "../../apis/chatAPIs";
+import {
+  setUserMsgAPI,
+  editChatItemAPI,
+  deletChatItemAPI,
+} from "../../apis/chatAPIs";
 import marked from "../../helper/markdownHelper.js";
 import { ElMessageBox } from "element-plus";
 
@@ -158,21 +162,22 @@ export default {
       var msg = inputText.value.replace(/\n/g, "<br />");
       // 置空输入框
       inputText.value = "";
-      var sendChatItemIid =
-        chatHistory.value.length == 0
-          ? 2
-          : chatHistory.value[chatHistory.value.length - 1].chatIid + 1;
-      // 更新对话,并控制不能再发送对话
-      store.commit("PUSH_CHATHISTORY_STATE", {
-        chatIid: sendChatItemIid,
-        id: "user",
-        text: msg,
-      });
+      // 控制再也不能发送对话
       store.commit("SET_CHATSTATE_STATE", true);
+      var rea = await setUserMsgAPI(msg);
+      if (rea.flag) {
+        // 更新对话
+        store.commit("PUSH_CHATHISTORY_STATE", {
+          chatIid: rea.chatIid,
+          id: "user",
+          text: msg,
+        });
+      }
+
       // 刷新对话框到最底部
       await setScrollToBottom();
       // 从服务端获得输出
-      await chatStreamAPI(msg);
+      await chatStreamAPI("active");
     };
 
     /** 无关紧要的延迟函数 */

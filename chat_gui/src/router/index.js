@@ -6,9 +6,10 @@ import ChatPage from "../components/chat/HomePage.vue";
 import ElementHomeEmpty from "../components/template/HomeEmptyPage.vue";
 import ElementHomeLogin from "../components/template/HomeLoginPage.vue";
 import ElementHomeAdmin from "../components/template/HomeAdminPage.vue";
-import ElementChatDrawer from "../components/template/ChatDrawerCard.vue";
+import ElementChatSidebar from "../components/template/ChatSidebar.vue";
 import ElementChatPrompt from "../components/template/ChatPromptCard.vue";
 import ElementChatChat from "../components/template/ChatChatCard.vue";
+import ElementChatSettings from "../components/template/ChatSettings.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -48,8 +49,8 @@ const router = createRouter({
       component: ElementHomeAdmin,
     },
     {
-      path: "/template/chat/drawer",
-      component: ElementChatDrawer,
+      path: "/template/chat/sidebar",
+      component: ElementChatSidebar,
     },
     {
       path: "/template/chat/prompt",
@@ -58,6 +59,10 @@ const router = createRouter({
     {
       path: "/template/chat/chat",
       component: ElementChatChat,
+    },
+    {
+      path: "/template/chat/settings",
+      component: ElementChatSettings,
     },
   ],
 });

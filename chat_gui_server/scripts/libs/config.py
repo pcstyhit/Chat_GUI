@@ -62,4 +62,8 @@ def joinAbsPath(pathKey: str, floderName: str = None, fileName: str = None):
             return f"{CONF['project_path']}/{CONF[pathKey]}/{floderName}/{fileName}"
 
 
-CONF = updateConfigurations()
+try:
+    CONF = updateConfigurations()
+except Exception as e:
+    print(f"Load server config.cfg and config.json file error! {e}")
+    exit(1)

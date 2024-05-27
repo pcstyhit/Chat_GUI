@@ -25,12 +25,15 @@ import router from "./router/index.js";
  */
 import store from "./store/index.js";
 
+// 引入自定义全局样式文件
+import "./assets/styles/global.css";
+
 const app = createApp(App);
 
 for (const [name, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(name, component);
 }
-app.use(store)
+app.use(store);
 app.use(ElementPlus);
 app.use(router);
 app.mount("#app");

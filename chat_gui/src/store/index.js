@@ -8,7 +8,8 @@ const state = {
   chatWsid: "", // 流对话的websocket的id
   chatCid: "", // 对话过程中的唯一标志，用这个访问数据库
   chatHistory: [], // 响应式存储对话，方便websocket流接收消息
-  chatState: false, // 是否处于对话状态的开过量，控制对话发送功能
+  chatState: false, // 是否处于对话状态的开关量，控制对话发送功能
+  isEditChatSettings: true, // 是否处于编辑chat的参数
 };
 
 const mutations = {
@@ -47,6 +48,9 @@ const mutations = {
   },
   EDIT_CHATHISTORY_ITEM(state, data) {
     state.chatHistory[data.index].text = data.data;
+  },
+  SET_EDIT_CHAT_SETTINGS_STATE(state, data) {
+    state.isEditChatSettings = data;
   },
 };
 

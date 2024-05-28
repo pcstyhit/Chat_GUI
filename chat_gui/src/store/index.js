@@ -1,56 +1,77 @@
 import { createStore } from "vuex";
+import { ChatState } from "./chat";
+import { UserState } from "./user";
 
 const state = {
-  user: "",
-  basicAuth: "",
-  loginState: false,
-  tokens: 0, // 根据上下文记录当前对话一次要消耗的tokens数量
-  chatWsid: "", // 流对话的websocket的id
-  chatCid: "", // 对话过程中的唯一标志，用这个访问数据库
-  chatHistory: [], // 响应式存储对话，方便websocket流接收消息
-  chatState: false, // 是否处于对话状态的开关量，控制对话发送功能
-  isEditChatSettings: true, // 是否处于编辑chat的参数
+  user: { ...UserState },
+  chat: { ...ChatState },
 };
 
 const mutations = {
+  /** @param {state} state */
   SET_USER_NAME(state, data) {
-    state.user = data;
+    state.user.setUserName(data);
   },
+
+  /** @param {state} state */
   SET_BASIC_AUTH(state, data) {
-    state.basicAuth = data;
+    console.log("hello");
+    state.user.setBasicAuth(data);
   },
+
+  /** @param {state} state */
   SET_LOGIN_STATE(state, data) {
-    state.loginState = data;
+    state.user.setLoginState(data);
   },
+
+  /** @param {state} state */
   SET_CHATWSID_STATE(state, data) {
-    state.chatWsid = data;
+    state.chat.setChatWsid(data);
   },
+
+  /** @param {state} state */
   SET_CHATHISTORY_STATE(state, data) {
-    state.chatHistory = data;
+    state.chat.setChatHistory(data);
   },
+
+  /** @param {state} state */
   PUSH_CHATHISTORY_STATE(state, data) {
-    state.chatHistory.push(data);
+    state.chat.pushChatHistory(data);
   },
+
+  /** @param {state} state */
   CHANGE_CHATHISTORY_STATE(state, data, sit) {
-    state.chatHistory[sit] = data;
+    state.chat.changeChatHistory(data, sit);
   },
-  SET_CHATSTATE_STATE(state, data) {
-    state.chatState = data;
+
+  /** @param {state} state */
+  SET_ISCHATTING_STATE(state, data) {
+    state.chat.setIsChattingState(data);
   },
+
+  /** @param {state} state */
   SET_TOKENS_STATE(state, data) {
-    state.tokens = data;
+    state.chat.setTokens(data);
   },
+
+  /** @param {state} state */
   SET_CHATCID_STATE(state, data) {
-    state.chatCid = data;
+    state.chat.setChatCid(data);
   },
+
+  /** @param {state} state */
   DELETE_CHATHISTORY_ITEM(state, index) {
-    state.chatHistory.splice(index, 1);
+    state.chat.deleteChatHistoryItem(index);
   },
+
+  /** @param {state} state */
   EDIT_CHATHISTORY_ITEM(state, data) {
-    state.chatHistory[data.index].text = data.data;
+    state.chat.editChatHistoryItem(data);
   },
+
+  /** @param {state} state */
   SET_EDIT_CHAT_SETTINGS_STATE(state, data) {
-    state.isEditChatSettings = data;
+    state.chat.setEditChatSettings(data);
   },
 };
 

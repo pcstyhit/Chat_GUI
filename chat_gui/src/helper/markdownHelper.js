@@ -1,9 +1,6 @@
 // 引入依赖
-import { marked } from "marked";
+import MarkdownIt from "markdown-it";
 import hljs from "highlight.js/lib/core";
-
-// 引入样式
-import "highlight.js/styles/ir-black.css";
 
 // 引入需要的相关语言包
 import accesslog from "highlight.js/lib/languages/accesslog";
@@ -35,20 +32,22 @@ hljs.registerLanguage("sql", sql);
 hljs.registerLanguage("shell", shell);
 hljs.registerLanguage("xml", xml);
 
-var rendererMD = new marked.Renderer();
-marked.setOptions({
-  renderer: rendererMD,
-  highlight: function (code) {
-    return hljs.highlightAuto(code).value;
+const marked = new MarkdownIt({
+  highlight: function (str, lang) {
+    console.log("get language: ", lang, hljs.getLanguage(lang));
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return (
+          '<pre class="text hljs"><code>' +
+          hljs.highlight(str, { language: lang }).value +
+          "</code></pre>"
+        );
+      } catch (__) {
+        //
+      }
+    }
+    return "";
   },
-  pedantic: false,
-  gfm: true,
-  tables: true,
-  breaks: false,
-  sanitize: false,
-  smartLists: true,
-  smartypants: false,
-  xhtml: false,
 });
 
 export default marked;

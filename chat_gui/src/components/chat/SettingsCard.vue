@@ -164,7 +164,7 @@
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button v-if="!isNewChat" class="cancle" @click="cancleSettings"
+        <el-button v-if="!isNewChat" class="cancel" @click="cancleSettings"
           >Cancel</el-button
         >
         <el-button v-if="isNewChat" class="confirm" @click="startChat">
@@ -189,9 +189,11 @@ export default {
   setup(props, context) {
     // 从store中得到关于chat的状态
     const store = useStore();
-    const isEditChatSettings = computed(() => store.state.isEditChatSettings);
+    const isEditChatSettings = computed(
+      () => store.state.chat.isEditChatSettings
+    );
     // 根据store存的chat的history判断是不是新建对话
-    const isNewChat = computed(() => store.state.chatHistory.length == 0);
+    const isNewChat = computed(() => store.state.chat.chatHistory.length == 0);
 
     // chat的名称
     const chatName = ref("");

@@ -29,7 +29,7 @@
   </div>
 </template>
 <script>
-import { ref, onMounted, computed} from "vue";
+import { ref, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
@@ -42,11 +42,11 @@ export default {
       { name: "OpenAI Chat GPT", path: "/chat" },
     ]);
     const store = useStore();
-    const loginState = computed(() => store.state.loginState);
+    const isLogged = computed(() => store.state.user.isLogged);
 
     /** ====================== 下面定义函数 ====================== */
     onMounted(() => {
-      if (!loginState.value) {
+      if (!isLogged.value) {
         ElMessage.error("请先登录！");
         // 回到登录界面
         router.push({
@@ -54,7 +54,7 @@ export default {
         });
       }
     });
-    
+
     const goPlayground = (val) => {
       if (val.name == "OpenAI Chat GPT") {
         ElMessage.info("Not Found The OpenAI GPT Key, 敬请期待！");

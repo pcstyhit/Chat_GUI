@@ -1,6 +1,7 @@
 @import "./chat/sidebar.scss";
 @import "./chat/chat.scss";
-@import "./chat//settings.scss";
+@import "./chat/settings.scss";
+@import "./chat/editor.scss";
 
 /* 设置整个应用的默认字体 */
 body {

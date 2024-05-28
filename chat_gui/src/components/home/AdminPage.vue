@@ -29,7 +29,7 @@
   </div>
 </template>
 <script>
-import { ref, onMounted , computed} from "vue";
+import { ref, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
@@ -37,7 +37,7 @@ export default {
   setup() {
     const router = useRouter();
     const store = useStore();
-    const loginState = computed(() => store.state.loginState);
+    const isLogged = computed(() => store.state.user.isLogged);
     const triggerType = ref("click");
     const cardList = ref([
       { name: "Azure Chat GPT", path: "/chat" },
@@ -52,7 +52,7 @@ export default {
 
     /** ====================== 下面定义函数 ====================== */
     onMounted(() => {
-      if (!loginState.value) {
+      if (!isLogged.value) {
         ElMessage.error("请先登录！");
         // 回到登录界面
         router.push({

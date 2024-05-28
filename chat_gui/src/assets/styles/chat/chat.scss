@@ -79,11 +79,11 @@
     top: var(--header-height);
     height: calc(
       100% - var(--header-height) - var(--input-bottom) -
-        var(--input-min-height) - 16px
+        var(--input-min-height) - 16px - var(--bottom-text)
     );
     max-height: calc(
       100% - var(--header-height) - var(--input-bottom) -
-        var(--input-min-height) - 16px
+        var(--input-min-height) - 16px - var(--bottom-text)
     );
     width: var(--width-size);
     max-width: var(--width-size);
@@ -95,14 +95,51 @@
       height: auto;
       min-height: 40px;
       border-radius: 32px;
+      margin: 4px 0px;
 
       .user-content {
+        max-width: 60%;
         width: 60%;
         border-radius: 16px;
         padding: 8px 16px;
         background-color: #f4f4f4;
         color: #0d0d0d;
+        overflow: auto;
+
+        .text {
+          font-size: 14px;
+          color: black;
+        }
+
+        .options {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-end;
+          width: 100%;
+          height: 24px;
+        }
       }
+    }
+
+    .options-button {
+      width: 24px;
+      height: 24px;
+      background-color: transparent;
+      border: none;
+      border-radius: 12px;
+
+      &:hover {
+        background-color: #939393;
+      }
+      &:active {
+        background-color: #939393;
+      }
+    }
+    .options-icon {
+      color: #4d4d4d;
+      background-color: transparent;
+      width: 16px;
+      height: 16px;
     }
 
     .gpt {
@@ -121,10 +158,116 @@
 
       .gpt-content {
         width: calc(100% - 40px);
+        max-width: calc(100% - 40px);
         border-radius: 16px;
         padding: 8px 16px;
         background-color: transparent;
         color: #0d0d0d;
+        overflow: auto;
+
+        .text {
+          font-size: 14px;
+          color: black;
+
+          pre code.hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 1em
+          }
+          code.hljs {
+            padding: 3px 5px
+          }
+          /*
+          
+          Atom One Dark by Daniel Gamage
+          Original One Dark Syntax theme from https://github.com/atom/one-dark-syntax
+          
+          base:    #282c34
+          mono-1:  #abb2bf
+          mono-2:  #818896
+          mono-3:  #5c6370
+          hue-1:   #56b6c2
+          hue-2:   #61aeee
+          hue-3:   #c678dd
+          hue-4:   #98c379
+          hue-5:   #e06c75
+          hue-5-2: #be5046
+          hue-6:   #d19a66
+          hue-6-2: #e6c07b
+          
+          */
+          .hljs {
+            color: #abb2bf;
+            background: #282c34
+          }
+          .hljs-comment,
+          .hljs-quote {
+            color: #5c6370;
+            font-style: italic
+          }
+          .hljs-doctag,
+          .hljs-keyword,
+          .hljs-formula {
+            color: #c678dd
+          }
+          .hljs-section,
+          .hljs-name,
+          .hljs-selector-tag,
+          .hljs-deletion,
+          .hljs-subst {
+            color: #e06c75
+          }
+          .hljs-literal {
+            color: #56b6c2
+          }
+          .hljs-string,
+          .hljs-regexp,
+          .hljs-addition,
+          .hljs-attribute,
+          .hljs-meta .hljs-string {
+            color: #98c379
+          }
+          .hljs-attr,
+          .hljs-variable,
+          .hljs-template-variable,
+          .hljs-type,
+          .hljs-selector-class,
+          .hljs-selector-attr,
+          .hljs-selector-pseudo,
+          .hljs-number {
+            color: #d19a66
+          }
+          .hljs-symbol,
+          .hljs-bullet,
+          .hljs-link,
+          .hljs-meta,
+          .hljs-selector-id,
+          .hljs-title {
+            color: #61aeee
+          }
+          .hljs-built_in,
+          .hljs-title.class_,
+          .hljs-class .hljs-title {
+            color: #e6c07b
+          }
+          .hljs-emphasis {
+            font-style: italic
+          }
+          .hljs-strong {
+            font-weight: bold
+          }
+          .hljs-link {
+            text-decoration: underline
+          }
+        }
+
+        .options {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-start;
+          width: 100%;
+          height: 24px;
+        }
       }
     }
   }
@@ -170,7 +313,7 @@
     }
   }
 
-  .footer{
+  .footer {
     position: absolute;
     left: 10%;
     bottom: 0px;
@@ -181,7 +324,7 @@
     align-items: center;
     justify-content: space-between;
 
-    .tips{
+    .tips {
       font-size: 12px;
       color: #939393;
       display: inline-block; /* 确保元素是行内块元素 */

@@ -23,12 +23,15 @@
           <!-- chat item -->
           <el-button
             @click="loadHistory(item.chatCid)"
-            :class="['chat-item', { 'selected-chat-item': chatName === item }]"
+            :class="[
+              'chat-item',
+              { 'selected-chat-item': chatCid === item.chatCid },
+            ]"
           >
             <!-- chat item label -->
             <el-text
               class="truncated-text"
-              :tag="chatName === item ? 'b' : 'span'"
+              :tag="chatCid === item.chatCid ? 'b' : 'span'"
               >{{ item.chatName }}</el-text
             >
             <!-- chat item options -->
@@ -101,10 +104,8 @@ export default {
     const historyList = ref(null);
     const router = useRouter();
     const store = useStore();
-    const user = computed(() => store.state.user);
-    const chatCid = computed(() => store.state.chatCid);
-    const tokens = computed(() => store.state.tokens);
-    const loginState = computed(() => store.state.loginState);
+    const chatCid = computed(() => store.state.chat.chatCid);
+    const isLogged = computed(() => store.state.user.isLogged);
 
     /** ====================== 下面定义函数 ====================== */
     /** 向父组件发送显示或者隐藏侧边栏的信号, `返回是否开关侧边栏的布尔量`*/
@@ -153,7 +154,7 @@ export default {
       }
     };
 
-    const onDeleteChat = async (chatCid) => {
+    const onDeleteChat = async (cid) => {
       var flag = false;
       await ElMessageBox.confirm("删除这个对话?", "Warning", {
         confirmButtonText: "Yes",
@@ -167,9 +168,9 @@ export default {
           flag = false;
         });
       if (flag) {
-        await deleteChatAPI(chatCid);
+        await deleteChatAPI(cid);
         await initHistoryList();
-        flag = chatCid.value == chatCid;
+        flag = chatCid.value == cid;
         if (flag) {
           // 向父组件发出删除对话的信号，如果是当前对话需要更新界面
           context.emit("updateChatCard", { flag: flag });
@@ -231,7 +232,7 @@ export default {
     };
 
     onMounted(async () => {
-      if (!loginState.value) {
+      if (!isLogged.value) {
         ElMessage.error("请先登录！");
         // 回到登录界面
         router.push({
@@ -243,9 +244,7 @@ export default {
     });
     return {
       SVGS,
-      user,
       chatCid,
-      tokens,
       historyList,
       onShowSidebar,
       newChat,

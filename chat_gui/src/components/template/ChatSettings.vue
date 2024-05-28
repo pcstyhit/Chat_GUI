@@ -139,7 +139,7 @@
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button class="cancle" @click="centerDialogVisible = false"
+        <el-button class="cancel" @click="centerDialogVisible = false"
           >Cancel</el-button
         >
         <el-button class="confirm" @click="centerDialogVisible = false">

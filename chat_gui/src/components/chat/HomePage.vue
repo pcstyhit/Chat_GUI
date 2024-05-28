@@ -39,7 +39,7 @@ export default {
     const model = ref("");
     const inputText = ref("");
     const historyList = ref([]);
-    const tokens = computed(() => store.state.tokens);
+    const tokens = computed(() => store.state.chat.tokens);
     const modelTokens = ref(0);
     const isShowSidebar = ref(true);
     const SidebarCardRef = ref();
@@ -108,6 +108,8 @@ export default {
         modelTokens.value = 0;
         // 显示新建chat卡片
         store.commit("SET_EDIT_CHAT_SETTINGS_STATE", true);
+        // 清空背景记录
+        store.commit("SET_CHATHISTORY_STATE", []);
       }
     };
 

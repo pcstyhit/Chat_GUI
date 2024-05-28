@@ -64,31 +64,31 @@ export async function logOUT() {
 export const getHeaders = () => {
   return {
     "Content-Type": "application/json",
-    Authorization: store.state.basicAuth,
+    Authorization: store.state.user.basicAuth,
   };
 };
 
 /** 从当前项目的store获得chat给到websocket的ID */
 export const getWsid = () => {
-  return store.state.chatWsid;
+  return store.state.chat.chatWsid;
 };
 
 /** 更新流对话 */
 export async function updateStreamHistroy(data) {
-  store.state.chatHistory[store.state.chatHistory.length - 1] = data;
+  store.state.chat.chatHistory[store.state.chat.chatHistory.length - 1] = data;
 }
 
 /** 新增流对话 */
 export async function addStreamHistroy(data) {
-  store.state.chatHistory.push(data);
+  store.state.chat.chatHistory.push(data);
 }
 
 /** 控制当前对话是否处于进行状态 */
 export async function setChatState(data) {
-  store.state.chatState = data;
+  store.state.chat.isChatting = data;
 }
 
 /** 设置如果按照当前的内容发送一次对话要消耗的tokens数量 */
 export async function setTokens(data) {
-  store.state.tokens = data;
+  store.state.chat.tokens = data;
 }

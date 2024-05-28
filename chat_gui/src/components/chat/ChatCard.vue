@@ -40,12 +40,89 @@
         <div v-for="item in chatHistory" :key="item.id">
           <!-- user question -->
           <div v-if="item.id == 'user'" class="user">
-            <div class="user-content" v-html="item.text" />
+            <div class="user-content">
+              <!-- content detail -->
+              <div class="text" v-html="item.text"></div>
+              <!-- content options -->
+              <div class="options">
+                <!-- re-request -->
+                <el-tooltip
+                  content="Re-request; This will refresh the chats below"
+                  placement="bottom"
+                >
+                  <el-button class="options-button">
+                    <div class="options-icon" v-html="SVGS.reRequestIcon"></div>
+                  </el-button>
+                </el-tooltip>
+                <!-- edit request -->
+                <el-tooltip content="Edit this request" placement="bottom">
+                  <el-button
+                    class="options-button"
+                    @click="editChatItem(item, index)"
+                  >
+                    <div
+                      class="options-icon"
+                      v-html="SVGS.eidtChatItemIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
+                <!-- delete request -->
+                <el-tooltip content="Delete this request" placement="bottom">
+                  <el-button
+                    class="options-button"
+                    @click="deleteChatItem(item.chatIid, index)"
+                  >
+                    <div
+                      class="options-icon"
+                      v-html="SVGS.deleteChatItemIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
           </div>
           <!-- gtp answer -->
           <div v-else class="gpt">
             <div class="gpt-icon" v-html="SVGS.gptIcon"></div>
-            <div class="gpt-content" v-html="item.text" />
+            <div class="gpt-content">
+              <!-- detail content -->
+              <div class="text" v-html="marked.render(item.text)"></div>
+              <div class="options">
+                <!-- re-response -->
+                <el-tooltip content="Re-response" placement="bottom">
+                  <el-button class="options-button">
+                    <div
+                      class="options-icon"
+                      v-html="SVGS.reResponseIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
+                <!-- edit response -->
+                <el-tooltip content="Edit this response" placement="bottom">
+                  <el-button
+                    class="options-button"
+                    @click="editChatItem(item, index)"
+                  >
+                    <div
+                      class="options-icon"
+                      v-html="SVGS.eidtChatItemIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
+                <!-- delete response -->
+                <el-tooltip content="Delete this response" placement="bottom">
+                  <el-button
+                    class="options-button"
+                    @click="deleteChatItem(item.chatIid, index)"
+                  >
+                    <div
+                      class="options-icon"
+                      v-html="SVGS.deleteChatItemIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -63,12 +140,12 @@
       <!-- send and pause button -->
       <el-button
         class="send-button"
-        :disabled="inputText == '' && !chatting"
+        :disabled="inputText == '' && !isChatting"
         @click="sendContent"
       >
         <!-- send chat button -->
         <div
-          v-if="!chatting"
+          v-if="!isChatting"
           :class="['svg-icon', { 'svg-icon-disable': inputText == '' }]"
           v-html="SVGS.sendIcon"
         ></div>
@@ -82,6 +159,11 @@
       <el-text class="tips"> 11/128000 tokens to be sent </el-text>
     </div>
   </div>
+  <!-- item editor ovelay -->
+  <ItemEditor
+    v-model:isShowItemEditor="isShowItemEditor"
+    v-model:editChatValue="editChatValue"
+  />
 </template>
 
 <script>
@@ -97,23 +179,26 @@ import {
 } from "../../apis/chatAPIs";
 import marked from "../../helper/markdownHelper.js";
 import { ElMessageBox } from "element-plus";
+import ItemEditor from "./ItemEditor.vue";
 
 export default {
-  props: {},
+  components: { ItemEditor },
   setup() {
     const store = useStore();
     const inputText = ref("");
     const scrollbarRef = ref();
     const innerRef = ref(); // 控制自动刷新到最底部
-    const chatHistory = computed(() => store.state.chatHistory);
-    const chatting = computed(() => store.state.chatState);
+    const chatHistory = computed(() => store.state.chat.chatHistory);
+    const isChatting = computed(() => store.state.chat.isChatting);
     const isStreamResponse = ref(true);
     const isAutoToBottom = ref(true);
-    const showEditChatItem = ref(false);
+    const isShowItemEditor = ref(false);
     const editChatValue = ref("");
     const editChatIndex = ref(-1);
     const chatIid = ref(-1);
-    onMounted(() => {});
+    onMounted(() => {
+      console.log("ehl");
+    });
 
     /** 输入框的按键组合键 */
     const handleKeydown = async (event) => {
@@ -127,7 +212,7 @@ export default {
 
     /** 向服务器发送数据 */
     const sendContent = async () => {
-      if (chatting.value) {
+      if (isChatting.value) {
         ElMessage.warning("请等待服务器回答完成！");
         return;
       }
@@ -137,7 +222,7 @@ export default {
       // 置空输入框
       inputText.value = "";
       // 控制再也不能发送对话
-      store.commit("SET_CHATSTATE_STATE", true);
+      store.commit("SET_ISCHATTING_STATE", true);
       var rea = await setUserMsgAPI(msg);
       if (rea.flag) {
         // 更新对话
@@ -165,6 +250,7 @@ export default {
      * https://blog.csdn.net/qq_42203909/article/details/133816286
      */
     const setScrollToBottom = async () => {
+      if (!isAutoToBottom.value) return;
       await nextTick();
       const max = innerRef.value.clientHeight;
       scrollbarRef.value.setScrollTop(max);
@@ -172,12 +258,12 @@ export default {
 
     /** 编辑某个聊天对话，修改prompt */
     const editChatItem = (item, index) => {
-      if (chatting.value) {
+      if (isChatting.value) {
         ElMessage.warning("请等待服务器回答完成！");
         return;
       }
 
-      showEditChatItem.value = true;
+      isShowItemEditor.value = true;
       editChatValue.value = item.text;
       chatIid.value = item.chatIid;
       editChatIndex.value = index;
@@ -185,7 +271,7 @@ export default {
 
     /** 删除某个chat */
     const deleteChatItem = async (chatIid, index) => {
-      if (chatting.value) {
+      if (isChatting.value) {
         ElMessage.warning("请等待服务器回答完成！");
         return;
       }
@@ -247,24 +333,24 @@ export default {
           ElMessage.error("修改失败");
         }
 
-        showEditChatItem.value = false;
+        isShowItemEditor.value = false;
       }
     };
 
-    /** 显示对话的编辑弹窗 settings-overlay */
+    /** 显示对话的编辑弹窗 chat-settings-overlay */
     const onShowSettings = () => {
       store.commit("SET_EDIT_CHAT_SETTINGS_STATE", true);
     };
 
     return {
       SVGS,
-      chatting,
+      isChatting,
       inputText,
       scrollbarRef,
       innerRef,
       chatHistory,
       marked,
-      showEditChatItem,
+      isShowItemEditor,
       editChatValue,
       isStreamResponse,
       isAutoToBottom,
@@ -287,5 +373,10 @@ export default {
   box-shadow: none; /* Remove any box shadow */
   background-color: #f4f4f4;
   resize: none !important;
+}
+
+.scroll-window :deep(.el-button) {
+  margin-left: 0px !important;
+  padding: 0px !important;
 }
 </style>

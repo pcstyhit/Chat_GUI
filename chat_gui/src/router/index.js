@@ -3,13 +3,13 @@ import LoginPage from "../components/home/LoginPage.vue";
 import AdminPage from "../components/home/AdminPage.vue";
 import PlaygroundPage from "../components/home/PlaygroundCard.vue";
 import ChatPage from "../components/chat/HomePage.vue";
-import ElementHomeEmpty from "../components/template/HomeEmptyPage.vue";
-import ElementHomeLogin from "../components/template/HomeLoginPage.vue";
-import ElementHomeAdmin from "../components/template/HomeAdminPage.vue";
-import ElementChatSidebar from "../components/template/ChatSidebar.vue";
-import ElementChatPrompt from "../components/template/ChatPromptCard.vue";
-import ElementChatChat from "../components/template/ChatChatCard.vue";
-import ElementChatSettings from "../components/template/ChatSettings.vue";
+import HomeEmpty from "../components/template/HomeEmptyPage.vue";
+import HomeLogin from "../components/template/HomeLoginPage.vue";
+import HomeAdmin from "../components/template/HomeAdminPage.vue";
+import ChatSidebar from "../components/template/ChatSidebar.vue";
+import ChatChat from "../components/template/ChatChatCard.vue";
+import ChatSettings from "../components/template/ChatSettings.vue";
+import ChatItemEditor from "../components/template/ChatItemEditor.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,31 +38,31 @@ const router = createRouter({
     },
     {
       path: "/template/home/empty",
-      component: ElementHomeEmpty,
+      component: HomeEmpty,
     },
     {
       path: "/template/home/login",
-      component: ElementHomeLogin,
+      component: HomeLogin,
     },
     {
       path: "/template/home/admin",
-      component: ElementHomeAdmin,
+      component: HomeAdmin,
     },
     {
       path: "/template/chat/sidebar",
-      component: ElementChatSidebar,
-    },
-    {
-      path: "/template/chat/prompt",
-      component: ElementChatPrompt,
+      component: ChatSidebar,
     },
     {
       path: "/template/chat/chat",
-      component: ElementChatChat,
+      component: ChatChat,
     },
     {
       path: "/template/chat/settings",
-      component: ElementChatSettings,
+      component: ChatSettings,
+    },
+    {
+      path: "/template/chat/item",
+      component: ChatItemEditor,
     },
   ],
 });

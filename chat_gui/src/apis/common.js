@@ -84,11 +84,16 @@ export async function addStreamHistroy(data) {
 }
 
 /** 控制当前对话是否处于进行状态 */
-export async function setChatState(data) {
+export async function setIsChattingState(data) {
   store.state.chat.isChatting = data;
 }
 
 /** 设置如果按照当前的内容发送一次对话要消耗的tokens数量 */
 export async function setTokens(data) {
   store.state.chat.tokens = data;
+}
+
+/** 是否要更新请求的时间 */
+export async function updateTimeStamp(data) {
+  store.state.chat.updateTimeStamp(data);
 }

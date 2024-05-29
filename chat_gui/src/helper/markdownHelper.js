@@ -34,7 +34,6 @@ hljs.registerLanguage("xml", xml);
 
 const marked = new MarkdownIt({
   highlight: function (str, lang) {
-    console.log("get language: ", lang, hljs.getLanguage(lang));
     if (lang && hljs.getLanguage(lang)) {
       try {
         return (
@@ -46,7 +45,7 @@ const marked = new MarkdownIt({
         //
       }
     }
-    return "";
+    return `<pre class="text no-hljs"><code> ${str} </code></pre>`;
   },
 });
 

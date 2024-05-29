@@ -28,15 +28,27 @@ export const ChatState = {
 
   /**
    * 是否处于对话状态的开关，控制对话发送功能。
-   * @type {boolean}
+   * @type {number} 0表示没有在对话, 1表示在对话, 2/-2表示流更新回答
    */
-  isChatting: false,
+  isChatting: 0,
 
   /**
    * 是否处于编辑聊天参数的状态。
    * @type {boolean}
    */
   isEditChatSettings: true,
+
+  /**
+   * 请求得到响应的时间
+   * @type {number}
+   */
+  requestTime: 0,
+
+  /**
+   * 当前时间戳
+   * @type {number}
+   */
+  timeStamp: 0,
 
   /**
    * 设置流对话的 WebSocket ID。
@@ -64,16 +76,19 @@ export const ChatState = {
 
   /**
    * 更改对话历史中的特定消息。
-   * @param {Object} data - 新的消息数据。
-   * @param {number} index - 要更改的消息索引。
+   * @param {Object} chatItemObj - 存入chatItem的对象。
    */
-  changeChatHistory(data, index) {
-    this.chatHistory[index] = data;
+  changeSpecChatItemHistory(chatItemObj) {
+    this.chatHistory.forEach((item) => {
+      if (item.chatIid == chatItemObj.chatIid) {
+        item.text = chatItemObj.text;
+      }
+    });
   },
 
   /**
    * 设置对话状态。
-   * @param {boolean} data - 新的对话状态。
+   * @param {number} data - 新的对话状态。
    */
   setIsChattingState(data) {
     this.isChatting = data;
@@ -97,20 +112,19 @@ export const ChatState = {
 
   /**
    * 删除对话历史中的某条消息。
-   * @param {number} index - 要删除的消息索引。
+   * @param {number} chatIid - 要删除的对象的唯一序号标志
    */
-  deleteChatHistoryItem(index) {
-    this.chatHistory.splice(index, 1);
-  },
+  deleteChatHistoryItem(chatIid) {
+    var index = 0;
+    for (let i = 0; i < this.chatHistory.length; i++) {
+      if (this.chatHistory[i].chatIid == chatIid) {
+        break; // 退出循环
+      } else {
+        index++;
+      }
+    }
 
-  /**
-   * 编辑对话历史中的特定消息。
-   * @param {Object} data - 新的消息数据。
-   * @param {number} data.index - 要编辑的消息索引。
-   * @param {string} data.data - 新的消息文本。
-   */
-  editChatHistoryItem(data) {
-    this.chatHistory[data.index].text = data.data;
+    this.chatHistory.splice(index, 1);
   },
 
   /**
@@ -119,5 +133,17 @@ export const ChatState = {
    */
   setEditChatSettings(data) {
     this.isEditChatSettings = data;
+  },
+
+  /**
+   * 更新时间戳
+   * @param {boolean} isUpdateRequestTime - 是否更新请求时间
+   */
+  updateTimeStamp(isUpdateRequestTime) {
+    const currentTime = new Date().getTime();
+    if (isUpdateRequestTime) {
+      this.requestTime = Math.abs(currentTime - this.timeStamp);
+    }
+    this.timeStamp = currentTime;
   },
 };

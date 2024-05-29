@@ -12,6 +12,7 @@ class Params:
                   'content': 'You are Chat GPT-4 a large language model of OpenAI.'}
 
     def __init__(self) -> None:
+        '''OpenAI GPT 对话的默认几个参数'''
         self.msgLen = 20                # 上下文长度，默认是10
         self.tempure = 10
         self.prompt = 'You are Chat GPT-4 a large language model of OpenAI.'
@@ -23,6 +24,9 @@ class Params:
         self.stopSequence = ""
         self.passedMsg = 10             # 默认的上下文长度
         self.timeout = 10000
+
+        '''下面的参数是针对这个项目体验设计的'''
+        self.strLen = 150  # 设置字符长度大于100才yeid出内容，减少web渲染次数
 
     def updateChatParam(self, systemContent, passedMsg):
         '''设置或更新对话的参数'''

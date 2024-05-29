@@ -1,5 +1,6 @@
 import fastapi
 import uvicorn
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from .login import LOGIN_OUT_ROUTER
@@ -23,5 +24,12 @@ def debug():
 
 def run():
     '''启动fastapi webserver 服务'''
+    debug()
+    uvicorn.run(app, host="0.0.0.0", port=5001)
+
+
+def run_static():
+    '''启动静态资源的运行服务'''
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
     debug()
     uvicorn.run(app, host="0.0.0.0", port=5001)

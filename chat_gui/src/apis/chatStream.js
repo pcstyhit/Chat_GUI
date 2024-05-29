@@ -7,8 +7,9 @@ import {
   getWsid,
   updateStreamHistroy,
   addStreamHistroy,
-  setChatState,
+  setIsChattingState,
   setTokens,
+  updateTimeStamp,
 } from "./common.js";
 
 let flag = false;
@@ -17,6 +18,9 @@ let wsurl = "";
 let socket = null;
 let connectionPromise = null;
 let chatRes = "";
+
+let isAutoToBottomFlag = 2;
+let isValidResponse = true;
 
 function createWebSocketConnection() {
   return new Promise((resolve, reject) => {
@@ -43,7 +47,8 @@ function createWebSocketConnection() {
       if (data.flag) {
         // 服务端标志对话结束
         chatRes = "";
-        setChatState(false); // 结束处于对话的状态
+        setIsChattingState(0); // 结束处于对话的状态
+        isValidResponse = true; // 重置可以更新时间戳的开关量
         setTokens(data.tokens); // 更新最新对话要消耗的tokens数量
       } else {
         // 对话进行中更新
@@ -53,6 +58,15 @@ function createWebSocketConnection() {
           id: "gpt",
           text: chatRes,
         });
+        // 更新流对话的一个开关
+        isAutoToBottomFlag = isAutoToBottomFlag * -1;
+        setIsChattingState(isAutoToBottomFlag);
+
+        // 更新时间戳
+        if (isValidResponse) {
+          updateTimeStamp(true);
+          isValidResponse = false;
+        }
       }
     };
 
@@ -78,6 +92,8 @@ export async function chatStreamAPI(msg) {
     socket.send(data);
     // 再history数组最后新增一个gpt的元素
     addStreamHistroy({ chatIid: -1, id: "gpt", text: "Please wait ... ..." });
+    // 开始流对话
+    setIsChattingState(isAutoToBottomFlag * -1);
   } catch (error) {
     addStreamHistroy({ chatIid: -1, id: "gpt", text: error.toString() });
   }

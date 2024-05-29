@@ -15,7 +15,6 @@ const mutations = {
 
   /** @param {state} state */
   SET_BASIC_AUTH(state, data) {
-    console.log("hello");
     state.user.setBasicAuth(data);
   },
 
@@ -40,8 +39,8 @@ const mutations = {
   },
 
   /** @param {state} state */
-  CHANGE_CHATHISTORY_STATE(state, data, sit) {
-    state.chat.changeChatHistory(data, sit);
+  CHANGE_SPEC_CHATITEM_HISTORY(state, chatItemObj) {
+    state.chat.changeSpecChatItemHistory(chatItemObj);
   },
 
   /** @param {state} state */
@@ -60,18 +59,18 @@ const mutations = {
   },
 
   /** @param {state} state */
-  DELETE_CHATHISTORY_ITEM(state, index) {
-    state.chat.deleteChatHistoryItem(index);
-  },
-
-  /** @param {state} state */
-  EDIT_CHATHISTORY_ITEM(state, data) {
-    state.chat.editChatHistoryItem(data);
+  DELETE_CHATHISTORY_ITEM(state, chatIid) {
+    state.chat.deleteChatHistoryItem(chatIid);
   },
 
   /** @param {state} state */
   SET_EDIT_CHAT_SETTINGS_STATE(state, data) {
     state.chat.setEditChatSettings(data);
+  },
+
+  /** @param {state} state */
+  SET_IS_UPDATE_REQUEST_TIME(state, data) {
+    state.chat.updateTimeStamp(data);
   },
 };
 

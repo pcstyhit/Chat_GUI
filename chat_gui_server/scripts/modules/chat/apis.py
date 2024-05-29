@@ -35,6 +35,8 @@ class ChatAPI(ChatHandle):
         collected_chunks = []
         collected_messages = []
         collected_tokens = 0
+        # 每次和websocket/SSE的通讯最好是定长的字符，减少前端VUE的刷新频率
+        will_be_send_message = ""
 
         for chunk in response:
             collected_chunks.append(chunk)
@@ -48,13 +50,21 @@ class ChatAPI(ChatHandle):
                 # 过滤掉为None的信息
                 if chunk_message != None:
                     collected_messages.append(chunk_message)
-                    yield chunk_message, self.tokens+collected_tokens, self.chatIid
+                    will_be_send_message += chunk_message
+
+                    # 判断长度，查看是否发送, 用字符串切片来做
+                    if len(will_be_send_message) >= self.param.strLen:
+                        yield will_be_send_message[:self.param.strLen], self.tokens+collected_tokens, self.chatIid
+                        will_be_send_message = will_be_send_message[self.param.strLen:]
             except Exception as e:
                 print(f'azureChatStream error >>> {e}')
                 continue
 
+        # 将剩余的消息全部返回给WEB
+        yield will_be_send_message, self.tokens+collected_tokens, self.chatIid
         full_reply_content = ''.join(
             [m if m else '' for m in collected_messages])
+
         # print(f"Full conversation received: {full_reply_content}")
         # 更新数据库的值
         await self.setMessageWithTokens(Params.ASS, full_reply_content, collected_tokens)

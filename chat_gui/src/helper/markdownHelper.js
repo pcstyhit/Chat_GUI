@@ -17,6 +17,8 @@ import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
 
+import * as SVGS from '../assets/styles/chat/svgs'
+
 // 语言包需要注册
 hljs.registerLanguage("accesslog", accesslog);
 hljs.registerLanguage("bash", bash);
@@ -34,19 +36,48 @@ hljs.registerLanguage("xml", xml);
 
 const marked = new MarkdownIt({
   highlight: function (str, lang) {
+    console.log("get language: ", lang, hljs.getLanguage(lang));
     if (lang && hljs.getLanguage(lang)) {
+
       try {
-        return (
-          '<pre class="text hljs"><code>' +
-          hljs.highlight(str, { language: lang }).value +
-          "</code></pre>"
+        return (`
+          <div class="text code-block">
+            <div class="copy-header">
+              <el-text class="lang">${lang}</el-text>
+              <button class="copy-button" onclick="copyToClipboard(this)">${SVGS.copyCodeIcon}</button>
+              <el-text class="copy-text">Copy code</el-text>
+            </div> 
+            <pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>
+          </div> 
+          `
         );
       } catch (__) {
         //
       }
     }
-    return `<pre class="text no-hljs"><code> ${str} </code></pre>`;
+    return "";
   },
 });
+
+marked.use(md=>{
+  const defaultRender = md.renderer.rules.fence || function(tokens,idx,options,env,self){
+    return self.renderToken(tokens,idx,options);
+  };
+
+  md.renderer.rules.fence = (tokens,idx,options,env,self)=>{
+    const token = tokens[idx];
+    const info = token.info ? md.utils.unescapeAll(token.info).trim() : '';
+    const langName = info.split(/\s+/g)[0];
+
+
+    console.log(langName)
+
+    return `
+      <div class="text code-rendered">
+        ${defaultRender(tokens,idx,options,env,self)}
+      </div> 
+      `;
+  }
+})
 
 export default marked;

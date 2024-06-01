@@ -317,6 +317,14 @@ export default {
       store.commit("SET_EDIT_CHAT_SETTINGS_STATE", true);
     };
 
+    const copyToClipboard = (button) => {
+      navigator.clipboard.writeText(
+        button.parentNode.nextElementSibling.querySelector("code").innerText
+      );
+    };
+
+    window.copyToClipboard = copyToClipboard;
+
     return {
       SVGS,
       isChatting,

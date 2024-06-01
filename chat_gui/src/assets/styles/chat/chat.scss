@@ -177,6 +177,51 @@
           code.hljs {
             padding: 3px 5px;
           }
+          .code-rendered {
+            position: relative;
+          }
+          .code-block {
+            position: relative;
+            width: 100%;
+            background: #282c34;
+            .hljs {
+              color: #abb2bf;
+              margin-top: 0px;
+              margin-bottom: 0px;
+            }
+            .copy-header {
+              margin-bottom: 0px;
+              background: #000000;
+              position: absolute;
+              display: flex;
+              flex-direction: row;
+              align-content: center;
+              justify-content: space-between;
+              align-items: center;
+              padding: 4px 8px;
+              top: 0px;
+              width: calc(100% - 16px);
+              color: #FFFFFF;
+              font-family: 'Microsoft YaHei';
+              .lang {
+                font-size: 10px;
+                color: #FFFFFF;
+              }
+              .copy-button {
+                margin-left: auto;
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                outline: none;
+              }
+              .copy-text {
+                font-size: 10px;
+                color: #FFFFFF;
+              }
+            }
+          }
+
           /*
           
           Atom One Dark by Daniel Gamage
@@ -197,18 +242,13 @@
           
           */
           .hljs {
-            color: #d4dceb;
+            color: #abb2bf;
             background: #282c34;
           }
-          .no-hljs {
-            color: #1f1f1f;
-            background: #f5f7fa;
-          }
-          .hljs-comment {
-            color: #8f95a0;
-          }
+          .hljs-comment,
           .hljs-quote {
             color: #5c6370;
+            font-style: italic;
           }
           .hljs-doctag,
           .hljs-keyword,
@@ -254,6 +294,9 @@
           .hljs-title.class_,
           .hljs-class .hljs-title {
             color: #e6c07b;
+          }
+          .hljs-emphasis {
+            font-style: italic;
           }
           .hljs-strong {
             font-weight: bold;

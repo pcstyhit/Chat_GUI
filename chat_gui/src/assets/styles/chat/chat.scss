@@ -1,0 +1,397 @@
+.chat-container {
+  position: relative;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+  --width-size: 80%;
+  --header-height: 40px;
+  --input-bottom: 0px;
+  --input-min-height: 32px;
+  --bottom-text: 24px;
+
+  .header {
+    position: absolute;
+    left: 10%;
+    top: 0px;
+    height: var(--header-height);
+    width: var(--width-size);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .settings {
+      background-color: transparent;
+      border: none;
+      height: 32px;
+      width: 100px;
+      color: #4d4d4d;
+      &:hover {
+        background-color: #ececec;
+      }
+      &:active {
+        background-color: #ececec;
+      }
+      .settings-text {
+        font-size: 16px;
+        padding: 4px 8px;
+      }
+      .settings-icon {
+        background-color: transparent;
+        width: 24px;
+        height: 24px;
+        border-radius: 16px;
+      }
+    }
+
+    .user-config {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      width: 50%;
+      padding: 4px;
+
+      .switch {
+        height: 100%;
+        width: auto;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+      }
+
+      .user-man {
+        height: 32px;
+        width: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-right: 4px;
+        margin-left: 4px;
+      }
+    }
+  }
+
+  .scroll-window {
+    position: absolute;
+    left: 10%;
+    top: var(--header-height);
+    height: calc(
+      100% - var(--header-height) - var(--input-bottom) -
+        var(--input-min-height) - 16px - var(--bottom-text)
+    );
+    max-height: calc(
+      100% - var(--header-height) - var(--input-bottom) -
+        var(--input-min-height) - 16px - var(--bottom-text)
+    );
+    width: var(--width-size);
+    max-width: var(--width-size);
+
+    .user {
+      display: flex;
+      flex-direction: row-reverse;
+      width: 100%;
+      height: auto;
+      min-height: 40px;
+      border-radius: 32px;
+      margin: 4px 0px;
+
+      .user-content {
+        max-width: 60%;
+        width: 60%;
+        border-radius: 16px;
+        padding: 8px 16px;
+        background-color: #f4f4f4;
+        color: #0d0d0d;
+        overflow: auto;
+
+        .text {
+          font-size: 14px;
+          color: black;
+        }
+
+        .options {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-end;
+          width: 100%;
+          height: 24px;
+        }
+      }
+    }
+
+    .options-button {
+      width: 24px;
+      height: 24px;
+      background-color: transparent;
+      border: none;
+      border-radius: 12px;
+
+      &:hover {
+        background-color: #939393;
+      }
+      &:active {
+        background-color: #939393;
+      }
+    }
+    .options-icon {
+      color: #4d4d4d;
+      background-color: transparent;
+      width: 16px;
+      height: 16px;
+    }
+
+    .assistant {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      height: auto;
+      min-height: 40px;
+      border-radius: 32px;
+
+      .assistant-icon {
+        color: black;
+        background-color: transparent;
+        border-radius: 16px;
+      }
+
+      .assistant-content {
+        width: calc(100% - 40px);
+        max-width: calc(100% - 40px);
+        border-radius: 16px;
+        padding: 8px 16px;
+        background-color: transparent;
+        color: #0d0d0d;
+        overflow: auto;
+
+        .text {
+          font-size: 14px;
+          color: black;
+
+          pre code.hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 1em;
+          }
+          code.hljs {
+            padding: 3px 5px;
+          }
+          .code-rendered {
+            position: relative;
+          }
+          .code-block {
+            position: relative;
+            width: 100%;
+            background: #282c34;
+            .hljs {
+              color: #abb2bf;
+              margin-top: 0px;
+              margin-bottom: 0px;
+            }
+            .copy-header {
+              margin-bottom: 0px;
+              background: #000000;
+              position: absolute;
+              display: flex;
+              flex-direction: row;
+              align-content: center;
+              justify-content: space-between;
+              align-items: center;
+              padding: 4px 8px;
+              top: 0px;
+              width: calc(100% - 16px);
+              color: #FFFFFF;
+              font-family: 'Microsoft YaHei';
+              .lang {
+                font-size: 10px;
+                color: #FFFFFF;
+              }
+              .copy-button {
+                margin-left: auto;
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                outline: none;
+              }
+              .copy-text {
+                font-size: 10px;
+                color: #FFFFFF;
+              }
+            }
+          }
+
+          /*
+          
+          Atom One Dark by Daniel Gamage
+          Original One Dark Syntax theme from https://github.com/atom/one-dark-syntax
+          
+          base:    #282c34
+          mono-1:  #abb2bf
+          mono-2:  #818896
+          mono-3:  #5c6370
+          hue-1:   #56b6c2
+          hue-2:   #61aeee
+          hue-3:   #c678dd
+          hue-4:   #98c379
+          hue-5:   #e06c75
+          hue-5-2: #be5046
+          hue-6:   #d19a66
+          hue-6-2: #e6c07b
+          
+          */
+          .hljs {
+            color: #abb2bf;
+            background: #282c34;
+          }
+          .hljs-comment,
+          .hljs-quote {
+            color: #5c6370;
+            font-style: italic;
+          }
+          .hljs-doctag,
+          .hljs-keyword,
+          .hljs-formula {
+            color: #c678dd;
+          }
+          .hljs-section,
+          .hljs-name,
+          .hljs-selector-tag,
+          .hljs-deletion,
+          .hljs-subst {
+            color: #e06c75;
+          }
+          .hljs-literal {
+            color: #56b6c2;
+          }
+          .hljs-string,
+          .hljs-regexp,
+          .hljs-addition,
+          .hljs-attribute,
+          .hljs-meta .hljs-string {
+            color: #98c379;
+          }
+          .hljs-attr,
+          .hljs-variable,
+          .hljs-template-variable,
+          .hljs-type,
+          .hljs-selector-class,
+          .hljs-selector-attr,
+          .hljs-selector-pseudo,
+          .hljs-number {
+            color: #d19a66;
+          }
+          .hljs-symbol,
+          .hljs-bullet,
+          .hljs-link,
+          .hljs-meta,
+          .hljs-selector-id,
+          .hljs-title {
+            color: #61aeee;
+          }
+          .hljs-built_in,
+          .hljs-title.class_,
+          .hljs-class .hljs-title {
+            color: #e6c07b;
+          }
+          .hljs-emphasis {
+            font-style: italic;
+          }
+          .hljs-strong {
+            font-weight: bold;
+          }
+          .hljs-link {
+            text-decoration: underline;
+          }
+        }
+
+        .options {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-start;
+          width: 100%;
+          height: 24px;
+        }
+      }
+    }
+  }
+
+  .input-card {
+    position: absolute;
+    bottom: var(--bottom-text);
+    left: 10%;
+    height: auto;
+    min-height: var(--input-min-height);
+    width: calc(var(--width-size) - 40px);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: #f4f4f4;
+    border-radius: 50px;
+    padding: 8px 20px;
+
+    .send-button {
+      height: 32;
+      width: 32;
+      border-radius: 16px;
+      background-color: transparent;
+      border: none;
+    }
+
+    .svg-icon {
+      color: white;
+      background-color: black;
+      min-width: 32px;
+      min-height: 32px;
+      max-width: 32px;
+      max-height: 32px;
+      border-radius: 16px;
+    }
+
+    .svg-icon-disable {
+      color: #f4f4f4;
+      background-color: #d7d7d7;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 16px;
+    }
+  }
+
+  .footer {
+    position: absolute;
+    left: 10%;
+    bottom: 0px;
+    width: var(--width-size);
+    height: var(--bottom-text);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .tips {
+      font-size: 12px;
+      color: #939393;
+      display: inline-block; /* 确保元素是行内块元素 */
+      white-space: nowrap; /* 禁止文本换行 */
+      overflow: hidden; /* 隐藏超出的文本 */
+      text-overflow: ellipsis; /* 显示省略号 */
+    }
+  }
+
+  .c-label {
+    font-size: 12px;
+    color: #4d4d4d;
+    padding: 8px 4px;
+    display: inline-block; /* 确保元素是行内块元素 */
+    white-space: nowrap; /* 禁止文本换行 */
+    overflow: hidden; /* 隐藏超出的文本 */
+    text-overflow: ellipsis; /* 显示省略号 */
+  }
+
+  .c-switch {
+    --el-switch-on-color: #10a37f;
+    --el-switch-off-color: #e3e3e3;
+    --el-switch-border-color: "transparent";
+  }
+}

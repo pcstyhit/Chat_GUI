@@ -18,7 +18,7 @@
     <div class="content">
       <el-input
         class="editor"
-        v-model="beEditedChatItem.text"
+        v-model="beEditedChatItem.content"
         type="textarea"
         :autosize="{ minRows: 1, maxRows: 8 }"
       >
@@ -39,7 +39,6 @@
 import { ref, watch } from "vue";
 import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
-import { htmlToText } from "../../helper/inputTextFormat.js";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { editChatItemAPI } from "../../apis/chatAPIs";
 export default {
@@ -76,10 +75,6 @@ export default {
       () => props.editChatItemObj,
       (newValue) => {
         beEditedChatItem.value = newValue;
-        // 如果说是el-input得到的<br />
-        if (newValue.id == "user") {
-          beEditedChatItem.value.text = htmlToText(newValue.text);
-        }
       }
     );
 
@@ -109,7 +104,7 @@ export default {
       if (flag) {
         var rea = await editChatItemAPI(
           beEditedChatItem.value.chatIid,
-          beEditedChatItem.value.text
+          beEditedChatItem.value.content
         );
         if (rea.flag == true) {
           ElMessage.success("修改成功");

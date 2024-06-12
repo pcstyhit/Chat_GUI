@@ -28,7 +28,7 @@ export const ChatState = {
     presentPenaty: 0,
     stopSequence: [],
     chatWithGptTimeout: 10,
-    webRenderStrLen: 150,
+    webRenderStrLen: 20,
     isUseProxy: false,
     proxyURL: "",
   },

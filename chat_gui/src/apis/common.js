@@ -92,3 +92,8 @@ export async function setTokens(data) {
 export async function updateTimeStamp(data) {
   store.state.chat.updateTimeStamp(data);
 }
+
+/** 获取chatParams的webLen的值 */
+export function getWebRenderLen() {
+  return store.state.chat.chatParams.webRenderStrLen;
+}

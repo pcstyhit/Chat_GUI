@@ -241,6 +241,15 @@ class ChatSSEResponse(BaseModel):
 
 @CHAT_ROUTE.get("/chat/sse/{chatCid}")
 async def sseAPI(chatCid: str):
+    '''
+    SSE方式向WEB端发送消息,通过chatCid来找到用户
+    对于asyncio.sleep(0)有解释：
+        - await asyncio.sleep(0)在Python的异步编程中通常用于“让出控制权”。当你在协程中使用await asyncio.sleep(0)时,你实际上是在告诉事件循环：“我现在没有什么要做的,你可以去处理其他的任务。”
+
+        - 在你的情况中,这些“其他的任务”可能包括处理WebSocket的数据发送。当你调用websocket.send_text(resp)时,你并不是立即发送数据,而是将数据放入一个发送缓冲区,等待事件循环在适当的时候发送它。当你使用await asyncio.sleep(0)时,你给了事件循环一个机会去处理这个发送任务。
+
+        - 但请注意,这只是一个可能的解释,实际效果可能会因为具体情况而有所不同。在某些情况下,使用await asyncio.sleep(0)可能并不会产生预期的效果。比如,如果事件循环有其他更高优先级的任务要处理,那么即使你使用了await asyncio.sleep(0),事件循环也可能选择先处理那些任务。
+    '''
     async def sseEventGenerator():
         rea = ChatSSEResponse()
         handle = getChatHandleByChatCid(chatCid)
@@ -252,7 +261,7 @@ async def sseAPI(chatCid: str):
             # 包装成符合SSE接收的消息的格式
             yield f"data: {resp}\n\n"
 
-            async for (chunk, tokens, chatIid) in handle.azureChatAPI():
+            async for (chunk, tokens, chatIid) in handle.azureChatStreamAPI():
                 rea.flag = 2
                 rea.data = f'{chunk}'
                 rea.tokens = tokens
@@ -260,6 +269,8 @@ async def sseAPI(chatCid: str):
                 resp, _ = dict2Str(rea.__dict__)
                 # 持续对话中
                 yield f"data: {resp}\n\n"
+                # ⭐ 必须 await asyncio.sleep
+                await asyncio.sleep(0)
 
             # 对话结束
             rea.flag = 0

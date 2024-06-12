@@ -25,7 +25,7 @@ class ChatAPI(ChatHandle):
         self.chatIid = -1                           # chatIid 表示对话中每条消息的ID，也是数据库中存放元素的ID
 
     async def azureChatAPI(self, isStreamResponse=True):
-        '''切换是不是用stream的方式回答还是直接返回结果, 有WEB控制'''
+        '''切换是不是用stream的方式回答还是直接返回结果'''
         if isStreamResponse:
             # 流对话
             async for response in self.azureChatStreamAPI():
@@ -48,9 +48,6 @@ class ChatAPI(ChatHandle):
                                         timeout=self.chatParams.chatWithGptTimeout)
 
         allMessages = []
-        outgoingTokens = 0
-        # 每次和websocket/SSE的通讯最好是定长的字符，减少前端VUE的刷新频率
-        outgoingMsg = ""
 
         for chunk in response:
             try:
@@ -59,29 +56,21 @@ class ChatAPI(ChatHandle):
                     continue
 
                 chunkMsg = chunk.choices[0].delta.content
-                chunkToken = self.chatParams.getTokens(chunkMsg)
 
                 # 过滤掉为None的信息, 然后拼接
                 if chunkMsg != None:
                     allMessages.append(chunkMsg)
-                    outgoingTokens += chunkToken
-                    outgoingMsg += chunkMsg
+                    chunkToken = self.chatParams.getTokens(chunkMsg)
+                    self.chatTokens += chunkToken
 
-                    # 判断长度，查看是否发送, 用字符串切片来做
-                    if len(outgoingMsg) >= self.chatParams.webRenderStrLen:
-                        yield outgoingMsg, self.chatTokens+outgoingTokens, self.chatIid
-                        # 置空
-                        outgoingMsg = ""
+                    yield chunkMsg, self.chatTokens, self.chatIid
 
             except Exception as e:
                 print(f'azureChatStream error >>> {e}')
                 continue
 
-        # 将剩余的消息全部返回给WEB
-        yield outgoingMsg, self.chatTokens+outgoingTokens, self.chatIid
-
         # 更新数据库的值
-        await self.setMessageWithTokens(Params.ASS, ''.join([m if m else '' for m in allMessages]), outgoingTokens)
+        await self.setMessageWithTokens(Params.ASS, ''.join([m if m else '' for m in allMessages]), self.chatTokens)
 
     async def azureChatSyncAPI(self):
         '''获取非流式的API对话返回结果'''

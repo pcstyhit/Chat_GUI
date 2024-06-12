@@ -7,7 +7,9 @@ import {
   setIsChattingState,
   setTokens,
   updateTimeStamp,
+  getWebRenderLen,
 } from "./common.js";
+import marked from "../helper/markdownHelper.js";
 
 export async function getAllHistoryAPI() {
   try {
@@ -219,15 +221,29 @@ export const createEventSourceAPI = (chatCid) => {
   let chatRes = "";
   let isAutoToBottomFlag = 2;
   let isValidResponse = true;
+  const webRenderLen = getWebRenderLen();
 
   return new Promise((resolve, reject) => {
     const eventSource = new EventSource(`${URL}/chat/sse/${chatCid}`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
+      // 服务端标志对话结束
       if (data.flag == 0) {
-        // 服务端标志对话结束
+        // 如果残留的字符没有更新,需要更新最后的字符
+        if (chatRes.length > 0) {
+          updateStreamHistroy({
+            chatIid: data.chatIid,
+            role: "assistant",
+            content: chatRes,
+            text: marked.render(chatRes),
+          });
+          // 更新流对话的一个开关
+          isAutoToBottomFlag = isAutoToBottomFlag * -1;
+          setIsChattingState(isAutoToBottomFlag);
+        }
+
+        // 会话结束重置一些操作
         chatRes = "";
         setIsChattingState(0); // 结束处于对话的状态
         isValidResponse = true; // 重置可以更新时间戳的开关量
@@ -241,7 +257,8 @@ export const createEventSourceAPI = (chatCid) => {
         // 在history数组最后新增一个gpt的元素
         addStreamHistroy({
           chatIid: null,
-          id: "assistant",
+          role: "assistant",
+          content: "",
           text: "Please wait ... ...",
         });
         // 开始流对话
@@ -252,14 +269,19 @@ export const createEventSourceAPI = (chatCid) => {
       if (data.flag == 2) {
         // 对话进行中更新
         chatRes += data.data;
-        updateStreamHistroy({
-          chatIid: data.chatIid,
-          id: "assistant",
-          text: chatRes,
-        });
-        // 更新流对话的一个开关
-        isAutoToBottomFlag = isAutoToBottomFlag * -1;
-        setIsChattingState(isAutoToBottomFlag);
+
+        // 网页自身控制render的频率
+        if (chatRes.length > webRenderLen) {
+          updateStreamHistroy({
+            chatIid: data.chatIid,
+            role: "assistant",
+            content: chatRes,
+            text: marked.render(chatRes),
+          });
+          // 更新流对话的一个开关
+          isAutoToBottomFlag = isAutoToBottomFlag * -1;
+          setIsChattingState(isAutoToBottomFlag);
+        }
 
         // 更新时间戳
         if (isValidResponse) {

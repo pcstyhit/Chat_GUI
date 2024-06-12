@@ -35,8 +35,8 @@ class Params:
         'frequecyPenaty': 0,
         'presentPenaty': 0,
         'stopSequence': [],
-        'chatWithGptTimeout': 10000,
-        'webRenderStrLen': 150,
+        'chatWithGptTimeout': 10,
+        'webRenderStrLen': 20
     }
 
     NOTEXPOSETOWEB = ['encoding', 'apiKey',
@@ -77,8 +77,7 @@ class Params:
         self.chatWithGptTimeout: int = 10               # 对话超过多少时间停止它
 
         '''下面的参数是针对这个项目体验设计的'''
-        self.webRenderStrLen: int = 150               # 设置字符长度大于150才yeild出内容，减少web渲染次数
-
+        self.webRenderStrLen: int = 20                  # 设置字符长度大于20才yeild出内容，减少web渲染次数
         '''辅助配置Chat功能设置的方法或者对象'''
         # 默认3.5 -> 4.0-* 用的计算方法都是一样的 cl100k_base 这里就不改了
         self.encoding = tiktoken.encoding_for_model('gpt-4')

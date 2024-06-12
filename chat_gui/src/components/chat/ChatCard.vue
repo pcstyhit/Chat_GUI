@@ -16,15 +16,6 @@
         </el-button>
       </el-tooltip>
       <div class="user-config">
-        <!-- stream switch -->
-        <div class="switch">
-          <el-text class="c-label"> Stream Response: </el-text>
-          <el-switch
-            class="c-switch"
-            v-model="isStreamResponse"
-            :disabled="isChatting != 0"
-          />
-        </div>
         <!-- auto-to-bottom switch -->
         <div class="switch">
           <el-text class="c-label"> Auto To Bottom: </el-text>
@@ -56,12 +47,12 @@
     <el-scrollbar class="scroll-window" ref="scrollbarRef">
       <div ref="innerRef">
         <!-- ⭐⭐⭐⭐⭐ TODO: v-for的渲染不合适 后面要换成innerHTML来做 -->
-        <div v-for="item in chatHistory" :key="item.id">
+        <div v-for="item in chatHistory" :key="item.chatIid">
           <!-- user question -->
-          <div v-if="item.id == 'user'" class="user">
+          <div v-if="item.role == 'user'" class="user">
             <div class="user-content">
               <!-- content detail -->
-              <div class="text" v-html="textToHtml(item.text)"></div>
+              <div class="text" v-html="item.text"></div>
               <!-- content options -->
               <div class="options" v-show="isChatting == 0">
                 <!-- re-request -->
@@ -114,7 +105,7 @@
             <div class="assistant-icon" v-html="SVGS.gptIcon"></div>
             <div class="assistant-content">
               <!-- detail content -->
-              <div class="text" v-html="marked.render(item.text)"></div>
+              <div class="text" v-html="item.text"></div>
               <div class="options" v-show="isChatting == 0">
                 <!-- re-response -->
                 <el-tooltip
@@ -283,8 +274,9 @@ export default {
         // 更新对话
         store.commit("PUSH_CHATHISTORY_STATE", {
           chatIid: rea.chatIid,
-          id: "user",
-          text: msg,
+          role: "user",
+          content: msg,
+          text: textToHtml(msg),
         });
       }
       // 控制再也不能发送对话, 晚于store.chathistory更新 这样可以保证autoToBottom
@@ -317,7 +309,8 @@ export default {
       // 对el-input输入框内容/gpt返回给到的内容 这里先不做处理了，留给子组件做
       // ⭐ 必须采用深拷贝方法
       editChatItemObj.value = {
-        id: item.id,
+        role: item.role,
+        content: item.content,
         text: item.text,
         chatIid: item.chatIid,
       };

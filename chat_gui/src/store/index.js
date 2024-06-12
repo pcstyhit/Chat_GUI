@@ -26,11 +26,6 @@ const mutations = {
   },
 
   /** @param {state} state */
-  SET_CHATWSID_STATE(state, data) {
-    state.chat.setChatWsid(data);
-  },
-
-  /** @param {state} state */
   SET_CHATHISTORY_STATE(state, data) {
     state.chat.setChatHistory(data);
   },

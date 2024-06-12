@@ -146,6 +146,17 @@ class UserSQL:
         rea: list = self.cursor.fetchall()
         return rea
 
+    def getUserNameByChatCid(self, chatCid) -> str:
+        '''根据chatCid来推到出userName的信息'''
+        self.cursor.execute(
+            "SELECT userName FROM usersmap WHERE chatCid = ?", (chatCid,))
+        result = self.cursor.fetchone()
+        if result:
+            # 返回userName
+            return result[0]
+        else:
+            return None
+
     def releaseCursor(self):
         '''释放游标，关闭资源'''
         self.cursor.close()

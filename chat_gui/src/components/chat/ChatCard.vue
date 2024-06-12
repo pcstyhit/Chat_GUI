@@ -212,9 +212,13 @@
 import { ref, onMounted, nextTick, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
-import { chatStreamAPI } from "../../apis/chatStream.js";
+// import { chatStreamAPI } from "../../apis/chatStream.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
-import { setUserMsgAPI, deletChatItemAPI } from "../../apis/chatAPIs";
+import {
+  setUserMsgAPI,
+  deletChatItemAPI,
+  createEventSourceAPI,
+} from "../../apis/chatAPIs";
 import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
 import { ElMessageBox } from "element-plus";
@@ -229,6 +233,7 @@ export default {
     const innerRef = ref(); // 控制自动刷新到最底部
 
     const chatHistory = computed(() => store.state.chat.chatHistory);
+    const chatCid = computed(() => store.state.chat.chatCid);
     const chatParams = computed(() => store.state.chat.chatParams);
     const isChatting = computed(() => store.state.chat.isChatting);
     const tokens = computed(() => store.state.chat.tokens);
@@ -286,7 +291,8 @@ export default {
       store.commit("SET_ISCHATTING_STATE", 1);
       store.commit("SET_IS_UPDATE_REQUEST_TIME", false);
       // 从服务端获得输出
-      await chatStreamAPI(isStreamResponse.value);
+      // await chatStreamAPI(isStreamResponse.value);
+      await createEventSourceAPI(chatCid.value);
     };
 
     /** 无关紧要的延迟函数 */

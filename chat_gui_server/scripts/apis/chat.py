@@ -2,7 +2,7 @@ import fastapi
 import asyncio
 from pydantic import BaseModel
 from scripts.libs import dict2Str, str2Dict
-from scripts.modules.umm import authenticateUser, getChatHandle, getUser
+from scripts.modules.umm import authenticateUser, getChatHandle, getUser, getChatHandleByChatCid
 
 CHAT_ROUTE = fastapi.APIRouter()
 
@@ -171,63 +171,6 @@ class ChatResponse(BaseModel):
     chatIid: str = ''  # 对话对象的唯一标志
 
 
-@CHAT_ROUTE.websocket('/chat/{wsid}')
-async def websocket_endpoint(websocket: fastapi.WebSocket,
-                             wsid: str):
-    '''websocket是一个长连接,理论上希望创建成功之后,同一个用户就不应该再调用这个接口创建新的,
-    通过维护一个映射关系, 来判断用户身份
-    用户登录时,分配websocket的wsid值
-    同时对于asyncio.sleep(0)有解释：
-        - await asyncio.sleep(0)在Python的异步编程中通常用于“让出控制权”。当你在协程中使用await asyncio.sleep(0)时,你实际上是在告诉事件循环：“我现在没有什么要做的,你可以去处理其他的任务。”
-
-        - 在你的情况中,这些“其他的任务”可能包括处理WebSocket的数据发送。当你调用websocket.send_text(resp)时,你并不是立即发送数据,而是将数据放入一个发送缓冲区,等待事件循环在适当的时候发送它。当你使用await asyncio.sleep(0)时,你给了事件循环一个机会去处理这个发送任务。
-
-        - 但请注意,这只是一个可能的解释,实际效果可能会因为具体情况而有所不同。在某些情况下,使用await asyncio.sleep(0)可能并不会产生预期的效果。比如,如果事件循环有其他更高优先级的任务要处理,那么即使你使用了await asyncio.sleep(0),事件循环也可能选择先处理那些任务。
-    '''
-
-    await websocket.accept()
-    user = getUser(wsid)
-    connection_closed = False
-    while True:
-        try:
-            data = await websocket.receive_text()
-        except Exception:
-            # 客户端断开连接，退出循环
-            connection_closed = True
-            break
-
-        item = str2Dict(data)
-        # 如果正常通讯, 暂时不对消息内容进行判断，后续可以通过字符来判断是否要主动关闭ws
-        isStreamResponse = item.get('data')
-        rea = ChatResponse()
-        handle = getChatHandle(user)
-
-        async for (chunk, tokens, chatIid) in handle.azureChatAPI(isStreamResponse):
-            rea.data = f'{chunk}'
-            rea.tokens = tokens
-            rea.chatIid = chatIid
-            resp, _ = dict2Str(rea.__dict__)
-            try:
-                if not connection_closed:
-                    await websocket.send_text(resp)
-                await asyncio.sleep(0)
-            except Exception:
-                # 客户端断开连接，退出循环
-                connection_closed = True
-                break
-
-        rea.flag = True
-        resp, _ = dict2Str(rea.__dict__)
-        try:
-            if not connection_closed:
-                await websocket.send_text(resp)
-            await asyncio.sleep(0)
-        except Exception:
-            # 客户端断开连接，退出循环
-            connection_closed = True
-            break
-
-
 # ''' '''
 # 根据对话的唯一标识 chatCid来从数据库获得配置
 # ''' '''
@@ -282,3 +225,53 @@ async def setChatParamsAPI(item: SetChatParamsRequest, user: str = fastapi.Depen
         print(f"Get chat: {item.chatCid} error: {e}")
 
     return rea
+
+# ==================================================
+# ✨ Chat SSE API 的应答体
+# ==================================================
+
+
+class ChatSSEResponse(BaseModel):
+    '''Chat对话的应答体'''
+    flag: int = 0       # SSE对话开始/进行中/结束的标识, 开始是1, 进行中是2, 结束是0
+    data: str = ''      # 具体的内容
+    tokens: int = 0
+    chatIid: str = ''   # 对话对象的唯一标志
+
+
+@CHAT_ROUTE.get("/chat/sse/{chatCid}")
+async def sseAPI(chatCid: str):
+    async def sseEventGenerator():
+        rea = ChatSSEResponse()
+        handle = getChatHandleByChatCid(chatCid)
+        try:
+            # 开始请求GPT API
+            rea.flag = 1
+            resp, _ = dict2Str(rea.__dict__)
+
+            # 包装成符合SSE接收的消息的格式
+            yield f"data: {resp}\n\n"
+
+            async for (chunk, tokens, chatIid) in handle.azureChatAPI():
+                rea.flag = 2
+                rea.data = f'{chunk}'
+                rea.tokens = tokens
+                rea.chatIid = chatIid
+                resp, _ = dict2Str(rea.__dict__)
+                # 持续对话中
+                yield f"data: {resp}\n\n"
+
+            # 对话结束
+            rea.flag = 0
+            resp, _ = dict2Str(rea.__dict__)
+            yield f"data: {resp}\n\n"
+
+        except asyncio.CancelledError:
+            print("WEB Close the sse connection")
+        except Exception as e:
+            yield f"data: Error: {str(e)}\n\n"
+            raise fastapi.HTTPException(
+                status_code=500, detail="Server error!"
+            )
+
+    return fastapi.responses.StreamingResponse(sseEventGenerator(), media_type="text/event-stream")

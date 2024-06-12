@@ -16,7 +16,6 @@ class LoginAndLogoutResponse(BaseModel):
     '''login和logout的应答体'''
     flag: bool = False
     msg: str = 'Password error'
-    chatWsid: str = ''
 
 
 @LOGIN_OUT_ROUTER.post('/login')
@@ -28,7 +27,7 @@ async def loginAPI(_: LoginAndLogoutRequest,
     '''
     rea = LoginAndLogoutResponse()
     # 能够执行到函数体说明身份是正确的, 判断在线情况
-    rea.flag, rea.msg, rea.chatWsid = login(user)
+    rea.flag, rea.msg = login(user)
     # FastAPI 可以直接返回 rea，它将会自动的转换为 JSON格式
     return rea
 

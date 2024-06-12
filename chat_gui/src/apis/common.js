@@ -68,11 +68,6 @@ export const getHeaders = () => {
   };
 };
 
-/** 从当前项目的store获得chat给到websocket的ID */
-export const getWsid = () => {
-  return store.state.chat.chatWsid;
-};
-
 /** 更新流对话 */
 export async function updateStreamHistroy(data) {
   store.state.chat.chatHistory[store.state.chat.chatHistory.length - 1] = data;

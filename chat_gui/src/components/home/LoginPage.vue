@@ -79,7 +79,6 @@ export default {
       // 登录成功
       if (rea.flag) {
         store.commit("SET_LOGIN_STATE", true);
-        store.commit("SET_CHATWSID_STATE", rea.chatWsid);
         // 用path传参会出现警告，所以没有传参，走store获取信息
         // https://blog.csdn.net/qq_43072786/article/details/121204960
         router.push({

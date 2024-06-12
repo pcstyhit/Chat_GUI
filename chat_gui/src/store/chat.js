@@ -40,12 +40,6 @@ export const ChatState = {
   tokens: 0,
 
   /**
-   * 流对话的 WebSocket ID。
-   * @type {string}
-   */
-  chatWsid: "",
-
-  /**
    * 对话过程中的唯一标志，用于访问数据库。
    * @type {string}
    */
@@ -80,14 +74,6 @@ export const ChatState = {
    * @type {number}
    */
   timeStamp: 0,
-
-  /**
-   * 设置流对话的 WebSocket ID。
-   * @param {string} data - WebSocket ID。
-   */
-  setChatWsid(data) {
-    this.chatWsid = data;
-  },
 
   /**
    * 设置对话历史。

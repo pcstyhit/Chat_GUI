@@ -24,20 +24,8 @@ class ChatAPI(ChatHandle):
 
         self.chatIid = -1                           # chatIid 表示对话中每条消息的ID，也是数据库中存放元素的ID
 
-    async def azureChatAPI(self, isStreamResponse=True):
-        '''切换是不是用stream的方式回答还是直接返回结果'''
-        if isStreamResponse:
-            # 流对话
-            async for response in self.azureChatStreamAPI():
-                yield response
-        else:
-            # 等待结果类型的请求
-            async for response in self.azureChatSyncAPI():
-                yield response
-
     async def azureChatStreamAPI(self):
-        '''进行流式对话,不需要接受meesgae,从数据库获取prompt'''
-        await self.getPrompt()
+        '''进行流式对话,不需要接受meesgae, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
         response = self.azureChatStream(self.chatPrompts,
                                         max_tokens=self.chatParams.maxResponseTokens,
                                         temperature=self.chatParams.temperature,
@@ -73,8 +61,7 @@ class ChatAPI(ChatHandle):
         await self.setMessageWithTokens(Params.ASS, ''.join([m if m else '' for m in allMessages]), self.chatTokens)
 
     async def azureChatSyncAPI(self):
-        '''获取非流式的API对话返回结果'''
-        await self.getPrompt()
+        '''获取非流式的API对话返回结果, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
         outgoingMsg, outgoingTokens = self.azureChatSync(self.chatPrompts,
                                                          max_tokens=self.chatParams.maxResponseTokens,
                                                          temperature=self.chatParams.temperature,
@@ -165,14 +152,16 @@ class ChatAPI(ChatHandle):
                                      apiVersion=self.chatParams.apiVersion,
                                      deployment=self.chatParams.deployment)
 
-    async def setUserMsg(self, msg: str) -> list:
+    async def setUserMsg(self, msg: str) -> tuple:
         '''将用户的消息存入数据库,然后返回对应的item的chatIid'''
         await self.setMessage(Params.USER, msg)
         # 返回一个chatIid
         self.chatIid = oruuid()
-        return self.chatIid
+        # 判断tokens是不是达到最大了
+        flag = await self.getPrompt(self.chatParams.passedMsgLen)
+        return flag, self.chatIid
 
-    async def getPrompt(self) -> list:
+    async def getPrompt(self, passedMsgLen) -> bool:
         '''从数据库中存入要发送的消息,并得到prompt
          `msgList` 其中每个msg的格式是元组: `msg = (1, 'TYR_YGHGH', 'user', 'Hello!', 10)`
          - msg[0]是数据库的id位,
@@ -185,7 +174,7 @@ class ChatAPI(ChatHandle):
         self.chatPrompts = self.chatParams.promptTemplate + []
         self.chatTokens = 0
         msgList = self.chatSql.getLastNItemsInSpecTable(
-            self.userName, self.chatCid, self.chatParams.passedMsgLen)
+            self.userName, self.chatCid, passedMsgLen)
 
         # getPrompt表示用户要开始和assistant进行通话,提前生成assistant消息的chatIid
         self.chatIid = oruuid()
@@ -194,6 +183,15 @@ class ChatAPI(ChatHandle):
             self.chatPrompts.append(
                 {'role': msgList[lenI][2], 'content':  msgList[lenI][3]})
             self.chatTokens += msgList[lenI][4]
+
+        if self.chatTokens > int(self.chatParams.maxTokens):
+            if passedMsgLen - 1 > 0:
+                passedMsgLen = passedMsgLen - 1
+                await self.getPrompt(passedMsgLen)
+            else:
+                return False
+
+        return True
 
     async def setMessage(self, role, msg):
         '''这个函数是将消息存入数据库'''

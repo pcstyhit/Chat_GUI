@@ -28,7 +28,7 @@ class Params:
         'endPoint': "",
         'promptTemplate': [{'role': 'system', 'content': 'You are GPT-4o a large language model of OpenAI.'}],
         'promptTemplateTokens': 15,
-        'passedMsgLen': 20,
+        'passedMsgLen': 6,
         'maxResponseTokens': 2000,
         'temperature': 0.7,
         'topP': 0.95,
@@ -67,7 +67,7 @@ class Params:
         self.promptTemplateTokens: int = 15
 
         # 和GPT进行对话的参数
-        self.passedMsgLen: str = 20                    # 上下文长度，默认是20
+        self.passedMsgLen: str = 6                    # 上下文长度，默认是20
         self.maxResponseTokens: int = 2000             # 最大响应的tokens
         self.temperature: float = 0.7
         self.topP: float = 0.95

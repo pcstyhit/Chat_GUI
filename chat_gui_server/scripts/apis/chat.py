@@ -2,7 +2,7 @@ import fastapi
 import asyncio
 from pydantic import BaseModel
 from scripts.libs import dict2Str, str2Dict
-from scripts.modules.umm import authenticateUser, getChatHandle, getUser, getChatHandleByChatCid
+from scripts.modules.umm import authenticateUser, getChatHandle, getChatHandleByChatCid
 
 CHAT_ROUTE = fastapi.APIRouter()
 
@@ -135,11 +135,7 @@ async def deleteChatAPI(item: DeleteChatRequest, user: str = fastapi.Depends(aut
 async def setUserMsgAPI(item: SetUserMsgRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetUserMsgResponse()
     handle = getChatHandle(user)
-    try:
-        rea.chatIid = await handle.setUserMsg(item.msg)
-        rea.flag = True
-    except Exception as eMsg:
-        print(f"Set User Msg failed! {eMsg}")
+    rea.flag, rea.chatIid = await handle.setUserMsg(item.msg)
     return rea
 
 

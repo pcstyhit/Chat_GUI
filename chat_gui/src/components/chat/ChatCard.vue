@@ -46,7 +46,6 @@
     <!-- Message Output -->
     <el-scrollbar class="scroll-window" ref="scrollbarRef">
       <div ref="innerRef">
-        <!-- ⭐⭐⭐⭐⭐ TODO: v-for的渲染不合适 后面要换成innerHTML来做 -->
         <div v-for="item in chatHistory" :key="item.chatIid">
           <!-- user question -->
           <div v-if="item.role == 'user'" class="user">
@@ -230,7 +229,6 @@ export default {
     const tokens = computed(() => store.state.chat.tokens);
     const requestTime = computed(() => store.state.chat.requestTime);
 
-    const isStreamResponse = ref(true);
     const isAutoToBottom = ref(true);
     const isShowItemEditor = ref(false);
     const editChatItemObj = ref({});
@@ -278,13 +276,15 @@ export default {
           content: msg,
           text: textToHtml(msg),
         });
+
+        // 控制再也不能发送对话, 晚于store.chathistory更新 这样可以保证autoToBottom
+        store.commit("SET_ISCHATTING_STATE", 1);
+        store.commit("SET_IS_UPDATE_REQUEST_TIME", false);
+        // 从服务端获得输出
+        await createEventSourceAPI(chatCid.value);
+      } else {
+        ElMessage.error("GPT API tokens error");
       }
-      // 控制再也不能发送对话, 晚于store.chathistory更新 这样可以保证autoToBottom
-      store.commit("SET_ISCHATTING_STATE", 1);
-      store.commit("SET_IS_UPDATE_REQUEST_TIME", false);
-      // 从服务端获得输出
-      // await chatStreamAPI(isStreamResponse.value);
-      await createEventSourceAPI(chatCid.value);
     };
 
     /** 无关紧要的延迟函数 */
@@ -372,7 +372,6 @@ export default {
       textToHtml,
       isShowItemEditor,
       editChatItemObj,
-      isStreamResponse,
       isAutoToBottom,
       onSendContent,
       handleKeydown,

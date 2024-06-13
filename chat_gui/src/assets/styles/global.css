@@ -7,19 +7,19 @@
 
 /* 设置整个应用的默认字体 */
 body {
-    font-family: 'Microsoft YaHei';
-    --header-height: 40px;
-    --silder-bar-width: 232px;
-  }
-  
-  /* 覆盖 Element Plus 的默认字体 */
-  .el-button,
-  .el-input,
-  .el-table,
-  .el-dialog {
-    font-family: 'Microsoft YaHei';
-  
-  }
-  
-  /* 你可以继续添加其他需要覆盖的 Element Plus 组件 */
-  
+  font-family: "Microsoft YaHei";
+  --header-height: 40px;
+  --silder-bar-width: 232px;
+  /* 允许在webview中拷贝文字 */
+  user-select: text;
+}
+
+/* 覆盖 Element Plus 的默认字体 */
+.el-button,
+.el-input,
+.el-table,
+.el-dialog {
+  font-family: "Microsoft YaHei";
+}
+
+/* 你可以继续添加其他需要覆盖的 Element Plus 组件 */

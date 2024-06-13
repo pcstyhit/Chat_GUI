@@ -124,9 +124,11 @@ export default {
     };
 
     watch(
-      () => chatCid,
-      (value) => {
-        console.log("chatcid: ", value);
+      () => store.state.chat.isEditChatSettings,
+      async (value) => {
+        if (value == -1) {
+          await handleInitHistoryList();
+        }
       }
     );
     /** 获取服务器的历史对话记录 */

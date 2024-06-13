@@ -145,6 +145,11 @@ class ChatAPI(ChatHandle):
         '''
         self.userSql.setChatParamsForSpecUser(chatCid, json.dumps(data))
 
+        # 是不是在更新对话的名称,因为对话名称在做allHistory时候用了键来快速查找的,比较特殊,需要单独判断
+        if data['chatName'] != self.chatParams.chatName:
+            self.userSql.setChatNameForSpecChatCid(
+                data['chatName'], self.chatCid)
+
         # 是不是要更新当前的配置
         if chatCid == self.chatCid:
             self.chatParams.updateCurrentParams(data)

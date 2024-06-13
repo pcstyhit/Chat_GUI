@@ -350,7 +350,7 @@ export default {
 
     /** 显示对话的编辑弹窗 chat-settings-overlay */
     const onShowSettings = () => {
-      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", true);
+      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", 1);
     };
 
     const copyToClipboard = (button) => {

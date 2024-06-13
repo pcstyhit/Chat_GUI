@@ -62,9 +62,9 @@ export const ChatState = {
 
   /**
    * 是否处于编辑聊天参数的状态。
-   * @type {boolean}
+   * @type {number}: 1表示正在修改, 0表示修改结束无更改, -1表示修改结束但是有更改
    */
-  isEditChatSettings: true,
+  isEditChatSettings: 1,
 
   /**
    * 请求得到响应的时间
@@ -183,7 +183,7 @@ export const ChatState = {
 
   /**
    * 设置是否处于编辑聊天参数的状态。
-   * @param {boolean} data - 新的编辑状态。
+   * @param {number} data - 新的编辑状态。
    */
   setEditChatSettings(data) {
     this.isEditChatSettings = data;

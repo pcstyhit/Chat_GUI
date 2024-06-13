@@ -62,7 +62,7 @@ const mutations = {
     state.chat.history = [];
     // 如果data是空""就代表进入了新建对话情况,不需要从SERVER加载对话了
     if (data == "") {
-      state.chat.isEditChatSettings = true;
+      state.chat.isEditChatSettings = 1;
       return;
     }
     // 不为空的chatCid代表切换对话就需要更新对话的参数和历史记录

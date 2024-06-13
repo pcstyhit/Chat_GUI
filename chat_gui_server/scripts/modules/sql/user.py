@@ -116,6 +116,12 @@ class UserSQL:
             f"UPDATE usersmap SET chatParams = ? WHERE chatCid = ?", (chatParams, chatCid,))
         self.conn.commit()
 
+    def setChatNameForSpecChatCid(self, chatName, chatCid):
+        '''根据指定的chatCid修改对应的chatName内容'''
+        self.cursor.execute(
+            f"UPDATE usersmap SET chatName = ? WHERE chatCid = ?", (chatName, chatCid,))
+        self.conn.commit()
+
     def checkChatCidbyUserName(self, userName, chatCid) -> bool:
         '''判断对应用户名下的ChatCid是不是还存在,有没有被其他用户给删除'''
         self.cursor.execute(

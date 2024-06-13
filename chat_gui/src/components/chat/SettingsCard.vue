@@ -340,8 +340,8 @@ export default {
     watch(
       () => store.state.chat.isEditChatSettings,
       async (value) => {
-        isOpenSettingDialog.value = value;
-        if (value) {
+        isOpenSettingDialog.value = value == 1;
+        if (isOpenSettingDialog.value) {
           // 新建对话从SERVER获得参数
           if (isNewChat.value) {
             await handleGetDefaultChatParams();
@@ -413,6 +413,8 @@ export default {
       if (!rea.flag) return false;
 
       store.commit("SET_CHATPARAMS_STATE", chatParams.value);
+      // 参数修改完成之后更新label
+      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", -1);
       return true;
     };
 
@@ -433,9 +435,8 @@ export default {
      * *************************
      * */
     const onCancleSettings = async () => {
-      //重置全部的isEdit属性
       isOpenSettingDialog.value = false;
-      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", false);
+      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", 0);
     };
 
     /**
@@ -449,7 +450,8 @@ export default {
         return;
       }
 
-      await onCancleSettings();
+      // 提前关闭窗口, 再进行API请求, 使得新建chat的逻辑不会和编辑chat的时候的chatCid不为空的保存逻辑冲突
+      isOpenSettingDialog.value = false;
 
       // 判断是新建还是保存
       var flag = await handleSetChatParams();

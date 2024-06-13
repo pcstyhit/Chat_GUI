@@ -91,6 +91,7 @@ class SetUserMsgResponse(BaseModel):
     '''Chat的中user的消息的应答体, 返回对话的唯一chatIid'''
     flag: bool = False
     chatIid: str = ''
+    tokens: int = 0
     log: str = ''
 
 
@@ -135,7 +136,7 @@ async def deleteChatAPI(item: DeleteChatRequest, user: str = fastapi.Depends(aut
 async def setUserMsgAPI(item: SetUserMsgRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetUserMsgResponse()
     handle = getChatHandle(user)
-    rea.flag, rea.chatIid = await handle.setUserMsg(item.msg)
+    rea.flag, rea.chatIid, rea.tokens = await handle.setUserMsg(item.msg)
     return rea
 
 
@@ -270,13 +271,17 @@ async def sseAPI(chatCid: str):
 
             # 对话结束
             rea.flag = 0
+            rea.data = ""
             resp, _ = dict2Str(rea.__dict__)
             yield f"data: {resp}\n\n"
 
         except asyncio.CancelledError:
             print("WEB Close the sse connection")
         except Exception as e:
-            yield f"data: Error: {str(e)}\n\n"
+            rea.flag = 0
+            rea.data = "API tokens error! Please delete some chat item."
+            resp, _ = dict2Str(rea.__dict__)
+            yield f"data: {resp}\n\n"
             raise fastapi.HTTPException(
                 status_code=500, detail="Server error!"
             )

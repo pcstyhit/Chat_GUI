@@ -159,7 +159,7 @@ class ChatAPI(ChatHandle):
         self.chatIid = oruuid()
         # 判断tokens是不是达到最大了
         flag = await self.getPrompt(self.chatParams.passedMsgLen)
-        return flag, self.chatIid
+        return flag, self.chatIid, self.chatTokens
 
     async def getPrompt(self, passedMsgLen) -> bool:
         '''从数据库中存入要发送的消息,并得到prompt
@@ -187,7 +187,7 @@ class ChatAPI(ChatHandle):
         if self.chatTokens > int(self.chatParams.maxTokens):
             if passedMsgLen - 1 > 0:
                 passedMsgLen = passedMsgLen - 1
-                await self.getPrompt(passedMsgLen)
+                return await self.getPrompt(passedMsgLen)
             else:
                 return False
 

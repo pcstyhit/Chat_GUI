@@ -228,20 +228,20 @@ export const createEventSourceAPI = (chatCid) => {
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      chatRes += data.data;
+
       // 服务端标志对话结束
       if (data.flag == 0) {
         // 如果残留的字符没有更新,需要更新最后的字符
-        if (chatRes.length > 0) {
-          updateStreamHistroy({
-            chatIid: data.chatIid,
-            role: "assistant",
-            content: chatRes,
-            text: marked.render(chatRes),
-          });
-          // 更新流对话的一个开关
-          isAutoToBottomFlag = isAutoToBottomFlag * -1;
-          setIsChattingState(isAutoToBottomFlag);
-        }
+        updateStreamHistroy({
+          chatIid: data.chatIid,
+          role: "assistant",
+          content: chatRes,
+          text: marked.render(chatRes),
+        });
+        // 更新流对话的一个开关
+        isAutoToBottomFlag = isAutoToBottomFlag * -1;
+        setIsChattingState(isAutoToBottomFlag);
 
         // 会话结束重置一些操作
         chatRes = "";
@@ -267,9 +267,6 @@ export const createEventSourceAPI = (chatCid) => {
       }
 
       if (data.flag == 2) {
-        // 对话进行中更新
-        chatRes += data.data;
-
         // 网页自身控制render的频率
         if (chatRes.length > webRenderLen) {
           updateStreamHistroy({
@@ -281,6 +278,7 @@ export const createEventSourceAPI = (chatCid) => {
           // 更新流对话的一个开关
           isAutoToBottomFlag = isAutoToBottomFlag * -1;
           setIsChattingState(isAutoToBottomFlag);
+          setTokens(data.tokens);
         }
 
         // 更新时间戳

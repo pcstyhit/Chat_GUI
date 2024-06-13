@@ -277,6 +277,9 @@ export default {
           text: textToHtml(msg),
         });
 
+        // 更新tokens
+        store.commit("SET_TOKENS_STATE", rea.tokens);
+
         // 控制再也不能发送对话, 晚于store.chathistory更新 这样可以保证autoToBottom
         store.commit("SET_ISCHATTING_STATE", 1);
         store.commit("SET_IS_UPDATE_REQUEST_TIME", false);

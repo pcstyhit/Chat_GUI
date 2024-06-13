@@ -1,3 +1,6 @@
+import marked from "../helper/markdownHelper.js";
+import { textToHtml } from "../helper/inputTextFormat.js";
+
 /**
  * 表示聊天信息存储的对象。
  */
@@ -92,8 +95,12 @@ export const ChatState = {
     data.forEach((element) => {
       this.chatHistory.push({
         chatIid: element.chatIid,
-        id: element.role,
-        text: element.content,
+        role: element.role,
+        content: element.content,
+        text:
+          element.role == "user"
+            ? textToHtml(element.content)
+            : marked.render(element.content),
       });
     });
   },
@@ -124,7 +131,11 @@ export const ChatState = {
   changeSpecChatItemHistory(chatItemObj) {
     this.chatHistory.forEach((item) => {
       if (item.chatIid == chatItemObj.chatIid) {
-        item.text = chatItemObj.text;
+        item.content = chatItemObj.content;
+        item.text =
+          chatItemObj.role == "user"
+            ? textToHtml(chatItemObj.content)
+            : marked.render(chatItemObj.content);
       }
     });
   },

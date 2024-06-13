@@ -26,6 +26,7 @@ class ChatAPI(ChatHandle):
 
     async def azureChatStreamAPI(self):
         '''进行流式对话,不需要接受meesgae, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
+        self.chatIid = oruuid()
         response = self.azureChatStream(self.chatPrompts,
                                         max_tokens=self.chatParams.maxResponseTokens,
                                         temperature=self.chatParams.temperature,
@@ -62,6 +63,7 @@ class ChatAPI(ChatHandle):
 
     async def azureChatSyncAPI(self):
         '''获取非流式的API对话返回结果, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
+        self.chatIid = oruuid()
         outgoingMsg, outgoingTokens = self.azureChatSync(self.chatPrompts,
                                                          max_tokens=self.chatParams.maxResponseTokens,
                                                          temperature=self.chatParams.temperature,
@@ -175,9 +177,6 @@ class ChatAPI(ChatHandle):
         self.chatTokens = 0
         msgList = self.chatSql.getLastNItemsInSpecTable(
             self.userName, self.chatCid, passedMsgLen)
-
-        # getPrompt表示用户要开始和assistant进行通话,提前生成assistant消息的chatIid
-        self.chatIid = oruuid()
 
         for lenI in range(len(msgList) - 1, -1, -1):
             self.chatPrompts.append(

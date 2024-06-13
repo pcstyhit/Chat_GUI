@@ -22,7 +22,7 @@ class ChatAPI(ChatHandle):
         self.chatPrompts = []                       # 存放当前对话要发送的提示消息
         self.chatTokens = 0                         # 当前消息消耗的令牌数量统计
 
-        self.chatIid = -1                           # chatIid 表示对话中每条消息的ID，也是数据库中存放元素的ID
+        self.chatIid = ''                           # chatIid 表示对话中每条消息的ID，也是数据库中存放元素的ID
 
     async def azureChatStreamAPI(self):
         '''进行流式对话,不需要接受meesgae, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
@@ -161,9 +161,8 @@ class ChatAPI(ChatHandle):
 
     async def setUserMsg(self, msg: str) -> tuple:
         '''将用户的消息存入数据库,然后返回对应的item的chatIid'''
-        await self.setMessage(Params.USER, msg)
-        # 返回一个chatIid
         self.chatIid = oruuid()
+        await self.setMessage(Params.USER, msg)
         # 判断tokens是不是达到最大了
         flag = await self.getPrompt(self.chatParams.passedMsgLen)
         return flag, self.chatIid, self.chatTokens
@@ -240,3 +239,25 @@ class ChatAPI(ChatHandle):
         except Exception as eMsg:
             print(f'deleteChatItem error : {eMsg}')
             return False
+
+    async def reGenerateContent(self, itemRole, chatIid):
+        '''根据提供的chat的id和新消息, 对chatItem表的内容进行更新'''
+        nextItemChatIidList = self.chatSql.getItemNextInfoByUserNameNChatAllId(
+            self.userName, self.chatCid, chatIid)
+
+        if nextItemChatIidList == None:
+            return False, 0, "chatIid is not exit!"
+
+        # 如果是assistant的消息也要从数据库删除掉
+        if itemRole == self.chatParams.ASS:
+            nextItemChatIidList.append(chatIid)
+
+        # 开始循环从数据库中删除元素
+        for iId in nextItemChatIidList:
+            flag = await self.deleteChatItemByID(iId)
+            if not flag:
+                return False, 0, "chatIid is error"
+
+        # 成功更新prompt
+        flag = await self.getPrompt(self.chatParams.passedMsgLen)
+        return flag, self.chatTokens, ""

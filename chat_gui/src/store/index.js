@@ -97,6 +97,11 @@ const mutations = {
   SET_IS_UPDATE_REQUEST_TIME(state, data) {
     state.chat.updateTimeStamp(data);
   },
+
+  /** @param {state} state */
+  SET_REGENERATE_CHATHISTORY(state, data) {
+    state.chat.reGenerateChatHistory(data);
+  },
 };
 
 export default createStore({

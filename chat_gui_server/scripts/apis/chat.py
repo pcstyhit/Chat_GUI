@@ -287,3 +287,32 @@ async def sseAPI(chatCid: str):
             )
 
     return fastapi.responses.StreamingResponse(sseEventGenerator(), media_type="text/event-stream")
+
+
+'''
+## ReGenerateChatItemContent的请求参数信息
+## 根据对话内每条消息的唯一标识 chatIid 来删除后面的全部数据然后重新生成
+## 不同的角色会影响是不是要删除当前这条消息的记录
+## 注意这个函数的数据 非常需要前后端的变量名一致
+'''
+
+
+class ReGenerateContentRequest(BaseModel):
+    '''ReGenerateContentAPI请求体的格式'''
+    chatIid: str  # 对话具体内容的唯一标志
+    role: str  # 角色的信息
+
+
+class ReGenerateContentResponse(BaseModel):
+    '''ReGenerateContentAPI返回的response的格式'''
+    flag: bool = False
+    tokens: int = 0
+    log: str = ''
+
+
+@CHAT_ROUTE.post('/chat/reGenerateContent')
+async def reGenerateContentAPI(item: ReGenerateContentRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = ReGenerateContentResponse()
+    handle = getChatHandle(user)
+    rea.flag, rea.tokens, rea.log = await handle.reGenerateContent(item.role, item.chatIid)
+    return rea

@@ -60,7 +60,10 @@
                   placement="bottom"
                   :show-after="500"
                 >
-                  <el-button class="options-button">
+                  <el-button
+                    class="options-button"
+                    @click="onReGenerateContent(item)"
+                  >
                     <div class="options-icon" v-html="SVGS.reRequestIcon"></div>
                   </el-button>
                 </el-tooltip>
@@ -112,7 +115,10 @@
                   placement="bottom"
                   :show-after="500"
                 >
-                  <el-button class="options-button">
+                  <el-button
+                    class="options-button"
+                    @click="onReGenerateContent(item)"
+                  >
                     <div
                       class="options-icon"
                       v-html="SVGS.reResponseIcon"
@@ -208,6 +214,7 @@ import {
   setUserMsgAPI,
   deletChatItemAPI,
   createEventSourceAPI,
+  reGenerateContentAPI,
 } from "../../apis/chatAPIs";
 import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
@@ -306,6 +313,22 @@ export default {
       scrollbarRef.value.setScrollTop(max);
     };
 
+    /** 重新发送对话请求 */
+    const onReGenerateContent = async (item) => {
+      var rea = await reGenerateContentAPI(item.role, item.chatIid);
+      if (rea.flag) {
+        // 重新更新tokens
+        store.commit("SET_TOKENS_STATE", rea.tokens);
+        // 对store的内容进行修改
+        store.commit("SET_REGENERATE_CHATHISTORY", item);
+
+        // 从服务端获得输出
+        await createEventSourceAPI(chatCid.value);
+      } else {
+        ElMessage.error("🤔 无效操作！");
+      }
+    };
+
     /** 编辑某个聊天对话，修改prompt */
     const onEditChatItem = (item) => {
       isShowItemEditor.value = true;
@@ -382,6 +405,7 @@ export default {
       onEditChatItem,
       onDeleteChatItem,
       onShowSettings,
+      onReGenerateContent,
     };
   },
 };

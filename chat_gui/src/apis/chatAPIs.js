@@ -307,3 +307,27 @@ export const createEventSourceAPI = (chatCid) => {
     };
   });
 };
+
+/** 从这个item开始重新生成内容 */
+export async function reGenerateContentAPI(role, chatIid) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/reGenerateContent`,
+      {
+        role: role,
+        chatIid: chatIid,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: null };
+  }
+}

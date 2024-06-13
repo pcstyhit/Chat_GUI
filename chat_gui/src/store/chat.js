@@ -169,14 +169,9 @@ export const ChatState = {
    * @param {number} chatIid - 要删除的对象的唯一序号标志
    */
   deleteChatHistoryItem(chatIid) {
-    var index = 0;
-    for (let i = 0; i < this.chatHistory.length; i++) {
-      if (this.chatHistory[i].chatIid == chatIid) {
-        break; // 退出循环
-      } else {
-        index++;
-      }
-    }
+    const index = this.chatHistory.findIndex(
+      (item) => item.chatIid === chatIid
+    );
 
     this.chatHistory.splice(index, 1);
   },
@@ -199,5 +194,20 @@ export const ChatState = {
       this.requestTime = Math.abs(currentTime - this.timeStamp);
     }
     this.timeStamp = currentTime;
+  },
+
+  /**
+   * 定制化的重新生成内容的API, 根据chatIid和role判断怎么刷新store的chatHistory
+   * @param {Object} chatItemObj - 存入chatItem的对象。
+   */
+  reGenerateChatHistory(chatItemObj) {
+    const index = this.chatHistory.findIndex(
+      (item) => item.chatIid === chatItemObj.chatIid
+    );
+    if (index !== -1) {
+      // 删除这个序号后面的全部元素
+      if (chatItemObj.role == "user") this.chatHistory.splice(index + 1);
+      else this.chatHistory.splice(index);
+    }
   },
 };

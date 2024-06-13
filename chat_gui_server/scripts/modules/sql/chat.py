@@ -74,6 +74,24 @@ class ChatSQL:
         lastNitems = self.cursor.fetchall()
         return lastNitems
 
+    def getItemNextInfoByUserNameNChatAllId(self, userName, chatCid, chatIid):
+        '''特别定制化的一个函数,找出表中chatIid对应的id之后的全部的信息,包括 当前的角色信息, 后续的chatIid列表'''
+        self.cursor.execute(
+            f"SELECT id FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
+        result = self.cursor.fetchone()
+
+        if not result:
+            return None
+
+        startId = result[0]
+
+        # Step 2: Get all chatIid after the obtained id
+        self.cursor.execute(
+            f"SELECT chatIid FROM {userName}_{chatCid} WHERE id > ?", (startId,))
+        rows = self.cursor.fetchall()
+
+        return [row[0] for row in rows]
+
     def setItemInSpecTable(self, userName, chatCid, chatIid, message, tokens):
         '''根据指定的ID修改对应的chat的内容'''
         self.cursor.execute(

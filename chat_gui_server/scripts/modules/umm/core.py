@@ -1,18 +1,19 @@
 '''
 FastAPI管理用户的核心文件
 '''
+from typing import Optional
 from scripts.modules.chat import ChatAPI
 from scripts.modules.sql import UserSQL, getUserSQLHandle
 ONLINELIST = {}
 
-userSQLHandler = None
+userSQLHandler: Optional[UserSQL] = None
 
 
 def login(user):
     global userSQLHandler
 
     # 保证在一个线程内被初始化, not a good desgin
-    userSQLHandler: UserSQL = getUserSQLHandle()
+    userSQLHandler = getUserSQLHandle()
     '''判断要登录的用户是否在线, 已经在线的用户无法继续登录,'''
     flag = True
     msg = 'Login Success!'

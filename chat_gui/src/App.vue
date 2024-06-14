@@ -19,5 +19,8 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
+  font-family: "Microsoft YaHei";
+  /* 允许在webview中拷贝文字 */
+  user-select: text;
 }
 </style>

@@ -2,6 +2,7 @@
 在 windows 的平台 用pywebview来运行这个fastapi挂起的静态资源网页, 模仿成一个最简单的EXE程序
 '''
 
+import os
 import ctypes
 import webview
 import threading
@@ -14,6 +15,10 @@ def setConsoleMode():
     '''在控制台长时间运行程序, 因为有log的不断输出, 可能造成CMD窗口的挂起, 导致必须回车之后才能继续服务
      解决的办法是通过 [禁用 CMD窗口的 快速编辑模式和插入模式](https://blog.csdn.net/weixin_39858881/article/details/106935616)
     '''
+    # 禁用当前CMD窗口的网络代理, 代理可能会影响当前窗口的本地连接
+    os.system('set http_proxy=')
+    os.system('set https_proxy=')
+
     # 获取标准输入的句柄
     STD_INPUT_HANDLE = -10
     kernel32 = ctypes.windll.kernel32

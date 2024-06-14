@@ -157,7 +157,9 @@ class ChatAPI(ChatHandle):
             self.updateAzureGPTModel(endPoint=self.chatParams.endPoint,
                                      apiKey=self.chatParams.apiKey,
                                      apiVersion=self.chatParams.apiVersion,
-                                     deployment=self.chatParams.deployment)
+                                     deployment=self.chatParams.deployment,
+                                     isUseProxy=self.chatParams.isUseProxy,
+                                     proxyURL=self.chatParams.proxyURL)
 
     async def setUserMsg(self, msg: str) -> tuple:
         '''将用户的消息存入数据库,然后返回对应的item的chatIid'''

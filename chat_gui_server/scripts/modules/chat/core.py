@@ -17,17 +17,17 @@ class ChatHandle:
         )
         self.deployment = CONF.default_deployment
 
-    def updateAzureGPTModel(self, endPoint, apiKey, apiVersion, deployment):
+    def updateAzureGPTModel(self, endPoint, apiKey, apiVersion, deployment, isUseProxy=False, proxyURL=""):
         '''根据最新的设置切换模型'''
-        if CONF.isUseProxy:
+        if isUseProxy:
             # 使用代理就加上代理的URL, 默认HTTPS和HTTP的代理是一个URL
             self.azureClient = AzureOpenAI(
                 azure_endpoint=endPoint,
                 api_key=apiKey,
                 api_version=apiVersion,
                 http_client=httpx.Client(proxies={
-                    'http://': CONF.proxyURL,
-                    'https://': CONF.proxyURL
+                    'http://': proxyURL,
+                    'https://': proxyURL
                 })
             )
         else:

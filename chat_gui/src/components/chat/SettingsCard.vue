@@ -282,7 +282,7 @@
               <el-text class="item-text">Proxy URL: </el-text>
               <el-input
                 :disabled="!chatParams.isUseProxy"
-                :value="JSON.stringify(chatParams.proxyURL)"
+                v-model="chatParams.proxyURL"
                 class="input"
               />
             </div>

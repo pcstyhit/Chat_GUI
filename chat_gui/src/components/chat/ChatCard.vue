@@ -321,7 +321,8 @@ export default {
         store.commit("SET_TOKENS_STATE", rea.tokens);
         // 对store的内容进行修改
         store.commit("SET_REGENERATE_CHATHISTORY", item);
-
+        // 重置时间戳的信息
+        store.commit("SET_IS_UPDATE_REQUEST_TIME", false);
         // 从服务端获得输出
         await createEventSourceAPI(chatCid.value);
       } else {

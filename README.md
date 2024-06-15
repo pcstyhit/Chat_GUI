@@ -24,6 +24,10 @@ FastAPI 后端与 GPT API 进行通信进行对话，并将结果传回 Vue 3 �
 - **对话参数配置**：允许用户配置对话参数
 - **Markdown 格式化**：支持代码片段和文本的 Markdown 格式化
 
+# ♻️ Update Notes
+
+1. 重新调整 Config.json 参数, 让项目切换 OpenAI 的模型和 Azure 的模型的默认参数更直观一些
+
 # 📝 TODO
 
 - [ ] WEB 端: 去掉 vue3 的 v-for 更新对话, 🤢 不合理的设计

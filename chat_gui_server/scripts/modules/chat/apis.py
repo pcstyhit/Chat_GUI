@@ -7,6 +7,7 @@ from .core import ChatHandle
 from .params import Params
 
 from scripts.libs import oruuid
+from scripts.libs import APIServicesTypes
 from scripts.modules.sql import UserSQL, ChatSQL, getUserSQLHandle, getChatSQLHandle
 
 
@@ -24,17 +25,17 @@ class ChatAPI(ChatHandle):
 
         self.chatIid = ''                           # chatIid 表示对话中每条消息的ID，也是数据库中存放元素的ID
 
-    async def azureChatStreamAPI(self):
+    async def chatStreamAPI(self):
         '''进行流式对话,不需要接受meesgae, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
         self.chatIid = oruuid()
-        response = self.azureChatStream(self.chatPrompts,
-                                        max_tokens=self.chatParams.maxResponseTokens,
-                                        temperature=self.chatParams.temperature,
-                                        top_p=self.chatParams.topP,
-                                        stop=self.chatParams.stopSequence,
-                                        frequency_penalty=self.chatParams.frequecyPenaty,
-                                        presence_penalty=self.chatParams.presentPenaty,
-                                        timeout=self.chatParams.chatWithGptTimeout)
+        response = self.chatStream(self.chatPrompts,
+                                   max_tokens=self.chatParams.maxResponseTokens,
+                                   temperature=self.chatParams.temperature,
+                                   top_p=self.chatParams.topP,
+                                   stop=self.chatParams.stopSequence,
+                                   frequency_penalty=self.chatParams.frequecyPenaty,
+                                   presence_penalty=self.chatParams.presentPenaty,
+                                   timeout=self.chatParams.chatWithGptTimeout)
 
         allMessages = []
 
@@ -61,17 +62,17 @@ class ChatAPI(ChatHandle):
         # 更新数据库的值
         await self.setMessageWithTokens(Params.ASS, ''.join([m if m else '' for m in allMessages]), self.chatTokens)
 
-    async def azureChatSyncAPI(self):
+    async def chatSyncAPI(self):
         '''获取非流式的API对话返回结果, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
         self.chatIid = oruuid()
-        outgoingMsg, outgoingTokens = self.azureChatSync(self.chatPrompts,
-                                                         max_tokens=self.chatParams.maxResponseTokens,
-                                                         temperature=self.chatParams.temperature,
-                                                         top_p=self.chatParams.topP,
-                                                         stop=self.chatParams.stopSequence,
-                                                         frequency_penalty=self.chatParams.frequecyPenaty,
-                                                         presence_penalty=self.chatParams.presentPenaty,
-                                                         timeout=self.chatParams.chatWithGptTimeout)
+        outgoingMsg, outgoingTokens = self.chatSync(self.chatPrompts,
+                                                    max_tokens=self.chatParams.maxResponseTokens,
+                                                    temperature=self.chatParams.temperature,
+                                                    top_p=self.chatParams.topP,
+                                                    stop=self.chatParams.stopSequence,
+                                                    frequency_penalty=self.chatParams.frequecyPenaty,
+                                                    presence_penalty=self.chatParams.presentPenaty,
+                                                    timeout=self.chatParams.chatWithGptTimeout)
 
         yield outgoingMsg, self.chatTokens+outgoingTokens, self.chatIid
         await self.setMessageWithTokens(Params.ASS, outgoingMsg, outgoingTokens)
@@ -154,12 +155,20 @@ class ChatAPI(ChatHandle):
         if chatCid == self.chatCid:
             self.chatParams.updateCurrentParams(data)
             # 更新GPT模型参数
-            self.updateAzureGPTModel(endPoint=self.chatParams.endPoint,
-                                     apiKey=self.chatParams.apiKey,
-                                     apiVersion=self.chatParams.apiVersion,
-                                     deployment=self.chatParams.deployment,
-                                     isUseProxy=self.chatParams.isUseProxy,
-                                     proxyURL=self.chatParams.proxyURL)
+            if self.chatParams.apiService == APIServicesTypes.OPENAI:
+                self.updateOpenAIModel(model=self.chatParams.openaiAPIParams.modelType,
+                                       baseURL=self.chatParams.openaiAPIParams.baseUrl,
+                                       apiKey=self.chatParams.openaiAPIParams.apiKey,
+                                       isUseProxy=self.chatParams.isUseProxy,
+                                       proxyURL=self.chatParams.proxyURL)
+
+            if self.chatParams.apiService == APIServicesTypes.AZURE:
+                self.updateAzureGPTModel(endPoint=self.chatParams.azureAPIParams.endPoint,
+                                         apiKey=self.chatParams.azureAPIParams.apiKey,
+                                         apiVersion=self.chatParams.azureAPIParams.apiVersion,
+                                         deployment=self.chatParams.azureAPIParams.deployment,
+                                         isUseProxy=self.chatParams.isUseProxy,
+                                         proxyURL=self.chatParams.proxyURL)
 
     async def setUserMsg(self, msg: str) -> tuple:
         '''将用户的消息存入数据库,然后返回对应的item的chatIid'''

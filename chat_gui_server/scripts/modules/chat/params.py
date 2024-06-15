@@ -4,7 +4,7 @@
 '''
 
 import tiktoken
-from scripts.libs import CONF
+from scripts.libs import CONF, AzureAPIParams, OpenAIAPIParams, APIServicesTypes
 
 
 class Params:
@@ -21,11 +21,9 @@ class Params:
         "isUseProxy": False,
         "proxyURL": '',
         'modelList': [],
-        'apiKey': "",
-        'apiVersion': "",
+        'modelType': '',
+        'modelName': '',
         'maxTokens': 0,
-        'deployment': "",
-        'endPoint': "",
         'promptTemplate': [{'role': 'system', 'content': 'You are GPT-4o a large language model of OpenAI.'}],
         'promptTemplateTokens': 15,
         'passedMsgLen': 6,
@@ -36,11 +34,15 @@ class Params:
         'presentPenaty': 0,
         'stopSequence': [],
         'chatWithGptTimeout': 10,
-        'webRenderStrLen': 20
+        'webRenderStrLen': 20,
+        "apiService": CONF.apiDefaultService,
+        'openaiAPIParams': OpenAIAPIParams(),
+        'azureAPIParams': AzureAPIParams(),
     }
 
-    NOTEXPOSETOWEB = ['encoding', 'apiKey',
-                      'apiVersion', 'deployment', 'endPoint']
+    # 不需要给到WEB的信息
+    NOTEXPOSETOWEB = ['apiService', 'openaiAPIParams',
+                      'azureAPIParams', 'encoding']
 
     def __init__(self) -> None:
         '''OpenAI GPT 对话的默认几个参数'''
@@ -52,12 +54,9 @@ class Params:
         self.modelName: str = ''
         self.modelList: list = []       # 可以用的模型列表
 
-        # HTTP 访问 Azure API 的身份信息
-        self.apiKey: str = ""           # 不暴露给WEB
-        self.apiVersion: str = ""       # 不暴露给WEB
-        self.maxTokens: int = 0         # 模型最大支持的对话的tokens数量
-        self.deployment: str = ""       # 不暴露给WEB
-        self.endPoint: str = ""         # 不暴露给WEB
+        self.apiService = CONF.apiDefaultService
+        self.openaiAPIParams = OpenAIAPIParams()
+        self.azureAPIParams = AzureAPIParams()
 
         # 和GPT进行对话的prompt的模板信息
         self.promptTemplate: list = [
@@ -99,6 +98,7 @@ class Params:
             if key in Params.NOTEXPOSETOWEB:
                 continue
             reaDictData[key] = self.__dict__[key]
+        print(reaDictData)
         return reaDictData
 
     def getDefaultParams(self) -> dict:
@@ -108,9 +108,21 @@ class Params:
 
     def updateModelType(self) -> bool:
         '''根据选中的模型名字来重新选中模型的参数, 例如从GPT4切换到GPT3更新这些参数'''
-        modelDictData = CONF.modelList[self.modelName]
-        for key in modelDictData:
-            self.__dict__[key] = modelDictData[key]
+        modelDictData = CONF.apiModelList[self.modelName]
+        # 找出这个模型的类型
+        self.apiService = modelDictData['serviceType']
+
+        if self.apiService == APIServicesTypes.OPENAI:
+            for key in modelDictData:
+                self.openaiAPIParams.__dict__[key] = modelDictData[key]
+            self.modelType = self.openaiAPIParams.modelType
+            self.maxTokens = self.openaiAPIParams.maxToken
+
+        if self.apiService == APIServicesTypes.AZURE:
+            for key in modelDictData:
+                self.azureAPIParams.__dict__[key] = modelDictData[key]
+            self.modelType = self.azureAPIParams.modelType
+            self.maxTokens = self.azureAPIParams.maxToken
 
     def updateCurrentParams(self, data: dict):
         '''根据data里面包含了哪些参数就把当前实例的属性给更新'''
@@ -122,21 +134,33 @@ class Params:
     def useDefaultModelParams(self):
         '''从CONF拿全局的变量,更新当前的一些模型的信息'''
         self.modelList = []
-        for key in CONF.modelList:
+        for key in CONF.apiModelList:
             self.modelList.append(
-                {'label': key, 'value': CONF.modelList[key]['maxToken'], 'mtype': CONF.modelList[key]['modelType']})
+                {'label': key, 'value': CONF.apiModelList[key]['maxToken'], 'mtype': CONF.apiModelList[key]['modelType']})
 
-        self.modelName = CONF.default_modelName
-        self.modelType = CONF.default_modelType
-        self.maxTokens = CONF.default_maxToken
-        # 不暴露给WEB的属性
-        self.apiKey = CONF.default_apiKey
-        self.apiVersion = CONF.default_apiVersion
-        self.deployment = CONF.default_deployment
-        self.endPoint = CONF.default_endPoint
+        # OPENAI 服务的默认参数
+        if self.apiService == APIServicesTypes.OPENAI:
+            self.setDefaultAPIModel(
+                self.openaiAPIParams, APIServicesTypes.OPENAI)
+
+        # AZURE 服务的默认参数
+        if self.apiService == APIServicesTypes.AZURE:
+            self.setDefaultAPIModel(
+                self.azureAPIParams, APIServicesTypes.AZURE)
 
         self.isUseProxy = CONF.isUseProxy
         self.proxyURL = CONF.proxyURL
+
+    def setDefaultAPIModel(self, params, serviceType):
+        '''为了减少默认模型参数设置时候要判断模型的类型, 抽了一个函数来做这个事情'''
+        apiModelDict: dict = CONF.findDictWithKey1Value(serviceType)
+        # 模型名称
+        self.modelName = next(iter(apiModelDict.keys()))
+        for key in apiModelDict:
+            params.__dict__[key] = apiModelDict[key]
+
+        self.modelType = params.modelType
+        self.maxTokens = params.maxToken
 
     def getPromptTemplate(self) -> list:
         '''获得出当前设置的prompt的template'''

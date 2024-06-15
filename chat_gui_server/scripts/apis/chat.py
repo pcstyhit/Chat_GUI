@@ -258,7 +258,7 @@ async def sseAPI(chatCid: str):
             # 包装成符合SSE接收的消息的格式
             yield f"data: {resp}\n\n"
 
-            async for (chunk, tokens, chatIid) in handle.azureChatStreamAPI():
+            async for (chunk, tokens, chatIid) in handle.chatStreamAPI():
                 rea.flag = 2
                 rea.data = f'{chunk}'
                 rea.tokens = tokens

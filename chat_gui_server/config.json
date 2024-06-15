@@ -2,7 +2,28 @@
   "host": "0.0.0.0",
   "port": 5001,
   "isLoginByTokenKey": false,
-  "tokenKey":"",
+  "tokenKey": "",
   "isUseProxy": false,
-  "proxyURL": ""
+  "proxyURL": "",
+  "apiDefaultService": "azure",
+  "apiServiceList": {
+    "modelList": {
+      "model-name-xxx-01": {
+        "serviceType": "azure",
+        "modelType": "xxx",
+        "apiKey": "xxx",
+        "endPoint": "xxx",
+        "deployment": "xxx",
+        "maxToken": "xxx",
+        "apiVersion": "xxx"
+      },
+      "model-name-xxx-02": {
+        "serviceType": "openai",
+        "modelType": "xxx",
+        "baseUrl": "xxx",
+        "apiKey": "xxx"
+      }
+    },
+    "expiredTime": 1721020364
+  }
 }

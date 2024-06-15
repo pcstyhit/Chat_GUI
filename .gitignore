@@ -5,6 +5,7 @@
 /chat_gui/node_modules
 /chat_gui/dist
 /chat_gui_server/config.cfg
+/chat_gui_server/cfg.json
 /chat_gui_server/statics/*
 /chat_gui_server/dist
 /chat_gui_server/build

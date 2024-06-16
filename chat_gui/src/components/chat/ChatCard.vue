@@ -205,7 +205,7 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick, computed, watch } from "vue";
+import { ref, nextTick, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
 // import { chatStreamAPI } from "../../apis/chatStream.js";
@@ -215,6 +215,8 @@ import {
   deletChatItemAPI,
   createEventSourceAPI,
   reGenerateContentAPI,
+  addNewChatAPI,
+  setChatParamsAPI,
 } from "../../apis/chatAPIs";
 import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
@@ -240,10 +242,6 @@ export default {
     const isShowItemEditor = ref(false);
     const editChatItemObj = ref({});
 
-    onMounted(() => {
-      //
-    });
-
     watch(
       () => isChatting.value,
       async () => {
@@ -265,16 +263,34 @@ export default {
 
     /** 向服务器发送数据 */
     const onSendContent = async () => {
+      var sendChatCid = chatCid.value !== "" ? chatCid.value : "";
       if (isChatting.value != 0) {
         ElMessage.warning("请等待服务器回答完成！");
         return;
+      }
+
+      if (chatCid.value == "") {
+        // 没有新建对话需要新建对话
+        ElMessage.info("默认参数开始对话, 初始化数据库 ... ...");
+        var rea = await addNewChatAPI(chatParams.value.chatName);
+        if (!rea.flag) return false;
+        // 得到ChatCid
+        sendChatCid = rea.chatCid;
+        rea = await setChatParamsAPI(sendChatCid, chatParams.value);
+        if (!rea.flag) return false;
+        // 🎉 有效的ChatCid, 新建对话成功！ 存入store
+        store.commit("SET_NEWCHATCID_STATE", sendChatCid);
+        store.commit("PUSH_CHATLIST_STATE", {
+          chatCid: sendChatCid,
+          chatName: chatParams.value.chatName,
+        });
       }
 
       // 将html元素text转成字符串
       var msg = userQuestionText.value;
       // 置空输入框
       userQuestionText.value = "";
-      var rea = await setUserMsgAPI(msg);
+      rea = await setUserMsgAPI(msg);
       if (rea.flag) {
         // 更新对话
         store.commit("PUSH_CHATHISTORY_STATE", {
@@ -291,7 +307,7 @@ export default {
         store.commit("SET_ISCHATTING_STATE", 1);
         store.commit("SET_IS_UPDATE_REQUEST_TIME", false);
         // 从服务端获得输出
-        await createEventSourceAPI(chatCid.value);
+        await createEventSourceAPI(sendChatCid);
       } else {
         ElMessage.error("GPT API tokens error");
       }

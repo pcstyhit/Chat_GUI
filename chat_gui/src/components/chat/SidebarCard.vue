@@ -19,7 +19,7 @@
     <div v-show="isShowSidebar" class="content">
       <div class="chats">
         <!-- chat history list -->
-        <div v-for="item in historyList" :key="item">
+        <div v-for="item in chatList" :key="item">
           <!-- chat item -->
           <el-button
             @click="onLoadHistory(item)"
@@ -75,15 +75,10 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
-import {
-  getAllHistoryAPI,
-  deleteChatAPI,
-  getSpecChatHistoryAPI,
-} from "../../apis/chatAPIs.js";
+import { deleteChatAPI, getSpecChatHistoryAPI } from "../../apis/chatAPIs.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import * as DOMSIZE from "../../assets/styles/consts.js";
 export default {
@@ -97,11 +92,9 @@ export default {
     },
   },
   setup(props, context) {
-    const historyList = ref(null);
-    const router = useRouter();
+    const chatList = computed(() => store.state.user.chatList);
     const store = useStore();
     const chatCid = computed(() => store.state.chat.chatCid);
-    const isLogged = computed(() => store.state.user.isLogged);
 
     /** ====================== 下面定义函数 ====================== */
     /**
@@ -121,20 +114,6 @@ export default {
       }
       // 通知父组件修改值
       context.emit("onShowSidebar", val);
-    };
-
-    watch(
-      () => store.state.chat.isEditChatSettings,
-      async (value) => {
-        if (value == -1) {
-          await handleInitHistoryList();
-        }
-      }
-    );
-    /** 获取服务器的历史对话记录 */
-    const handleInitHistoryList = async () => {
-      var rea = await getAllHistoryAPI();
-      historyList.value = rea.data;
     };
 
     /** 向父组件发送要新建对话的信号 */
@@ -178,7 +157,7 @@ export default {
         });
       if (flag) {
         await deleteChatAPI(cid);
-        await handleInitHistoryList();
+        store.commit("DELETE_CHATLIST_STATE", cid);
         flag = chatCid.value == cid;
         if (flag) {
           // 向父组件发出删除对话的信号，如果是当前对话需要更新界面
@@ -219,28 +198,16 @@ export default {
       ElMessage.info("修改对话名称, 敬请期待！😜");
     };
 
-    onMounted(async () => {
-      if (!isLogged.value) {
-        ElMessage.error("请先登录！");
-        // 回到登录界面
-        router.push({
-          path: "/",
-        });
-      }
-      // 获取服务器的历史对话记录
-      await handleInitHistoryList();
-    });
     return {
       SVGS,
       chatCid,
-      historyList,
+      chatList,
       onShowSidebar,
       onNewChat,
       onLoadHistory,
       onDeleteChat,
       onDownloadChat,
       onEditChat,
-      handleInitHistoryList,
     };
   },
 };

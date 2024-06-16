@@ -72,7 +72,6 @@ class OpenAIChatClient(BaseChatClient):
                 })
             )
         else:
-            print("ok", baseURL, apiKey)
             self.client = OpenAI(
                 base_url=baseURL,
                 api_key=apiKey
@@ -81,7 +80,6 @@ class OpenAIChatClient(BaseChatClient):
 
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
              frequency_penalty: float, presence_penalty: float, timeout: int, stream: bool):
-        print(messages, max_tokens, self.model)
         response: ChatCompletion = self.client.chat.completions.create(model=self.model,
                                                                        messages=messages,
                                                                        stream=stream,

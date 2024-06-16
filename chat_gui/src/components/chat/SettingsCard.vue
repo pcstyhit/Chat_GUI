@@ -292,9 +292,7 @@
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button v-if="!isNewChat" class="cancel" @click="onCancleSettings"
-          >Cancel</el-button
-        >
+        <el-button class="cancel" @click="onCancleSettings">Cancel</el-button>
         <el-button v-if="isNewChat" class="confirm" @click="onStartChat">
           Confirm
         </el-button>
@@ -307,24 +305,19 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
 import { ElMessage } from "element-plus";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
-import {
-  addNewChatAPI,
-  getChatParamsAPI,
-  setChatParamsAPI,
-} from "../../apis/chatAPIs.js";
+import { addNewChatAPI, setChatParamsAPI } from "../../apis/chatAPIs.js";
 
 export default {
-  emits: ["onUpdateChatNameList"],
-  setup(props, context) {
+  setup() {
     // 从store中得到关于chat的状态
     const store = useStore();
 
     // 控制对话框的属性
-    const isOpenSettingDialog = ref(true);
+    const isOpenSettingDialog = ref(false);
 
     // 根据store存的chat的chatCid是不是''判断是不是新建对话
     const isNewChat = computed(() => store.state.chat.chatCid == "");
@@ -342,15 +335,9 @@ export default {
       async (value) => {
         isOpenSettingDialog.value = value == 1;
         if (isOpenSettingDialog.value) {
-          // 新建对话从SERVER获得参数
-          if (isNewChat.value) {
-            await handleGetDefaultChatParams();
-          } else {
-            // 切换chatCid时候已经更新了store的chatParams,因为没有watch到就在这里用赋值的方式更新
-            Object.keys(store.state.chat.chatParams).forEach((key) => {
-              chatParams.value[key] = store.state.chat.chatParams[key];
-            });
-          }
+          Object.keys(store.state.chat.chatParams).forEach((key) => {
+            chatParams.value[key] = store.state.chat.chatParams[key];
+          });
         }
       }
     );
@@ -364,29 +351,6 @@ export default {
         );
       }
     );
-
-    /**
-     * *************************
-     * 初始化时候要获得一次默认的参数
-     * *************************
-     * */
-    onMounted(async () => {
-      await handleGetDefaultChatParams();
-    });
-
-    /**
-     * *************************
-     * 从SERVER获得默认的chatParams来更新当前的对话参数.
-     * *************************
-     * */
-    const handleGetDefaultChatParams = async () => {
-      var rea = await getChatParamsAPI("");
-      if (rea.flag) {
-        Object.keys(rea.data).forEach((key) => {
-          chatParams.value[key] = rea.data[key];
-        });
-      }
-    };
 
     /**
      * *************************
@@ -404,8 +368,12 @@ export default {
         // 🎉 有效的ChatCid, 新建对话成功！ 存入store
         store.commit("SET_NEWCHATCID_STATE", rea.chatCid);
         currentChatCid = rea.chatCid;
-        // 新建的对话要高亮
-        context.emit("onUpdateChatNameList");
+
+        // 新建的对话存入store里
+        store.commit("PUSH_CHATLIST_STATE", {
+          chatCid: rea.chatCid,
+          chatName: chatParams.value.chatName,
+        });
       }
 
       // 开始设置对话的参数到数据库

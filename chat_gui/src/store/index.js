@@ -26,6 +26,21 @@ const mutations = {
   },
 
   /** @param {state} state */
+  SET_CHATLIST_STATE(state, data) {
+    state.user.sethChat(data);
+  },
+
+  /** @param {state} state */
+  PUSH_CHATLIST_STATE(state, data) {
+    state.user.pushChat(data);
+  },
+
+  /** @param {state} state */
+  DELETE_CHATLIST_STATE(state, data) {
+    state.user.deleteChatByChatCid(data);
+  },
+
+  /** @param {state} state */
   SET_CHATHISTORY_STATE(state, data) {
     state.chat.setChatHistory(data);
   },
@@ -60,21 +75,17 @@ const mutations = {
   async SET_CHATCID_STATE(state, data) {
     state.chat.setChatCid(data);
     state.chat.chatHistory = [];
-    // 如果data是空""就代表进入了新建对话情况,不需要从SERVER加载对话了
-    if (data == "") {
-      state.chat.isEditChatSettings = 1;
-      // 置空参数
-      state.chat.chatParams.maxTokens = 0;
-      state.chat.chatParams.modelName = "";
 
-      state.chat.tokens = 0;
-      state.chat.requestTime = 0;
-      return;
-    }
     // 不为空的chatCid代表切换对话就需要更新对话的参数和历史记录
     var rea = await getChatParamsAPI(data);
     if (rea.flag) state.chat.resetChatParams(rea.data);
 
+    // 如果data是空""就代表进入了新建对话情况,不需要从SERVER加载对话了
+    if (data == "") {
+      state.chat.tokens = 0;
+      state.chat.requestTime = 0;
+      return;
+    }
     // 更新这个对话的历史记录
     rea = await getSpecChatHistoryAPI(data);
     if (rea.flag) {

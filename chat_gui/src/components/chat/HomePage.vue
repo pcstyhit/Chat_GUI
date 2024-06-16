@@ -1,11 +1,10 @@
 <template>
   <div class="container">
     <!-- Settings overlay -->
-    <SettingsCard @onUpdateChatNameList="onUpdateChatNameList" />
+    <SettingsCard />
 
     <!-- Sidebar -->
     <SidebarCard
-      ref="SidebarCardRef"
       :isShowSidebar="isShowSidebar"
       @onShowSidebar="onShowSidebar"
     />
@@ -18,38 +17,47 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import SettingsCard from "./SettingsCard.vue";
 import SidebarCard from "./SidebarCard.vue";
 import ChatCard from "./ChatCard.vue";
+import { getAllHistoryAPI } from "../../apis/chatAPIs";
 
 export default {
   name: "HomePage",
   components: { SidebarCard, ChatCard, SettingsCard },
   setup() {
     const isShowSidebar = ref(true);
-    const SidebarCardRef = ref();
+    const store = useStore();
+    const router = useRouter();
+    const isLogged = computed(() => store.state.user.isLogged);
 
     /** ====================== 下面定义函数 ====================== */
-    onMounted(() => {});
+    onMounted(async () => {
+      if (!isLogged.value) {
+        ElMessage.error("请先登录！");
+        // 回到登录界面
+        router.push({
+          path: "/",
+        });
+      }
+      // 获取服务器的历史对话记录
+      var rea = await getAllHistoryAPI();
+      store.commit("SET_CHATLIST_STATE", rea.data);
+      store.commit("SET_CHATCID_STATE", "");
+    });
 
     /** 根据子组件的信号来控制显示或者隐藏侧边栏 */
     const onShowSidebar = (val) => {
       isShowSidebar.value = val;
     };
 
-    /** 开始新的对话，并且父组件调用子组件来初始化整个对话列表 */
-    const onUpdateChatNameList = async () => {
-      // vue3.0父组件调用子组件里的方法
-      // https://blog.csdn.net/qq_16151185/article/details/109464095
-      await SidebarCardRef.value.handleInitHistoryList();
-    };
-
     return {
       isShowSidebar,
-      SidebarCardRef,
       onShowSidebar,
-      onUpdateChatNameList,
     };
   },
 };

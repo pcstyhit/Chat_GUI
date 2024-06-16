@@ -98,7 +98,6 @@ class Params:
             if key in Params.NOTEXPOSETOWEB:
                 continue
             reaDictData[key] = self.__dict__[key]
-        print(reaDictData)
         return reaDictData
 
     def getDefaultParams(self) -> dict:
@@ -156,8 +155,8 @@ class Params:
         apiModelDict: dict = CONF.findDictWithKey1Value(serviceType)
         # 模型名称
         self.modelName = next(iter(apiModelDict.keys()))
-        for key in apiModelDict:
-            params.__dict__[key] = apiModelDict[key]
+        for key in apiModelDict[self.modelName]:
+            params.__dict__[key] = apiModelDict[self.modelName][key]
 
         self.modelType = params.modelType
         self.maxTokens = params.maxToken

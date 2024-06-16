@@ -9,7 +9,6 @@ export const ChatState = {
    * 当前对话的参数
    * @type {object}
    */
-
   chatParams: {
     chatName: "",
     modelType: "",
@@ -64,7 +63,7 @@ export const ChatState = {
    * 是否处于编辑聊天参数的状态。
    * @type {number}: 1表示正在修改, 0表示修改结束无更改, -1表示修改结束但是有更改
    */
-  isEditChatSettings: 1,
+  isEditChatSettings: 0,
 
   /**
    * 请求得到响应的时间

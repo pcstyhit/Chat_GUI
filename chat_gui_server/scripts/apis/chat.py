@@ -316,3 +316,59 @@ async def reGenerateContentAPI(item: ReGenerateContentRequest, user: str = fasta
     handle = getChatHandle(user)
     rea.flag, rea.tokens, rea.log = await handle.reGenerateContent(item.role, item.chatIid)
     return rea
+
+
+'''
+## downloadChatHistory的请求参数信息
+## 这个没有啥介绍的, 主要是设计上不给prompts的信息
+'''
+
+
+class DownloadChatHistoryRequest(BaseModel):
+    '''DownloadChatHistoryAPI请求体的格式'''
+    chatCid: str  # 对话的唯一标志
+
+
+class DownloadChatHistoryResponse(BaseModel):
+    '''DownloadChatHistoryAPI返回的response的格式'''
+    flag: bool = False
+    data: list = []
+    log: str = ''
+
+
+@CHAT_ROUTE.post('/chat/downloadChatHistory')
+async def downloadChatHistoryAPI(item: DownloadChatHistoryRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = DownloadChatHistoryResponse()
+    handle = getChatHandle(user)
+    rea.flag = True
+    rea.data = await handle.downloadChatHistory(item.chatCid)
+    return rea
+
+
+'''
+## uploadChatHistory的请求参数信息
+## 这个没有啥介绍的, 使用默认的对话参数创建一个对话,然后返回一个chatCid
+'''
+
+
+class UploadChatHistoryRequest(BaseModel):
+    '''uploadChatHistoryAPI请求体的格式'''
+    data: object  # 对话的唯一标志
+
+
+class UploadChatHistoryResponse(BaseModel):
+    '''uploadChatHistoryAPI返回的response的格式'''
+    flag: bool = False
+    chatCid: str = ''
+    history: list = []
+    tokens: int = 0
+    log: str = ''
+
+
+@CHAT_ROUTE.post('/chat/uploadChatHistory')
+async def uploadChatHistoryAPI(item: UploadChatHistoryRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = UploadChatHistoryResponse()
+    handle = getChatHandle(user)
+    rea.flag = True
+    rea.chatCid, rea.history, rea.tokens = await handle.uploadChatHistory(item.data)
+    return rea

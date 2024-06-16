@@ -272,3 +272,58 @@ class ChatAPI(ChatHandle):
         # 成功更新prompt
         flag = await self.getPrompt(self.chatParams.passedMsgLen)
         return flag, self.chatTokens, ""
+
+    async def downloadChatHistory(self, chatCid):
+        '''根据提供的chatCid将对话给到WEB下载,注意不用附带prompts'''
+        flag = self.userSql.checkChatCidbyUserName(self.userName, chatCid)
+        if not flag:
+            return [], 0, False, 'Chat has been deleted by others.'
+
+        msgList = self.chatSql.getAllItemInSpecTable(
+            self.userName, self.chatCid)
+
+        # 获取chatHistory
+        chatHistoy = []
+        for lenI in range(0, len(msgList)):
+            item = msgList[lenI]
+            chatHistoy.append(
+                {'role': item[2], 'content':  item[3]})
+
+        return chatHistoy
+
+    async def uploadChatHistory(self, data: dict):
+        '''解析上传的json数据,用默认的模型参数开始对话'''
+        allParams = json.dumps(self.chatParams.getCurrentParams())
+        # 将最开始的配置参数存入数据库, 其实可以不放入任何内容,但是只是保证操作的统一
+        self.chatCid = self.userSql.addChatInfoForSpecUser(
+            self.userName, self.chatParams.chatName, allParams)
+
+        # 创建一个存放这个新对话的表单到chatSQL里
+        self.chatSql.createTableByUserNameNChatCid(self.userName, self.chatCid)
+
+        chatHistory = []
+        chatTokens = 0
+
+        # 开始向数据库塞入数据
+        for sit in range(len(data)):
+            msg = data[sit]
+            role = msg.get('role', '')
+            content = msg.get('content', 'Invalid content')
+            tokens = self.chatParams.getTokens(content)
+            self.chatIid = oruuid()
+
+            if role == Params.USER:
+                chatHistory.append(
+                    {'chatIid': self.chatIid, 'role': role, 'content': content})
+                await self.setMessageWithTokens(Params.USER, content, tokens)
+
+            if role == Params.ASS:
+                chatHistory.append(
+                    {'chatIid': self.chatIid, 'role': role, 'content': content})
+                await self.setMessageWithTokens(Params.ASS, content, tokens)
+
+            # 更新下次要发送的tokens数量
+            if sit >= len(data) - self.chatParams.passedMsgLen:
+                chatTokens += tokens
+
+        return self.chatCid, chatHistory, chatTokens

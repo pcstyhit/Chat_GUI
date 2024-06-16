@@ -44,7 +44,10 @@
       </div>
     </div>
     <!-- Message Output -->
-    <el-scrollbar class="scroll-window" ref="scrollbarRef">
+    <div class="roles-card" v-if="chatCid == ''">
+      <RolesCard />
+    </div>
+    <el-scrollbar v-else class="scroll-window" ref="scrollbarRef">
       <div ref="innerRef">
         <div v-for="item in chatHistory" :key="item.chatIid">
           <!-- user question -->
@@ -222,9 +225,10 @@ import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
 import { ElMessageBox } from "element-plus";
 import ItemEditor from "./ItemEditor.vue";
+import RolesCard from "./RolesCard.vue";
 
 export default {
-  components: { ItemEditor },
+  components: { ItemEditor, RolesCard },
   setup() {
     const store = useStore();
     const userQuestionText = ref("");
@@ -403,6 +407,7 @@ export default {
 
     return {
       SVGS,
+      chatCid,
       isChatting,
       userQuestionText,
       scrollbarRef,

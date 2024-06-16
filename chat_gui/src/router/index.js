@@ -10,6 +10,7 @@ import ChatSidebar from "../components/template/ChatSidebar.vue";
 import ChatChat from "../components/template/ChatChatCard.vue";
 import ChatSettings from "../components/template/ChatSettings.vue";
 import ChatItemEditor from "../components/template/ChatItemEditor.vue";
+import ChatRoles from "../components/template/ChatRoles.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -63,6 +64,10 @@ const router = createRouter({
     {
       path: "/template/chat/item",
       component: ChatItemEditor,
+    },
+    {
+      path: "/template/chat/roles",
+      component: ChatRoles,
     },
   ],
 });

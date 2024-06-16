@@ -78,7 +78,7 @@
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { deleteChatAPI, getSpecChatHistoryAPI } from "../../apis/chatAPIs.js";
+import { deleteChatAPI, downloadChatHistory } from "../../apis/chatAPIs.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import * as DOMSIZE from "../../assets/styles/consts.js";
 export default {
@@ -167,15 +167,10 @@ export default {
     };
 
     const onDownloadChat = async (chatCid) => {
-      var rea = await getSpecChatHistoryAPI(chatCid);
+      var rea = await downloadChatHistory(chatCid);
       if (rea.flag) {
-        var dataObj = {
-          prompt: rea.history,
-          tokens: rea.tokens,
-        };
-
         // 将对象转换成JSON字符串
-        const jsonData = JSON.stringify(dataObj);
+        const jsonData = JSON.stringify(rea.data);
         // 创建一个包含JSON字符串的Blob对象
         const jsonBlob = new Blob([jsonData], { type: "application/json" });
 

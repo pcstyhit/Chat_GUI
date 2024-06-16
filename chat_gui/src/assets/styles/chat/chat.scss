@@ -73,6 +73,25 @@
     }
   }
 
+  .roles-card {
+    position: absolute;
+    left: 10%;
+    top: var(--header-height);
+    height: calc(
+      100% - var(--header-height) - var(--input-bottom) -
+        var(--input-min-height) - 16px - var(--bottom-text)
+    );
+    max-height: calc(
+      100% - var(--header-height) - var(--input-bottom) -
+        var(--input-min-height) - 16px - var(--bottom-text)
+    );
+    width: var(--width-size);
+    max-width: var(--width-size);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+  }
+
   .scroll-window {
     position: absolute;
     left: 10%;
@@ -201,11 +220,11 @@
               padding: 4px 8px;
               top: 0px;
               width: calc(100% - 16px);
-              color: #FFFFFF;
-              font-family: 'Microsoft YaHei';
+              color: #ffffff;
+              font-family: "Microsoft YaHei";
               .lang {
                 font-size: 10px;
-                color: #FFFFFF;
+                color: #ffffff;
               }
               .copy-button {
                 margin-left: auto;
@@ -217,7 +236,7 @@
               }
               .copy-text {
                 font-size: 10px;
-                color: #FFFFFF;
+                color: #ffffff;
               }
             }
           }

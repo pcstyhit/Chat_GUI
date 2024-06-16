@@ -331,3 +331,48 @@ export async function reGenerateContentAPI(role, chatIid) {
     return { data: null };
   }
 }
+/** 下载对话的全部消息 */
+export async function downloadChatHistory(chatCid) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/downloadChatHistory`,
+      {
+        chatCid: chatCid,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: null };
+  }
+}
+
+/** 上传json数据然后开始对话 */
+export async function uploadChatHistory(jsonData) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/uploadChatHistory`,
+      {
+        data: jsonData,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: null };
+  }
+}

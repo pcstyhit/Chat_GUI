@@ -179,8 +179,10 @@ class ChatAPI(ChatHandle):
         await self.setMessage(Params.USER, msg)
         # 幽灵对话不会记录上下文, 只有默认的prompt
         if self.chatParams.isGhostChat:
-            self.chatPrompts = self.chatParams.promptTemplate + []
-            self.chatTokens = self.chatParams.promptTemplateTokens + 0
+            self.chatPrompts = self.chatParams.promptTemplate + \
+                [{'role': Params.USER, 'content': msg}]
+            self.chatTokens = self.chatParams.promptTemplateTokens + \
+                self.chatParams.getTokens(msg)
             return True, self.chatIid, self.chatTokens
         else:
             # 判断tokens是不是达到最大了

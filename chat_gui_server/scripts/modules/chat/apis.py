@@ -154,29 +154,38 @@ class ChatAPI(ChatHandle):
         # 是不是要更新当前的配置
         if chatCid == self.chatCid:
             self.chatParams.updateCurrentParams(data)
-            # 更新GPT模型参数
-            if self.chatParams.apiService == APIServicesTypes.OPENAI:
-                self.updateOpenAIModel(model=self.chatParams.openaiAPIParams.modelType,
-                                       baseURL=self.chatParams.openaiAPIParams.baseUrl,
-                                       apiKey=self.chatParams.openaiAPIParams.apiKey,
-                                       isUseProxy=self.chatParams.isUseProxy,
-                                       proxyURL=self.chatParams.proxyURL)
+            self.setAssistantModel()
 
-            if self.chatParams.apiService == APIServicesTypes.AZURE:
-                self.updateAzureGPTModel(endPoint=self.chatParams.azureAPIParams.endPoint,
-                                         apiKey=self.chatParams.azureAPIParams.apiKey,
-                                         apiVersion=self.chatParams.azureAPIParams.apiVersion,
-                                         deployment=self.chatParams.azureAPIParams.deployment,
-                                         isUseProxy=self.chatParams.isUseProxy,
-                                         proxyURL=self.chatParams.proxyURL)
+    def setAssistantModel(self):
+        '''抽出初始化模型信息的函数, 因为创建template对话时候会用到'''
+        if self.chatParams.apiService == APIServicesTypes.OPENAI:
+            self.updateOpenAIModel(model=self.chatParams.openaiAPIParams.modelType,
+                                   baseURL=self.chatParams.openaiAPIParams.baseUrl,
+                                   apiKey=self.chatParams.openaiAPIParams.apiKey,
+                                   isUseProxy=self.chatParams.isUseProxy,
+                                   proxyURL=self.chatParams.proxyURL)
+
+        if self.chatParams.apiService == APIServicesTypes.AZURE:
+            self.updateAzureGPTModel(endPoint=self.chatParams.azureAPIParams.endPoint,
+                                     apiKey=self.chatParams.azureAPIParams.apiKey,
+                                     apiVersion=self.chatParams.azureAPIParams.apiVersion,
+                                     deployment=self.chatParams.azureAPIParams.deployment,
+                                     isUseProxy=self.chatParams.isUseProxy,
+                                     proxyURL=self.chatParams.proxyURL)
 
     async def setUserMsg(self, msg: str) -> tuple:
         '''将用户的消息存入数据库,然后返回对应的item的chatIid'''
         self.chatIid = oruuid()
         await self.setMessage(Params.USER, msg)
-        # 判断tokens是不是达到最大了
-        flag = await self.getPrompt(self.chatParams.passedMsgLen)
-        return flag, self.chatIid, self.chatTokens
+        # 幽灵对话不会记录上下文, 只有默认的prompt
+        if self.chatParams.isGhostChat:
+            self.chatPrompts = self.chatParams.promptTemplate + []
+            self.chatTokens = self.chatParams.promptTemplateTokens + 0
+            return True, self.chatIid, self.chatTokens
+        else:
+            # 判断tokens是不是达到最大了
+            flag = await self.getPrompt(self.chatParams.passedMsgLen)
+            return flag, self.chatIid, self.chatTokens
 
     async def getPrompt(self, passedMsgLen) -> bool:
         '''从数据库中存入要发送的消息,并得到prompt
@@ -298,6 +307,9 @@ class ChatAPI(ChatHandle):
         self.chatCid = self.userSql.addChatInfoForSpecUser(
             self.userName, self.chatParams.chatName, allParams)
 
+        self.userSql.setChatParamsForSpecUser(self.chatCid, allParams)
+        self.setAssistantModel()
+
         # 创建一个存放这个新对话的表单到chatSQL里
         self.chatSql.createTableByUserNameNChatCid(self.userName, self.chatCid)
 
@@ -327,3 +339,19 @@ class ChatAPI(ChatHandle):
                 chatTokens += tokens
 
         return self.chatCid, chatHistory, chatTokens
+
+    async def newGhostChat(self, template: str):
+        '''设置幽灵对话的参数'''
+        allParams = self.chatParams.setGhostChat(template)
+        allParamsStr = json.dumps(allParams)
+        # 将最开始的配置参数存入数据库, 其实可以不放入任何内容,但是只是保证操作的统一
+        self.chatCid = self.userSql.addChatInfoForSpecUser(
+            self.userName, self.chatParams.chatName, allParamsStr)
+
+        self.userSql.setChatParamsForSpecUser(self.chatCid, allParamsStr)
+        self.setAssistantModel()
+
+        # 创建一个存放这个新对话的表单到chatSQL里
+        self.chatSql.createTableByUserNameNChatCid(self.userName, self.chatCid)
+
+        return self.chatCid, allParams, self.chatParams.promptTemplateTokens

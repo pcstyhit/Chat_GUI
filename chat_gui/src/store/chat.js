@@ -33,6 +33,7 @@ export const ChatState = {
     webRenderStrLen: 20,
     isUseProxy: false,
     proxyURL: "",
+    isGhostChat: false,
   },
 
   /**

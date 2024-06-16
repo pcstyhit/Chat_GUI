@@ -335,6 +335,10 @@ export default {
 
     /** 重新发送对话请求 */
     const onReGenerateContent = async (item) => {
+      if (chatParams.value.isGhostChat) {
+        ElMessage.warning("幽灵对话不支持修改内容 🤔");
+        return;
+      }
       var rea = await reGenerateContentAPI(item.role, item.chatIid);
       if (rea.flag) {
         // 重新更新tokens
@@ -352,6 +356,10 @@ export default {
 
     /** 编辑某个聊天对话，修改prompt */
     const onEditChatItem = (item) => {
+      if (chatParams.value.isGhostChat) {
+        ElMessage.warning("幽灵对话不支持修改内容 🤔");
+        return;
+      }
       isShowItemEditor.value = true;
       // 对el-input输入框内容/gpt返回给到的内容 这里先不做处理了，留给子组件做
       // ⭐ 必须采用深拷贝方法
@@ -365,6 +373,10 @@ export default {
 
     /** 删除某个chat */
     const onDeleteChatItem = async (chatIid) => {
+      if (chatParams.value.isGhostChat) {
+        ElMessage.warning("幽灵对话不支持修改内容 🤔");
+        return;
+      }
       var flag = false;
       await ElMessageBox.confirm(
         "删除这个对话的内容吗(删除无法恢复)?",

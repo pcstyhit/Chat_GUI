@@ -376,3 +376,26 @@ export async function uploadChatHistory(jsonData) {
     return { data: null };
   }
 }
+
+/** 新建一个幽灵对话 */
+export async function newGhostChatAPI(data) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/newGhostChat`,
+      {
+        data: data,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: null };
+  }
+}

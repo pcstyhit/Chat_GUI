@@ -372,3 +372,32 @@ async def uploadChatHistoryAPI(item: UploadChatHistoryRequest, user: str = fasta
     rea.flag = True
     rea.chatCid, rea.history, rea.tokens = await handle.uploadChatHistory(item.data)
     return rea
+
+
+'''
+## newGhostChatAPI的请求参数信息
+## 使用默认的对话参数创建一个幽灵对话, 然后WEB 设置对话的固定名称,这个都是很随意的
+'''
+
+
+class NewGhostChatRequest(BaseModel):
+    '''newGhostChatAPI请求体的格式'''
+    data: str  # 具体的模板是什么
+
+
+class NewGhostChatResponse(BaseModel):
+    '''newGhostChatAPI返回的response的格式'''
+    flag: bool = False
+    chatCid: str = ''
+    chatParams: dict = {}
+    tokens: int = 0
+    log: str = ''
+
+
+@CHAT_ROUTE.post('/chat/newGhostChat')
+async def newGhostChatAPI(item: NewGhostChatRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = NewGhostChatResponse()
+    handle = getChatHandle(user)
+    rea.chatCid, rea.chatParams, rea.tokens = await handle.newGhostChat(item.data)
+    rea.flag = True
+    return rea

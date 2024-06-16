@@ -4,6 +4,7 @@
 '''
 
 import tiktoken
+from .template import TEMPLATES
 from scripts.libs import CONF, AzureAPIParams, OpenAIAPIParams, APIServicesTypes
 
 
@@ -77,6 +78,7 @@ class Params:
 
         '''下面的参数是针对这个项目体验设计的'''
         self.webRenderStrLen: int = 20                  # 设置字符长度大于20才yeild出内容，减少web渲染次数
+        self.isGhostChat = False                        # 幽灵对话不会记录上下文, 只有默认的prompt
         '''辅助配置Chat功能设置的方法或者对象'''
         # 默认3.5 -> 4.0-* 用的计算方法都是一样的 cl100k_base 这里就不改了
         self.encoding = tiktoken.encoding_for_model('gpt-4')
@@ -185,3 +187,19 @@ class Params:
         if allTokens < self.maxTokens:
             return True
         return False
+
+    def setGhostChat(self, template) -> dict:
+        '''特定的函数, 设置一个幽灵对话'''
+        self.useDefaultParams()
+        self.isGhostChat = True
+        # 获得模板
+        promptsTempDict: dict = TEMPLATES.get(template, {})
+        promptsDataTemp: list = promptsTempDict.get('data', [])
+
+        # 设置模板和信息
+        self.promptTemplate = promptsDataTemp
+        self.promptTemplateTokens = 0
+        for msg in self.promptTemplate:
+            self.promptTemplateTokens += self.getTokens(msg.get('content', ''))
+
+        return self.getCurrentParams()

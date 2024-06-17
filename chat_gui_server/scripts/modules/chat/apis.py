@@ -112,8 +112,6 @@ class ChatAPI(ChatHandle):
         if not flag:
             return [], 0, False, 'Chat has been deleted by others.'
 
-        # 重置当前的chatCid，也就是这个操作表示切换了对话历史
-        self.chatCid = chatCid
         msgList = self.chatSql.getAllItemInSpecTable(
             self.userName, self.chatCid)
 
@@ -138,7 +136,11 @@ class ChatAPI(ChatHandle):
             return self.chatParams.getDefaultParams()
 
         strData = self.userSql.getChatParamsByChatCid(chatCid)
-        return json.loads(strData)
+        dictData = json.loads(strData)
+        # 其实这个也代表切换对话/新建对话, 需要将当前的参数设置给chatParams
+        self.chatCid = chatCid
+        await self.setChatParams(self.chatCid, dictData)
+        return dictData
 
     async def setChatParams(self, chatCid, data: dict) -> None:
         '''根据用户名和唯一的对话ChatCid来设置数据库中里对应条目的值

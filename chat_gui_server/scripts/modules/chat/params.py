@@ -39,6 +39,7 @@ class Params:
         "apiService": CONF.apiDefaultService,
         'openaiAPIParams': OpenAIAPIParams(),
         'azureAPIParams': AzureAPIParams(),
+        "isGhostChat": False,
     }
 
     # 不需要给到WEB的信息

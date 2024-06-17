@@ -5,7 +5,7 @@
   "tokenKey": "",
   "isUseProxy": false,
   "proxyURL": "",
-  "apiDefaultService": "azure",
+  "apiDefaultService": "openai",
   "apiServiceList": {
     "modelList": {
       "model-name-xxx-01": {

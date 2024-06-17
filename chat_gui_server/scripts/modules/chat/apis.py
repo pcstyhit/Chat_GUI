@@ -8,6 +8,7 @@ from .params import Params
 
 from scripts.libs import oruuid
 from scripts.libs import APIServicesTypes
+from scripts.modules.tts import generateBAudioFileByHttpx, getStreamAudio
 from scripts.modules.sql import UserSQL, ChatSQL, getUserSQLHandle, getChatSQLHandle
 
 
@@ -359,3 +360,16 @@ class ChatAPI(ChatHandle):
         self.chatSql.createTableByUserNameNChatCid(self.userName, self.chatCid)
 
         return self.chatCid, allParams, self.chatParams.promptTemplateTokens
+
+    async def getChatItemAudio(self, data):
+        '''@deprecated 废弃这个方式 调用chatTTS的模型 再缓存文件夹生成一个mp3文件, 返回文件名称给到WEB, 
+        WEB主动请求audio的URL,进行语音播放
+        '''
+        fileName = await generateBAudioFileByHttpx(data, isUseProxy=self.chatParams.isUseProxy, proxyURL=self.chatParams.proxyURL)
+        return fileName
+
+    async def getChatItemStreamAudio(self, data):
+        '''用openai的客户端调用chatTTS的模型 直接生成流式的回答
+        '''
+        async for audioChunk in await getStreamAudio(data, isUseProxy=self.chatParams.isUseProxy, proxyURL=self.chatParams.proxyURL):
+            yield audioChunk

@@ -399,3 +399,26 @@ export async function newGhostChatAPI(data) {
     return { data: null };
   }
 }
+
+/** 对话的语音播报 */
+export async function chatAudioAPI(data) {
+  try {
+    const response = await axios.post(
+      `${URL}/chat/chatAudio`,
+      {
+        data: data,
+      },
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.code === "ECONNABORTED") {
+      console.error("TIME OVER");
+    } else {
+      console.error("REQUEST FAILED:", error.message);
+    }
+    return { data: null };
+  }
+}

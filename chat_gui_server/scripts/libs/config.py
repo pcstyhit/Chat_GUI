@@ -41,7 +41,7 @@ class ProjectConfig:
         'isLoginByTokenKey', 'isUseProxy', 'proxyURL', 'tokenKey', 'dataBasePath', 'host', 'port'}
 
     # 项目用到的文件夹结构和实例对象的属性是一样的命名
-    PROJECTNESSDIR = {'dataBasePath', }
+    PROJECTNESSDIR = {'dataBasePath', 'cachePath'}
 
     def __init__(self) -> None:
         self.adminUserPassword: str = 'pldz'                # 默认的管理员密码
@@ -54,6 +54,7 @@ class ProjectConfig:
         self.port: int = 10080                              # 项目运行的port号
 
         self.dataBasePath: str = '.dbpath'                  # 数据库相对项目的路径
+        self.cachePath: str = '.cache'                      # 缓存文件夹路径
         self.staticsPath: str = 'statics'                   # 静态资源相对项目的路径
         self.apiServiceListFileName = "cfg.json"            # 没有tokenKey情况下的api服务的全部参数配置
         self.systemConfigFileName: str = 'config.cfg'
@@ -202,6 +203,10 @@ class ProjectConfig:
             if subDict.get("serviceType") == targetValue:
                 return {key: subDict}
         return None
+
+    def getCacheDirectory(self):
+        '''获得缓存的绝对路径'''
+        return self.getAbsPath(self.cachePath)
 
 
 CONF = ProjectConfig()

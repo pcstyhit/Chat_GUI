@@ -160,6 +160,27 @@
                     ></div>
                   </el-button>
                 </el-tooltip>
+                <!-- play audio response -->
+                <el-tooltip
+                  content="Read aloud"
+                  placement="bottom"
+                  :show-after="500"
+                >
+                  <el-button class="options-button" @click="onReadAloud(item)">
+                    <div
+                      v-if="!isReadAlouding"
+                      class="options-icon"
+                      v-html="SVGS.chatAudioStartIcon"
+                    ></div>
+                    <div
+                      v-if="
+                        isReadAlouding && isReadAloudChatIid == item.chatIid
+                      "
+                      class="options-icon"
+                      v-html="SVGS.chatAudioStopIcon"
+                    ></div>
+                  </el-button>
+                </el-tooltip>
               </div>
             </div>
           </div>
@@ -205,6 +226,7 @@
     v-model:isShowItemEditor="isShowItemEditor"
     v-model:editChatItemObj="editChatItemObj"
   />
+  <audio id="audioElement"></audio>
 </template>
 
 <script>
@@ -220,7 +242,9 @@ import {
   reGenerateContentAPI,
   addNewChatAPI,
   setChatParamsAPI,
+  chatAudioAPI,
 } from "../../apis/chatAPIs";
+import { URL } from "../../apis/common.js";
 import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
 import { ElMessageBox } from "element-plus";
@@ -245,6 +269,9 @@ export default {
     const isAutoToBottom = ref(true);
     const isShowItemEditor = ref(false);
     const editChatItemObj = ref({});
+
+    const isReadAlouding = ref(false);
+    const isReadAloudChatIid = ref("");
 
     watch(
       () => isChatting.value,
@@ -409,6 +436,41 @@ export default {
       store.commit("SET_EDIT_CHAT_SETTINGS_STATE", 1);
     };
 
+    /** 点击按钮 开始播放音频 */
+    const onReadAloud = async (item) => {
+      const audioElement = document.getElementById("audioElement");
+
+      if (isReadAlouding.value) {
+        // 结束播放
+        audioElement.pause();
+        audioElement.src = "";
+        isReadAloudChatIid.value = "";
+        isReadAlouding.value = false;
+        return;
+      }
+
+      ElMessage.info("开始生成音频文件... ...");
+      isReadAloudChatIid.value = item.chatIid;
+      var rea = await chatAudioAPI(item.content);
+      if (!rea.flag) {
+        ElMessage.error("尝试获取音频失败！ 😥");
+        return;
+      }
+      isReadAlouding.value = true;
+
+      ElMessage.info("开始播放音频... ...");
+      audioElement.src = `${URL}/chat/audio/${rea.data}`;
+
+      // 播放结束主动关闭
+      audioElement.addEventListener("ended", () => {
+        isReadAlouding.value = false;
+        audioElement.src = "";
+        isReadAloudChatIid.value = "";
+      });
+
+      audioElement.play();
+    };
+
     const copyToClipboard = (button) => {
       navigator.clipboard.writeText(
         button.parentNode.nextElementSibling.querySelector("code").innerText
@@ -440,6 +502,9 @@ export default {
       onDeleteChatItem,
       onShowSettings,
       onReGenerateContent,
+      isReadAlouding,
+      isReadAloudChatIid,
+      onReadAloud,
     };
   },
 };

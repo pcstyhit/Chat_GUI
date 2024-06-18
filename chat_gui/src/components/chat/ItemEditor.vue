@@ -40,7 +40,7 @@ import { ref, watch } from "vue";
 import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { editChatItemAPI } from "../../apis/chatAPIs";
+import { editChatItemAPI } from "../../apis/chat.js";
 export default {
   props: {
     isShowItemEditor: {

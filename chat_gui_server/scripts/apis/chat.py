@@ -7,16 +7,32 @@ from scripts.modules.umm import authenticateUser, getChatHandle, getChatHandleBy
 CHAT_ROUTE = fastapi.APIRouter()
 
 
-class AllHistoryRequest(BaseModel):
-    '''allHistoryAPI的请求体, 实际上没有内容'''
-    pass
-
+# ==================================================
+# 📜 allHistoryAPI 从数据库拿当前用户的全部对话记录
+# 一条对话记录包括对话的名称,以及它的唯一的chatCid
+# ==================================================
 
 class AllHistoryResponse(BaseModel):
     '''allHistoryAPI的应答体, 返回全部的列表即可'''
     data: list = []
     log: str = ''
 
+
+@CHAT_ROUTE.get('/chat/allHistory')
+async def allHistoryAPI(user: str = fastapi.Depends(authenticateUser)):
+    '''获取全部的对话历史记录的API'''
+    rea = AllHistoryResponse()
+    handle = getChatHandle(user)
+    rea.data = await handle.getAllHistory()
+    return rea
+
+
+# ==================================================
+# ➕ addNewChatAPI 根据新的对话名称创建一个对话表
+# 对话名称可以重复因为对话表的唯一标识是chatCid
+# 直接在数据库创建一张存对话记录的表
+# 返回这个新建对话的chatCid
+# ==================================================
 
 class NewChatRequest(BaseModel):
     '''newChatAPI请求'''
@@ -28,80 +44,6 @@ class NewChatResponse(BaseModel):
     flag: bool = False
     chatCid: str = ''    # 用于对话的唯一标志
     log: str = ''
-
-
-class LoadChatHistoryRequest(BaseModel):
-    '''加载对话历史的函数的请求体'''
-    chatCid: str  # 对话的名称
-    timeout: int
-
-
-class LoadChatHistoryResponse(BaseModel):
-    '''加载对话历史的函数的响应体'''
-    history: list = []  # 对话的历史记录
-    tokens: int = 0
-    flag: bool = False
-    log: str = ''
-
-
-class DeleteChatRequest(BaseModel):
-    '''deleteChatAPI前端请求体内的参数'''
-    chatCid: str
-    timeout: int
-
-
-class DeleteChatResponse(BaseModel):
-    '''deleteChatAPI前端response的参数'''
-    flag: bool = False
-    log: str = ''
-
-
-class EditChatItemRequest(BaseModel):
-    '''editChatItemAPI前端请求体内的参数'''
-    chatIid: str    # 对话每个元素的唯一标志
-    msg: str
-    timeout: int
-
-
-class EditChatItemResponse(BaseModel):
-    '''editChatItemAPI前端response的参数'''
-    flag: bool = False
-    log: str = ''
-
-
-class DeleteChatItemRequest(BaseModel):
-    '''deletChatItemAPI前端请求体内的参数'''
-    chatIid: str
-    timeout: int
-
-
-class DeleteChatItemResponse(BaseModel):
-    '''deletChatItemAPI前端response的参数'''
-    flag: bool = False
-    log: str = ''
-
-
-class SetUserMsgRequest(BaseModel):
-    '''Chat的中user的消息的请求体, 接受消息存入数据库, 并返回对话的唯一chatIid'''
-    msg: str
-    timeout: int
-
-
-class SetUserMsgResponse(BaseModel):
-    '''Chat的中user的消息的应答体, 返回对话的唯一chatIid'''
-    flag: bool = False
-    chatIid: str = ''
-    tokens: int = 0
-    log: str = ''
-
-
-@CHAT_ROUTE.get('/chat/allHistory')
-async def allHistoryAPI(user: str = fastapi.Depends(authenticateUser)):
-    '''获取全部的对话历史记录的API'''
-    rea = AllHistoryResponse()
-    handle = getChatHandle(user)
-    rea.data = await handle.getAllHistory()
-    return rea
 
 
 @CHAT_ROUTE.post('/chat/addNewChat')
@@ -116,12 +58,47 @@ async def addNewChatAPI(item: NewChatRequest, user: str = fastapi.Depends(authen
     return rea
 
 
+# ==================================================
+# 📖 getSpecChatHistoryAPI 从数据库拿当前用户的唯一chatCid的全部对话历史记录
+# 根据指定的chatCid来获取具体的内容
+# 返回的response会携带下次要发送的消息消耗的tokens数量
+# ==================================================
+
+class GetSpecChatHistoryRequest(BaseModel):
+    '''加载对话历史的函数的请求体'''
+    chatCid: str  # 对话的名称
+
+
+class GetSpecChatHistoryResponse(BaseModel):
+    '''加载对话历史的函数的响应体'''
+    history: list = []  # 对话的历史记录
+    tokens: int = 0
+    flag: bool = False
+    log: str = ''
+
+
 @CHAT_ROUTE.post('/chat/getSpecChatHistory')
-async def getSpecChatHistoryAPI(item: LoadChatHistoryRequest, user: str = fastapi.Depends(authenticateUser)):
-    rea = LoadChatHistoryResponse()
+async def getSpecChatHistoryAPI(item: GetSpecChatHistoryRequest, user: str = fastapi.Depends(authenticateUser)):
+    rea = GetSpecChatHistoryResponse()
     handle = getChatHandle(user)
     rea.history, rea.tokens, rea.flag, rea.log = await handle.getSpecChatHistory(item.chatCid)
     return rea
+
+
+# ==================================================
+# ❌ deleteChatAPI 删除当前用户的指定chatCid的对话内容
+# 根据chatCid直接删除这张对话的表
+# ==================================================
+
+class DeleteChatRequest(BaseModel):
+    '''deleteChatAPI前端请求体内的参数'''
+    chatCid: str
+
+
+class DeleteChatResponse(BaseModel):
+    '''deleteChatAPI前端response的参数'''
+    flag: bool = False
+    log: str = ''
 
 
 @CHAT_ROUTE.post('/chat/deleteChat')
@@ -132,6 +109,25 @@ async def deleteChatAPI(item: DeleteChatRequest, user: str = fastapi.Depends(aut
     return rea
 
 
+# ==================================================
+# ✉️ setUserMsgAPI 向数据库存入用户的提问
+# 向chat hanlder里设置最新的用户提示的内容
+# 因为整个prompt是被存在数据库的,设置成功之后, Assistant的请求就不需要携带message了
+# ==================================================
+
+class SetUserMsgRequest(BaseModel):
+    '''Chat的中user的消息的请求体, 接受消息存入数据库, 并返回对话的唯一chatIid'''
+    msg: str
+
+
+class SetUserMsgResponse(BaseModel):
+    '''Chat的中user的消息的应答体, 返回对话的唯一chatIid'''
+    flag: bool = False
+    chatIid: str = ''
+    tokens: int = 0
+    log: str = ''
+
+
 @CHAT_ROUTE.post('/chat/setUserMsg')
 async def setUserMsgAPI(item: SetUserMsgRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetUserMsgResponse()
@@ -140,12 +136,46 @@ async def setUserMsgAPI(item: SetUserMsgRequest, user: str = fastapi.Depends(aut
     return rea
 
 
+# ==================================================
+# ✏️ editChatItemAPI 修改数据库里面对应的消息的内容
+# 根据指定的chatIid来修改对应的内容
+# ==================================================
+
+class EditChatItemRequest(BaseModel):
+    '''editChatItemAPI前端请求体内的参数'''
+    chatIid: str    # 对话每个元素的唯一标志
+    msg: str
+
+
+class EditChatItemResponse(BaseModel):
+    '''editChatItemAPI前端response的参数'''
+    flag: bool = False
+    log: str = ''
+
+
 @CHAT_ROUTE.post('/chat/editChatItem')
 async def editChatItemAPI(item: EditChatItemRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = EditChatItemResponse()
     handle = getChatHandle(user)
     rea.flag = await handle.editChatItemMsgByID(item.chatIid, item.msg)
     return rea
+
+
+# ==================================================
+# ❌ deleteChatItemAPI 从数据库删除指定的对话元素的API
+# 根据指定的chatIid来删除对应的元素
+# 注意 如果API返回的message是报错的,那么这个chatIid是无效的, 但是不会影响这里的接口
+# ==================================================
+
+class DeleteChatItemRequest(BaseModel):
+    '''deletChatItemAPI前端请求体内的参数'''
+    chatIid: str
+
+
+class DeleteChatItemResponse(BaseModel):
+    '''deletChatItemAPI前端response的参数'''
+    flag: bool = False
+    log: str = ''
 
 
 @CHAT_ROUTE.post('/chat/deleteChatItem')
@@ -157,20 +187,10 @@ async def deleteChatItemAPI(item: DeleteChatItemRequest, user: str = fastapi.Dep
 
 
 # ==================================================
-# ✨ Chat Stream / 普通对话的API操作函数, 没有用SSE直接用websocket来操作
+# ⚙️ getChatParams 获取对话的参数信息的API
+# 根据对话的唯一标识 chatCid来从数据库获得配置, 如果是无效的chatCid就返回默认值
 # ==================================================
 
-class ChatResponse(BaseModel):
-    '''Chat对话的应答体'''
-    flag: bool = False  # 是否输出完成的开关量
-    data: str = ''  # 具体的内容
-    tokens: int = 0
-    chatIid: str = ''  # 对话对象的唯一标志
-
-
-# ''' '''
-# 根据对话的唯一标识 chatCid来从数据库获得配置
-# ''' '''
 class GetChatParamsRequest(BaseModel):
     '''getChatParamsAPI请求体的格式'''
     chatCid: str  # 用于对话的唯一标志
@@ -192,12 +212,11 @@ async def getChatParamsAPI(item: GetChatParamsRequest, user: str = fastapi.Depen
     return rea
 
 
-'''
-## SetChatParams的请求
-## 根据对话的唯一标识 chatCid来对当前的对话的设置进行修改
-## 注意这个函数的数据 非常需要前后端的变量名一致
-'''
-
+# ==================================================
+# 🛠️ SetChatParams的请求
+# 根据对话的唯一标识 chatCid来对当前的对话的设置进行修改
+# 注意这个函数的数据 非常需要前后端的变量名一致
+# ==================================================
 
 class SetChatParamsRequest(BaseModel):
     '''getChatParamsAPI请求体的格式'''
@@ -223,10 +242,12 @@ async def setChatParamsAPI(item: SetChatParamsRequest, user: str = fastapi.Depen
 
     return rea
 
-# ==================================================
-# ✨ Chat SSE API 的应答体
-# ==================================================
 
+# ==================================================
+# ✨ 📡Chat SSE API 的应答体
+# 关键点在于用WEB的eventSource来创建SSE是不能携带header信息
+# 通过url挂着chatCid来做用户身份判断
+# ==================================================
 
 class ChatSSEResponse(BaseModel):
     '''Chat对话的应答体'''
@@ -289,13 +310,12 @@ async def sseAPI(chatCid: str):
     return fastapi.responses.StreamingResponse(sseEventGenerator(), media_type="text/event-stream")
 
 
-'''
-## ReGenerateChatItemContent的请求参数信息
-## 根据对话内每条消息的唯一标识 chatIid 来删除后面的全部数据然后重新生成
-## 不同的角色会影响是不是要删除当前这条消息的记录
-## 注意这个函数的数据 非常需要前后端的变量名一致
-'''
-
+# ==================================================
+# 🔄 ReGenerateChatItemContent的请求参数信息
+# 根据对话内每条消息的唯一标识 chatIid 来删除后面的全部数据然后重新生成
+# 不同的角色会影响是不是要删除当前这条消息的记录
+# 注意这个函数的数据 非常需要前后端的变量名一致
+# ==================================================
 
 class ReGenerateContentRequest(BaseModel):
     '''ReGenerateContentAPI请求体的格式'''
@@ -318,11 +338,10 @@ async def reGenerateContentAPI(item: ReGenerateContentRequest, user: str = fasta
     return rea
 
 
-'''
-## downloadChatHistory的请求参数信息
-## 这个没有啥介绍的, 主要是设计上不给prompts的信息
-'''
-
+# ==================================================
+# 📥 downloadChatHistory的请求参数信息
+# 这个没有啥介绍的, 主要是设计上不给prompts的信息
+# ==================================================
 
 class DownloadChatHistoryRequest(BaseModel):
     '''DownloadChatHistoryAPI请求体的格式'''
@@ -345,11 +364,10 @@ async def downloadChatHistoryAPI(item: DownloadChatHistoryRequest, user: str = f
     return rea
 
 
-'''
-## uploadChatHistory的请求参数信息
-## 这个没有啥介绍的, 使用默认的对话参数创建一个对话,然后返回一个chatCid
-'''
-
+# ==================================================
+# 📤 uploadChatHistory的请求参数信息
+# 这个没有啥介绍的, 使用默认的对话参数创建一个对话,然后返回一个chatCid
+# ==================================================
 
 class UploadChatHistoryRequest(BaseModel):
     '''uploadChatHistoryAPI请求体的格式'''
@@ -374,11 +392,11 @@ async def uploadChatHistoryAPI(item: UploadChatHistoryRequest, user: str = fasta
     return rea
 
 
-'''
-## newGhostChatAPI的请求参数信息
-## 使用默认的对话参数创建一个幽灵对话, 然后WEB 设置对话的固定名称,这个都是很随意的
-'''
-
+# ==================================================
+# 👻 newGhostChatAPI的请求参数信息
+# 使用默认的对话参数创建一个幽灵对话, 然后WEB 设置对话的固定名称,这个都是很随意的
+# 幽灵对话其实是没有上下文记忆的对话
+# ==================================================
 
 class NewGhostChatRequest(BaseModel):
     '''newGhostChatAPI请求体的格式'''
@@ -402,10 +420,12 @@ async def newGhostChatAPI(item: NewGhostChatRequest, user: str = fastapi.Depends
     rea.flag = True
     return rea
 
-'''
-## 生成语音播报的请求参数信息
-'''
 
+# ==================================================
+# 🔊 chatAudioAPI 生成语音播报的请求参数信息
+# 调用接口 生成一个mp3文件, 然后和SSE请求一样, 用URL内挂chatCid来进行audio的返回
+# 📝 TODO: 可以直接用OpenAI client做stream的返回, 但是请求体携带用户信息还没有做考虑
+# ==================================================
 
 class ChatAudioRequest(BaseModel):
     '''chatAudioAPI请求体的格式'''

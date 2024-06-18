@@ -309,7 +309,7 @@ import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
 import { ElMessage } from "element-plus";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
-import { addNewChatAPI, setChatParamsAPI } from "../../apis/chatAPIs.js";
+import { addNewChatAPI, setChatParamsAPI } from "../../apis/chat.js";
 
 export default {
   setup() {

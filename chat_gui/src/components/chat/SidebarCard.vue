@@ -78,7 +78,7 @@
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { deleteChatAPI, downloadChatHistory } from "../../apis/chatAPIs.js";
+import { deleteChatAPI, downloadChatHistory } from "../../apis/chat.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import * as DOMSIZE from "../../assets/styles/consts.js";
 export default {

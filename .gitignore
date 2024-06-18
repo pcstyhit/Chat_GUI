@@ -9,6 +9,8 @@
 /chat_gui_server/statics/*
 /chat_gui_server/dist
 /chat_gui_server/build
+/chat_gui_server/.cache/*.mp3
+/chat_gui_server/*.spec
 
 *.db
 *.pyc

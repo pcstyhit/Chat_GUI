@@ -24,7 +24,7 @@ import { ElMessage } from "element-plus";
 import SettingsCard from "./SettingsCard.vue";
 import SidebarCard from "./SidebarCard.vue";
 import ChatCard from "./ChatCard.vue";
-import { getAllHistoryAPI } from "../../apis/chatAPIs";
+import { getAllHistoryAPI } from "../../apis/chat.js";
 
 export default {
   name: "HomePage",

@@ -48,7 +48,7 @@ import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-import { logIN } from "../../apis/common.js";
+import { logIN } from "../../apis/login.js";
 import { random24Icon, token24Icon } from "../../assets/styles/home/svgs.js";
 export default {
   setup() {

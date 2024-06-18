@@ -59,7 +59,7 @@ import * as SVGS from "../../assets/styles/chat/svgs.js";
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { ElMessage } from "element-plus";
-import { uploadChatHistory, newGhostChatAPI } from "../../apis/chatAPIs.js";
+import { uploadChatHistory, newGhostChatAPI } from "../../apis/chat.js";
 export default {
   setup() {
     const store = useStore();

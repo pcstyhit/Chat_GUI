@@ -194,7 +194,7 @@
         type="textarea"
         v-model="userQuestionText"
         placeholder="Please input your question ..."
-        @keyup.enter="onSendContent"
+        @keydown.enter="onEnterKeydown"
         :autosize="{ minRows: 1, maxRows: 8 }"
       ></el-input>
       <!-- send and pause button -->
@@ -237,15 +237,14 @@ import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import {
   setUserMsgAPI,
-  deletChatItemAPI,
+  deleteChatItemAPI,
   createEventSourceAPI,
   reGenerateContentAPI,
   addNewChatAPI,
   setChatParamsAPI,
   chatAudioAPI,
-} from "../../apis/chatAPIs";
+} from "../../apis/chat.js";
 import { URL } from "../../apis/common.js";
-import marked from "../../helper/markdownHelper.js";
 import { textToHtml } from "../../helper/inputTextFormat.js";
 import { ElMessageBox } from "element-plus";
 import ItemEditor from "./ItemEditor.vue";
@@ -283,7 +282,7 @@ export default {
     );
 
     /** 输入框的按键组合键 */
-    const handleKeydown = async (event) => {
+    const onEnterKeydown = async (event) => {
       // Enter 和 Shift 键表示换行的操作
       if (event.key === "Enter" && !event.shiftKey) {
         // 阻止默认行为（换行）并发送内容
@@ -294,6 +293,10 @@ export default {
 
     /** 向服务器发送数据 */
     const onSendContent = async () => {
+      // 及时清空对话框
+      var msg = userQuestionText.value;
+      userQuestionText.value = "";
+
       var sendChatCid = chatCid.value !== "" ? chatCid.value : "";
       if (isChatting.value != 0) {
         ElMessage.warning("请等待服务器回答完成！");
@@ -317,10 +320,7 @@ export default {
         });
       }
 
-      // 将html元素text转成字符串
-      var msg = userQuestionText.value;
-      // 置空输入框
-      userQuestionText.value = "";
+      // 发送消息
       rea = await setUserMsgAPI(msg);
       if (rea.flag) {
         // 更新对话
@@ -421,7 +421,7 @@ export default {
           flag = false;
         });
       if (flag) {
-        var rea = await deletChatItemAPI(chatIid);
+        var rea = await deleteChatItemAPI(chatIid);
         if (rea.flag == true) {
           ElMessage.success("删除成功");
           store.commit("DELETE_CHATHISTORY_ITEM", chatIid);
@@ -490,13 +490,12 @@ export default {
       chatParams,
       tokens,
       requestTime,
-      marked,
       textToHtml,
       isShowItemEditor,
       editChatItemObj,
       isAutoToBottom,
       onSendContent,
-      handleKeydown,
+      onEnterKeydown,
       sleep,
       onEditChatItem,
       onDeleteChatItem,

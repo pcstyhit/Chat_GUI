@@ -8,8 +8,7 @@ LOGIN_OUT_ROUTER = fastapi.APIRouter()
 
 class LoginAndLogoutRequest(BaseModel):
     '''login和logout的请求体'''
-    data: str
-    timeout: int
+    data: str = ''  # 保留 可能是用户名
 
 
 class LoginAndLogoutResponse(BaseModel):

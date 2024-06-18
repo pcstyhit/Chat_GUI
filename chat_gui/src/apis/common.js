@@ -13,18 +13,15 @@ export const WSURL = `ws://127.0.0.1:${PORT}`;
  *          第三个参数是 axios 请求的配置选项，例如headers.
  * 比较规范的写法建议是将第二参数的body体内的变量做到与fast api的class格式一一对应.
  * */
-export async function logIN() {
+export async function apiRequest(method, endpoint, body = {}) {
   try {
-    const response = await axios.post(
-      `${URL}/login`,
-      {
-        data: "login",
-        timeout: SHORTTIME,
-      },
-      {
-        headers: getHeaders(),
-      }
-    );
+    const response = await axios({
+      method: method,
+      url: `${URL}${endpoint}`,
+      data: body,
+      headers: getHeaders(),
+      timeout: 10000,
+    });
     return response.data;
   } catch (error) {
     if (error.code === "ECONNABORTED") {
@@ -32,31 +29,7 @@ export async function logIN() {
     } else {
       console.error("REQUEST FAILED:", error.message);
     }
-    return { data: "Network Error" };
-  }
-}
-
-/** 退出登录 */
-export async function logOUT() {
-  try {
-    const response = await axios.post(
-      `${URL}/logout`,
-      {
-        data: {},
-        timeout: SHORTTIME,
-      },
-      {
-        headers: getHeaders(),
-      }
-    );
-    return response.data;
-  } catch (error) {
-    if (error.code === "ECONNABORTED") {
-      console.error("TIME OVER");
-    } else {
-      console.error("REQUEST FAILED:", error.message);
-    }
-    return { data: "Network Error" };
+    return { data: error.message || "Network Error" };
   }
 }
 

@@ -2,7 +2,7 @@ import { createStore } from "vuex";
 import { ChatState } from "./chat";
 import { UserState } from "./user";
 
-import { getSpecChatHistoryAPI, getChatParamsAPI } from "../apis/chatAPIs";
+import { getSpecChatHistoryAPI, getChatParamsAPI } from "../apis/chat.js";
 
 const state = {
   user: { ...UserState },

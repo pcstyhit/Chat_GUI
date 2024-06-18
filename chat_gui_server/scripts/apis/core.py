@@ -1,7 +1,6 @@
 import os
 import fastapi
 import uvicorn
-import multiprocessing
 
 from .login import LOGIN_OUT_ROUTER
 from .chat import CHAT_ROUTE

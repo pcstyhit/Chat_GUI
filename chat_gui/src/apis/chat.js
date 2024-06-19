@@ -75,6 +75,17 @@ export const createEventSourceAPI = (chatCid) => {
   return new Promise((resolve, reject) => {
     const eventSource = new EventSource(`${URL}/chat/sse/${chatCid}`);
 
+    // 在history数组最后新增一个gpt的元素 等待连接与返回消息
+    addStreamHistroy({
+      chatIid: null,
+      role: "assistant",
+      content: "",
+      text: "Please wait ... ...",
+    });
+    // 开始流对话
+    setIsChattingState(isAutoToBottomFlag * -1);
+
+    // 处理收到的消息
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       chatRes += data.data;
@@ -103,15 +114,6 @@ export const createEventSourceAPI = (chatCid) => {
 
       // 开始对话的标志
       if (data.flag == 1) {
-        // 在history数组最后新增一个gpt的元素
-        addStreamHistroy({
-          chatIid: null,
-          role: "assistant",
-          content: "",
-          text: "Please wait ... ...",
-        });
-        // 开始流对话
-        setIsChattingState(isAutoToBottomFlag * -1);
         chatRes = "";
       }
 

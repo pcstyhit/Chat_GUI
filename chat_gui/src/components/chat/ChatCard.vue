@@ -233,7 +233,6 @@
 import { ref, nextTick, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
-// import { chatStreamAPI } from "../../apis/chatStream.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import {
   setUserMsgAPI,
@@ -245,7 +244,7 @@ import {
   chatAudioAPI,
 } from "../../apis/chat.js";
 import { URL } from "../../apis/common.js";
-import { textToHtml } from "../../helper/inputTextFormat.js";
+import marked from "../../helper/markdownHelper.js";
 import { ElMessageBox } from "element-plus";
 import ItemEditor from "./ItemEditor.vue";
 import RolesCard from "./RolesCard.vue";
@@ -328,7 +327,7 @@ export default {
           chatIid: rea.chatIid,
           role: "user",
           content: msg,
-          text: textToHtml(msg),
+          text: marked.render(msg),
         });
 
         // 更新tokens
@@ -344,14 +343,9 @@ export default {
       }
     };
 
-    /** 无关紧要的延迟函数 */
-    const sleep = async (ms) => {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    };
-
     /**
      * 默认显示最新的内容，拖拉条滚动到最底部
-     * Element-plus】如何让滚动条永远在最底部（支持在线演示）
+     * Element-plus 如何让滚动条永远在最底部（支持在线演示）
      * https://blog.csdn.net/qq_42203909/article/details/133816286
      */
     const setScrollToBottom = async () => {
@@ -490,13 +484,11 @@ export default {
       chatParams,
       tokens,
       requestTime,
-      textToHtml,
       isShowItemEditor,
       editChatItemObj,
       isAutoToBottom,
       onSendContent,
       onEnterKeydown,
-      sleep,
       onEditChatItem,
       onDeleteChatItem,
       onShowSettings,

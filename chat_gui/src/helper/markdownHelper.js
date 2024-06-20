@@ -3,6 +3,9 @@ import MarkdownIt from "markdown-it";
 import hljs from "highlight.js/lib/core";
 
 // 引入需要的相关语言包
+import cpp from "highlight.js/lib/languages/cpp";
+import c from "highlight.js/lib/languages/c";
+import python from "highlight.js/lib/languages/python";
 import accesslog from "highlight.js/lib/languages/accesslog";
 import bash from "highlight.js/lib/languages/bash";
 import dockerfile from "highlight.js/lib/languages/dockerfile";
@@ -33,30 +36,36 @@ hljs.registerLanguage("yaml", yaml);
 hljs.registerLanguage("sql", sql);
 hljs.registerLanguage("shell", shell);
 hljs.registerLanguage("xml", xml);
+hljs.registerLanguage("cpp", cpp);
+hljs.registerLanguage("c", c);
+hljs.registerLanguage("python", python);
 
 const marked = new MarkdownIt({
   highlight: function (str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return `
-          <div class="text code-block">
-            <div class="copy-header">
-              <el-text class="lang">${lang}</el-text>
-              <button class="copy-button" onclick="copyToClipboard(this)">${
-                SVGS.copyCodeIcon
-              }</button>
-              <el-text class="copy-text">Copy code</el-text>
-            </div> 
-            <pre class="hljs"><code>${
-              hljs.highlight(str, { language: lang }).value
-            }</code></pre>
-          </div> 
-          `;
-      } catch (__) {
-        //
+    let codeContent = "";
+
+    try {
+      if (lang && hljs.getLanguage(lang)) {
+        codeContent = hljs.highlight(str, { language: lang }).value;
+      } else {
+        codeContent = hljs.highlight(str, { language: "python" }).value;
       }
+    } catch (__) {
+      codeContent = hljs.highlight(str, { language: "python" }).value;
     }
-    return "";
+
+    return `
+      <div class="text code-block">
+        <div class="copy-header">
+          <el-text class="lang">${lang ? lang : "plaintext"}</el-text>
+          <button class="copy-button" onclick="copyToClipboard(this)">
+            ${SVGS.copyCodeIcon}
+            <el-text class="copy-text">Copy code</el-text>
+          </button>
+        </div> 
+        <pre class="text code-block hljs"><code>${codeContent}</code></pre>
+      </div> 
+    `;
   },
 });
 

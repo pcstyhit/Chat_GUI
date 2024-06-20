@@ -244,7 +244,7 @@ import {
   chatAudioAPI,
 } from "../../apis/chat.js";
 import { URL } from "../../apis/common.js";
-import marked from "../../helper/markdownHelper.js";
+import { textToHtml } from "../../helper/inputTextFormat";
 import { ElMessageBox } from "element-plus";
 import ItemEditor from "./ItemEditor.vue";
 import RolesCard from "./RolesCard.vue";
@@ -327,7 +327,7 @@ export default {
           chatIid: rea.chatIid,
           role: "user",
           content: msg,
-          text: marked.render(msg),
+          text: textToHtml(msg),
         });
 
         // 更新tokens
@@ -464,14 +464,6 @@ export default {
 
       audioElement.play();
     };
-
-    const copyToClipboard = (button) => {
-      navigator.clipboard.writeText(
-        button.parentNode.nextElementSibling.querySelector("code").innerText
-      );
-    };
-
-    window.copyToClipboard = copyToClipboard;
 
     return {
       SVGS,

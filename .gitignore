@@ -11,6 +11,7 @@
 /chat_gui_server/build
 /chat_gui_server/.cache/*.mp3
 /chat_gui_server/*.spec
+/.test
 
 *.db
 *.pyc

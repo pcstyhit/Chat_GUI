@@ -80,7 +80,7 @@ marked.use((md) => {
     // const token = tokens[idx];
     // const info = token.info ? md.utils.unescapeAll(token.info).trim() : "";
     // const langName = info.split(/\s+/g)[0];
-
+    options.langPrefix = "code-language-";
     return `
       <div class="text code-rendered">
         ${defaultRender(tokens, idx, options, env, self)}

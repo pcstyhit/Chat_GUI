@@ -264,7 +264,7 @@ export default {
     const tokens = computed(() => store.state.chat.tokens);
     const requestTime = computed(() => store.state.chat.requestTime);
 
-    const isAutoToBottom = ref(true);
+    const isAutoToBottom = ref(false);
     const isShowItemEditor = ref(false);
     const editChatItemObj = ref({});
 

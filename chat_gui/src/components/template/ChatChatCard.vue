@@ -153,7 +153,7 @@
 import { ref, onMounted, nextTick } from "vue";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 // marked美化
-import marked from "../../helper/markdownHelper.js";
+import { marked } from "../../helper/formatHelper.js";
 export default {
   setup() {
     const history = ref([]);

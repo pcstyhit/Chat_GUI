@@ -244,7 +244,7 @@ import {
   chatAudioAPI,
 } from "../../apis/chat.js";
 import { URL } from "../../apis/common.js";
-import { textToHtml } from "../../helper/inputTextFormat";
+import { textToHtml } from "../../helper/formatHelper.js";
 import { ElMessageBox } from "element-plus";
 import ItemEditor from "./ItemEditor.vue";
 import RolesCard from "./RolesCard.vue";

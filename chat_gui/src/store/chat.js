@@ -1,5 +1,4 @@
-import marked from "../helper/markdownHelper.js";
-import { textToHtml } from "../helper/inputTextFormat.js";
+import { marked, textToHtml } from "../helper/formatHelper.js";
 
 /**
  * 表示聊天信息存储的对象。

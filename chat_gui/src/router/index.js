@@ -11,6 +11,7 @@ import ChatChat from "../components/template/ChatChatCard.vue";
 import ChatSettings from "../components/template/ChatSettings.vue";
 import ChatItemEditor from "../components/template/ChatItemEditor.vue";
 import ChatRoles from "../components/template/ChatRoles.vue";
+import CustomElComponents from "../components/template/CustomElComponents.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -68,6 +69,10 @@ const router = createRouter({
     {
       path: "/template/chat/roles",
       component: ChatRoles,
+    },
+    {
+      path: "/template/custom/els",
+      component: CustomElComponents,
     },
   ],
 });

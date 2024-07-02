@@ -8,7 +8,7 @@ import {
   updateTimeStamp,
   getWebRenderLen,
 } from "./common.js";
-import marked from "../helper/markdownHelper.js";
+import { marked } from "../helper/formatHelper.js";
 
 /** 📜 获取所有历史记录 */
 export const getAllHistoryAPI = () => apiRequest("get", "/chat/allHistory");

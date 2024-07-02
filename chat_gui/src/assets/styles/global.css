@@ -7,6 +7,9 @@
 
 @import "./home/login.scss";
 
+@import "./custom/messagebox.scss";
+@import "./custom/message.scss";
+
 /* 设置整个应用的默认字体 */
 body {
   --header-height: 40px;

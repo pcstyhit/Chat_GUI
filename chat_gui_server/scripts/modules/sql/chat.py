@@ -11,13 +11,14 @@
     - tokens: 这个消息的tokens数量
 '''
 import sqlite3
+from typing import List, Tuple
+from scripts.libs import LOGGER
 
 
 class ChatSQL:
-    def __init__(self, sqlFileName='chats.db', logger=None) -> None:
+    def __init__(self, sqlFileName='chats.db') -> None:
         # 简单的配置
         self.dbName = sqlFileName
-        self.logger = logger
         # 初始时,连接chat.db数据库
         self.conn = sqlite3.connect(self.dbName)
         self.cursor = self.conn.cursor()
@@ -41,8 +42,7 @@ class ChatSQL:
         '''根据指定的chat table中(由userName_chatCid组成), 插入一条chat记录'''
         self.cursor.execute(
             f"INSERT INTO {userName}_{chatCid} (chatIid,role,message,tokens) VALUES (?,?,?,?)", (chatIid, role, message, tokens,))
-        print(f'Chat item added to {userName}_{chatCid} table.')
-
+        LOGGER.info(f'Chat item added to {userName}_{chatCid} table.')
         # 提交更改
         self.conn.commit()
 
@@ -50,15 +50,24 @@ class ChatSQL:
         '''删除指定用户和聊天表'''
         self.cursor.execute(f"DROP TABLE IF EXISTS {userName}_{chatCid}")
 
-        print(f'Chat table{userName}_{chatCid} deleted successfully.')
+        LOGGER.info(f'Chat table{userName}_{chatCid} deleted successfully.')
         # 提交更改并关闭连接
         self.conn.commit()
 
-    def deleteItemInSpecTable(self, userName, chatCid, chatIid):
-        self.cursor.execute(
-            f"DELETE FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
+    def getItemInSpecTable(self, userName, chatCid, chatIid) -> str:
+        '''从表中获取对应的chatIid的文本内容'''
+        self.cursor.execute(f"SELECT message FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
+        result: List[Tuple[str]] = self.cursor.fetchall()
 
-        print(f'Delete chat item {chatIid} in {userName}_{chatCid} table.')
+        if len(result) > 0:
+            LOGGER.info(f'Get chat item {chatIid} in {userName}_{chatCid} table.')
+            return result[0][0]
+
+        return None
+
+    def deleteItemInSpecTable(self, userName, chatCid, chatIid):
+        self.cursor.execute(f"DELETE FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
+        LOGGER.info(f'Delete chat item {chatIid} in {userName}_{chatCid} table.')
         self.conn.commit()
 
     def getAllItemInSpecTable(self, userName, chatCid):
@@ -67,17 +76,15 @@ class ChatSQL:
         items = self.cursor.fetchall()
         return items
 
-    def getLastNItemsInSpecTable(self, userName, chatCid, n):
+    def getLastNItemsInSpecTable(self, userName, chatCid, n) -> List[Tuple[int, str, str, str, int]]:
         '''查询指定用户和对话名称下的,倒数n个记录'''
-        self.cursor.execute(
-            f"SELECT * FROM {userName}_{chatCid} ORDER BY id DESC LIMIT ?", (n,))
+        self.cursor.execute(f"SELECT * FROM {userName}_{chatCid} ORDER BY id DESC LIMIT ?", (n,))
         lastNitems = self.cursor.fetchall()
         return lastNitems
 
     def getItemNextInfoByUserNameNChatAllId(self, userName, chatCid, chatIid):
         '''特别定制化的一个函数,找出表中chatIid对应的id之后的全部的信息,包括 当前的角色信息, 后续的chatIid列表'''
-        self.cursor.execute(
-            f"SELECT id FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
+        self.cursor.execute(f"SELECT id FROM {userName}_{chatCid} WHERE chatIid = ?", (chatIid,))
         result = self.cursor.fetchone()
 
         if not result:

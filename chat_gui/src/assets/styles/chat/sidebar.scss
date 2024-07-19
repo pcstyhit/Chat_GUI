@@ -46,6 +46,14 @@
       overflow-y: scroll;
       overflow-x: hidden;
 
+      .chat-item-input{
+        height: 36px;
+        width: 200px;
+        border: none;
+        border-radius: 10px;
+        background-color: #7d7d7d;
+      }
+
       .chat-item {
         height: 36px;
         width: 200px;

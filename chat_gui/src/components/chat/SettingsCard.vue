@@ -1,294 +1,186 @@
 <template>
   <!-- overlay-dialog -->
-  <el-dialog
-    class="chat-settings-overlay"
+  <el-drawer
+    class="chat-settings-drawer"
     v-model="isOpenSettingDialog"
-    align-center
-    append-to-body
-    :show-close="false"
-    :close-on-click-modal="false"
+    :before-close="onCancleSettings"
   >
     <!-- header -->
     <template #header>
       <div class="header">
-        <el-text :tag="'b'" class="label">Settings</el-text>
+        <el-text class="label">Edit Current Chat Settings</el-text>
       </div>
-      <el-divider class="divider" />
     </template>
+
     <!-- settings tab -->
     <div class="content">
-      <el-tabs tab-position="left" class="tabs">
-        <!-- prompt setting -->
-        <el-tab-pane>
-          <template #label>
-            <span class="tabs-label">
-              <div class="icon" v-html="SVGS.promptIcon"></div>
-              <el-text class="text">Prompt</el-text>
-            </span>
-          </template>
-          <div class="scroll-bar">
-            <!-- chat name -->
-            <div class="item">
-              <el-text class="item-text">Chat name: </el-text>
-              <el-input v-model="chatParams.chatName" class="input" />
-            </div>
+      <el-divider class="divider" />
 
-            <div class="item">
-              <el-text class="item-text">Select model: </el-text>
-              <el-select v-model="chatParams.modelName">
-                <el-option
-                  v-for="item in chatParams.modelList"
-                  :key="item"
-                  :label="item.label"
-                  :value="item.value"
-                  @click="onSelectModel(item)"
-                />
-              </el-select>
-            </div>
-            <!-- divider -->
-            <el-divider class="divider" />
-            <!-- default prompt switch -->
-            <div class="item">
-              <el-text class="item-text">Use default prompt: </el-text>
-              <el-switch class="c-switch" v-model="isUseDefaultPrompt" />
-            </div>
-            <!-- system prompt -->
-            <div class="item">
-              <el-text class="item-text">Prompts: </el-text>
-              <el-input
-                :value="JSON.stringify(chatParams.promptTemplate)"
-                class="input"
-              />
-            </div>
-          </div>
-        </el-tab-pane>
-        <!-- parameter setting -->
-        <el-tab-pane>
-          <template #label>
-            <span class="tabs-label">
-              <div class="icon" v-html="SVGS.paramIcon"></div>
-              <el-text class="text">Parameters</el-text>
-            </span>
-          </template>
-          <div class="scroll-bar">
-            <div class="item">
-              <!-- use default assistant parameters -->
-              <el-text class="item-text">Use default parameters: </el-text>
-              <el-switch class="c-switch" v-model="isUseDefaultParams" />
-            </div>
-            <!-- passed recode message -->
-            <div class="item">
-              <el-text class="item-text">Passed Message(1~20): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.passedMsgLen"
-                :min="1"
-                :max="20"
-              />
-              <el-input
-                v-model.number="chatParams.passedMsgLen"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.passedMsgLen =
-                      chatParams.passedMsgLen >= 20
-                        ? 20
-                        : chatParams.passedMsgLen;
-                    chatParams.passedMsgLen =
-                      chatParams.passedMsgLen <= 1
-                        ? 1
-                        : chatParams.passedMsgLen;
-                  }
-                "
-              />
-            </div>
-            <!-- max response tokens -->
-            <div class="item">
-              <el-text class="item-text">Max Response(1~8192): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.maxResponseTokens"
-                :min="1"
-                :max="8192"
-              />
-              <el-input
-                v-model.number="chatParams.maxResponseTokens"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.maxResponseTokens =
-                      chatParams.maxResponseTokens >= 8192
-                        ? 8192
-                        : chatParams.maxResponseTokens;
-                    chatParams.maxResponseTokens =
-                      chatParams.maxResponseTokens <= 1
-                        ? 1
-                        : chatParams.maxResponseTokens;
-                  }
-                "
-              />
-            </div>
-            <!-- temperature -->
-            <div class="item">
-              <el-text class="item-text">Temperature(0.1~1): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.temperature"
-                :min="0.01"
-                :max="1"
-                :step="0.01"
-              />
-              <el-input
-                v-model.number="chatParams.temperature"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.temperature =
-                      chatParams.temperature >= 1 ? 1 : chatParams.temperature;
-                    chatParams.temperature =
-                      chatParams.temperature <= 0.01
-                        ? 0.01
-                        : chatParams.temperature;
-                  }
-                "
-              />
-            </div>
-            <!-- topP -->
-            <div class="item">
-              <el-text class="item-text">Top P(0.1~1): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.topP"
-                :min="0.01"
-                :max="1"
-                :step="0.01"
-              />
-              <el-input
-                v-model.number="chatParams.topP"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.topP =
-                      chatParams.topP >= 1 ? 1 : chatParams.topP;
-                    chatParams.topP =
-                      chatParams.topP <= 0.01 ? 0.01 : chatParams.topP;
-                  }
-                "
-              />
-            </div>
-            <!-- Frequecy penalty -->
-            <div class="item">
-              <el-text class="item-text">Frequecy penalty(0~2): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.frequecyPenaty"
-                :min="0"
-                :max="2"
-                :step="0.01"
-              />
-              <el-input
-                v-model.number="chatParams.frequecyPenaty"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.frequecyPenaty =
-                      chatParams.frequecyPenaty >= 2
-                        ? 2
-                        : chatParams.frequecyPenaty;
-                    chatParams.frequecyPenaty =
-                      chatParams.frequecyPenaty <= 0
-                        ? 0
-                        : chatParams.frequecyPenaty;
-                  }
-                "
-              />
-            </div>
-            <!-- Presence penalty -->
-            <div class="item">
-              <el-text class="item-text">Presence penalty(0~2): </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.presentPenaty"
-                :min="0"
-                :max="2"
-                :step="0.01"
-              />
-              <el-input
-                v-model.number="chatParams.presentPenaty"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.presentPenaty =
-                      chatParams.presentPenaty >= 2
-                        ? 2
-                        : chatParams.presentPenaty;
-                    chatParams.presentPenaty =
-                      chatParams.presentPenaty <= 0
-                        ? 0
-                        : chatParams.presentPenaty;
-                  }
-                "
-              />
-            </div>
-            <!-- stop sequences -->
-            <div class="item">
-              <el-text class="item-text">Stop sequences: </el-text>
-              <el-input v-model="chatParams.stopSequence" class="input" />
-            </div>
-          </div>
-        </el-tab-pane>
-        <!-- settings setting -->
-        <el-tab-pane>
-          <template #label>
-            <span class="tabs-label">
-              <div class="icon" v-html="SVGS.userSettingsIcon"></div>
-              <el-text class="text">Settings</el-text>
-            </span>
-          </template>
-          <div class="scroll-bar">
-            <!-- render charcters -->
-            <div class="item">
-              <el-text class="item-text">Max render characters: </el-text>
-              <el-slider
-                class="slider"
-                v-model="chatParams.webRenderStrLen"
-                :min="1"
-                :max="800"
-                :step="1"
-              />
-              <el-input
-                v-model.number="chatParams.webRenderStrLen"
-                class="input-slider"
-                @input="
-                  () => {
-                    chatParams.webRenderStrLen =
-                      chatParams.webRenderStrLen >= 800
-                        ? 800
-                        : chatParams.webRenderStrLen;
-                    chatParams.webRenderStrLen =
-                      chatParams.webRenderStrLen <= 1
-                        ? 1
-                        : chatParams.webRenderStrLen;
-                  }
-                "
-              />
-            </div>
-            <!-- default prompt switch -->
-            <div class="item">
-              <el-text class="item-text">Use proxy: </el-text>
-              <el-switch class="c-switch" v-model="chatParams.isUseProxy" />
-            </div>
-            <div class="item">
-              <el-text class="item-text">Proxy URL: </el-text>
-              <el-input
-                :disabled="!chatParams.isUseProxy"
-                v-model="chatParams.proxyURL"
-                class="input"
-              />
-            </div>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+      <el-scrollbar class="scroll-bar">
+        <!-- chat name and model type -->
+        <div class="title">
+          <el-text class="label">Edit chat name and model type.</el-text>
+        </div>
+        <div class="item">
+          <el-text class="item-text">Chat name: </el-text>
+          <el-input class="input" v-model="chatParams.chatName" />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Select model: </el-text>
+          <el-select v-model="chatParams.modelName" class="item-select">
+            <el-option
+              v-for="item in chatModelList"
+              :key="item.modelName"
+              :label="item.modelName"
+              :value="item.modelName"
+              @change="onSelectModel(item)"
+            />
+          </el-select>
+        </div>
+        <el-divider class="divider" />
+        <!-- chat prompts -->
+        <div class="title">
+          <el-text class="label">Edit chat prompts</el-text>
+        </div>
+        <div class="item">
+          <el-text class="item-text">Use default settings: </el-text>
+          <el-switch class="c-switch" v-model="isUseDefaultPrompt" />
+        </div>
+        <div class="item-textarea">
+          <el-text class="item-text">System: </el-text>
+          <el-input
+            class="input"
+            type="textarea"
+            v-model="chatSysPrompt"
+            @input="updateChatPrompts"
+          />
+        </div>
+        <div class="item-textarea">
+          <el-text class="item-text">User: </el-text>
+          <el-input
+            class="input"
+            type="textarea"
+            v-model="chatUserPrompt"
+            @input="updateChatPrompts"
+          />
+        </div>
+        <div class="item-textarea">
+          <el-text class="item-text">Assist: </el-text>
+          <el-input
+            class="input"
+            type="textarea"
+            v-model="chatAssPrompt"
+            @input="updateChatPrompts"
+          />
+        </div>
+        <el-divider class="divider" />
+        <!-- chat parameters -->
+        <div class="title">
+          <el-text class="label">Edit chat parameters.</el-text>
+        </div>
+        <div class="item">
+          <el-text class="item-text">Use default settings: </el-text>
+          <el-switch class="c-switch" v-model="isUseDefaultParams" />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Passed Message(1~20): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.passedMsgLen"
+            :min="1"
+            :max="20"
+          />
+          <el-input
+            v-model.number="chatParams.passedMsgLen"
+            class="input-slider"
+            @input="validateRange('passedMsgLen', 1, 20)"
+          />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Max Response(1~8192): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.maxResponseTokens"
+            :min="1"
+            :max="8192"
+          />
+          <el-input
+            v-model.number="chatParams.maxResponseTokens"
+            class="input-slider"
+            @input="validateRange('maxResponseTokens', 1, 8192)"
+          />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Temperature(0.1~1): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.temperature"
+            :min="0.01"
+            :max="1"
+            :step="0.01"
+          />
+          <el-input
+            v-model.number="chatParams.temperature"
+            class="input-slider"
+            @input="validateRange('temperature', 0.1, 1)"
+          />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Top P(0.1~1): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.topP"
+            :min="0.01"
+            :max="1"
+            :step="0.01"
+          />
+          <el-input
+            v-model.number="chatParams.topP"
+            class="input-slider"
+            @input="validateRange('topP', 0.1, 1)"
+          />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Frequecy penalty(0~2): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.frequecyPenaty"
+            :min="0"
+            :max="2"
+            :step="0.01"
+          />
+          <el-input
+            v-model.number="chatParams.frequecyPenaty"
+            class="input-slider"
+            @input="validateRange('frequecyPenaty', 0, 2)"
+          />
+        </div>
+        <div class="item">
+          <el-text class="item-text">Presence penalty(0~2): </el-text>
+          <el-slider
+            class="slider"
+            v-model="chatParams.presentPenaty"
+            :min="0"
+            :max="2"
+            :step="0.01"
+          />
+          <el-input
+            v-model.number="chatParams.presentPenaty"
+            class="input-slider"
+            @input="validateRange('presentPenaty', 0, 2)"
+          />
+        </div>
+        <div class="item-textarea">
+          <el-text class="item-text">Stop sequences: </el-text>
+          <el-input
+            class="input"
+            type="textarea"
+            v-model="chatStopSequence"
+            @input="validStopSequence"
+          />
+        </div>
+      </el-scrollbar>
+      <el-divider class="divider" />
     </div>
     <template #footer>
       <div class="dialog-footer">
@@ -301,145 +193,173 @@
         </el-button>
       </div>
     </template>
-  </el-dialog>
+  </el-drawer>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
-import { ElMessage } from "element-plus";
-import * as SVGS from "../../assets/styles/chat/svgs.js";
+import { showMessage } from "../../helper/customMessage.js";
 import { addNewChatAPI, setChatParamsAPI } from "../../apis/chat.js";
 
-export default {
-  setup() {
-    // 从store中得到关于chat的状态
-    const store = useStore();
+// 从store中得到关于chat的状态
+const store = useStore();
 
-    // 控制对话框的属性
-    const isOpenSettingDialog = ref(false);
+// 控制对话框的属性
+const isOpenSettingDialog = ref(false);
 
-    // 根据store存的chat的chatCid是不是''判断是不是新建对话
-    const isNewChat = computed(() => store.state.chat.chatCid == "");
-    const chatCid = computed(() => store.state.chat.chatCid);
+// 根据store存的chat的chatCid是不是''判断是不是新建对话
+const isNewChat = computed(() => store.state.chat.chatCid == "");
+const chatCid = computed(() => store.state.chat.chatCid);
+const chatModelList = computed(() => store.state.chat.modelList);
 
-    // 要被修改的对话的全部参数
-    const chatParams = ref({});
+// 要被修改的对话的全部参数
+const chatParams = ref({});
+const chatSysPrompt = ref("");
+const chatUserPrompt = ref("");
+const chatAssPrompt = ref("");
+const chatStopSequence = ref("");
 
-    const isUseDefaultPrompt = ref(true);
-    const isUseDefaultParams = ref(true);
+const isUseDefaultPrompt = ref(true);
+const isUseDefaultParams = ref(true);
 
-    // 绕过v-model提示的computed是readonly的行为
-    watch(
-      () => store.state.chat.isEditChatSettings,
-      async (value) => {
-        isOpenSettingDialog.value = value == 1;
-        if (isOpenSettingDialog.value) {
-          Object.keys(store.state.chat.chatParams).forEach((key) => {
-            chatParams.value[key] = store.state.chat.chatParams[key];
-          });
-        }
-      }
-    );
+// 绕过v-model提示的computed是readonly的行为
+watch(
+  () => store.state.chat.isEditChatSettings,
+  async (value) => {
+    isOpenSettingDialog.value = value == 1;
+    if (isOpenSettingDialog.value) {
+      Object.keys(store.state.chat.chatParams).forEach((key) => {
+        chatParams.value[key] = store.state.chat.chatParams[key];
+      });
+      // 更新对应的 chat prompt的值
+      chatSysPrompt.value = getPromptContentByRole("system");
+      chatUserPrompt.value = getPromptContentByRole("user");
+      chatAssPrompt.value = getPromptContentByRole("assistant");
+      chatStopSequence.value = JSON.stringify(chatParams.value.stopSequence);
+    }
+  }
+);
 
-    // TODO: 优化这部分的逻辑
-    watch(
-      () => store.state.chat.chatParams,
-      () => {
-        console.log(
-          "😡 直接监听object是无效的. 所以更新chatParams的行为放到了isEditChatSettings内"
-        );
-      }
-    );
+/**
+ * *************************
+ * 处理Save/Confirm(也就是新建对话)的逻辑函数
+ * *************************
+ * */
+const handleSetChatParams = async () => {
+  // 要编辑/新建的chatCid的值
+  var currentChatCid = chatCid.value;
+  // 是否新建对话的标志
+  if (isNewChat.value) {
+    // 发送请求来获取有效的ChatCid
+    var rea = await addNewChatAPI();
+    if (!rea.flag) return false;
+    // 🎉 有效的ChatCid, 新建对话成功！ 存入store
+    store.commit("SET_NEWCHATCID", rea.chatCid);
+    currentChatCid = rea.chatCid;
 
-    /**
-     * *************************
-     * 处理Save/Confirm(也就是新建对话)的逻辑函数
-     * *************************
-     * */
-    const handleSetChatParams = async () => {
-      // 要编辑/新建的chatCid的值
-      var currentChatCid = chatCid.value;
-      // 是否新建对话的标志
-      if (isNewChat.value) {
-        // 发送请求来获取有效的ChatCid
-        var rea = await addNewChatAPI(chatParams.value.chatName);
-        if (!rea.flag) return false;
-        // 🎉 有效的ChatCid, 新建对话成功！ 存入store
-        store.commit("SET_NEWCHATCID_STATE", rea.chatCid);
-        currentChatCid = rea.chatCid;
+    // 新建的对话存入store里
+    store.commit("PUSH_CHATNAMELIST", {
+      chatCid: rea.chatCid,
+      chatName: chatParams.value.chatName,
+    });
+  }
 
-        // 新建的对话存入store里
-        store.commit("PUSH_CHATLIST_STATE", {
-          chatCid: rea.chatCid,
-          chatName: chatParams.value.chatName,
-        });
-      }
+  // 开始设置对话的参数到数据库
+  rea = await setChatParamsAPI(currentChatCid, chatParams.value);
+  if (!rea.flag) return false;
 
-      // 开始设置对话的参数到数据库
-      rea = await setChatParamsAPI(currentChatCid, chatParams.value);
-      if (!rea.flag) return false;
+  store.commit("SET_CHATPARAMS", chatParams.value);
+  // 参数修改完成之后更新label
+  store.commit("SET_CHAT_SHOWSETTINGUI", -1);
+  store.commit("EDIT_CHATNAMELIST", {
+    chatCid: currentChatCid,
+    chatName: chatParams.value.chatName,
+  });
+  return true;
+};
 
-      store.commit("SET_CHATPARAMS_STATE", chatParams.value);
-      // 参数修改完成之后更新label
-      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", -1);
-      return true;
-    };
+const validateRange = (param, min, max) => {
+  chatParams.value[param] = Math.max(
+    min,
+    Math.min(max, chatParams.value[param])
+  );
+};
 
-    /**
-     * *************************
-     * 选择合适的模型
-     * *************************
-     * */
-    const onSelectModel = (item) => {
-      chatParams.value.modelName = item.label;
-      chatParams.value.maxTokens = item.value;
-      chatParams.value.modelType = item.mtype;
-    };
+const validStopSequence = () => {
+  const resultArray = chatStopSequence.value.replace(/\n/g, "").split(";");
+  // 检查结果是否是数组
+  if (Array.isArray(resultArray)) {
+    chatParams.value.stopSequence = resultArray;
+  } else {
+    showMessage("error", "Chat stop sequence必须是数组类型的字符串");
+  }
+};
 
-    /**
-     * *************************
-     * 关闭当前的setting窗口
-     * *************************
-     * */
-    const onCancleSettings = async () => {
-      isOpenSettingDialog.value = false;
-      store.commit("SET_EDIT_CHAT_SETTINGS_STATE", 0);
-    };
+const updateChatPrompts = () => {
+  const key = "content";
+  const tmpPrompts = [
+    { role: "system", content: (chatSysPrompt.value || "").replace(/\n/g, "") },
+    { role: "user", content: (chatUserPrompt.value || "").replace(/\n/g, "") },
+    {
+      role: "assistant",
+      content: (chatAssPrompt.value || "").replace(/\n/g, ""),
+    },
+  ];
+  chatParams.value.prompts = tmpPrompts.filter(
+    (item) => item[key] !== "" && item[key] !== undefined
+  );
+};
 
-    /**
-     * *************************
-     * 向server发送请求创建对应的对话的channel
-     * *************************
-     * */
-    const onStartChat = async () => {
-      if (chatParams.value.chatName == "") {
-        ElMessage.error("😡 Chat 的名称不能为空!");
-        return;
-      }
+/**
+ * *************************
+ * 选择合适的模型
+ * *************************
+ * */
+const onSelectModel = (item) => {
+  chatParams.value.modelName = item.modelName;
+  chatParams.value.maxTokens = item.maxTokens;
+  chatParams.value.modelType = item.modelType;
+};
 
-      // 提前关闭窗口, 再进行API请求, 使得新建chat的逻辑不会和编辑chat的时候的chatCid不为空的保存逻辑冲突
-      isOpenSettingDialog.value = false;
+/**  定义一个函数来获取指定角色的提示内容 */
+const getPromptContentByRole = (role) => {
+  if (chatParams.value.prompts) {
+    return (chatParams.value.prompts.find((item) => item.role === role) || {})
+      .content;
+  }
+  return "";
+};
 
-      // 判断是新建还是保存
-      var flag = await handleSetChatParams();
-      if (!flag) {
-        ElMessage.error("Start Chat error!");
-        return;
-      }
-    };
+/**
+ * *************************
+ * 关闭当前的setting窗口
+ * *************************
+ * */
+const onCancleSettings = async () => {
+  isOpenSettingDialog.value = false;
+  store.commit("SET_CHAT_SHOWSETTINGUI", 0);
+};
 
-    return {
-      isOpenSettingDialog,
-      isNewChat,
-      SVGS,
-      chatParams,
-      isUseDefaultPrompt,
-      isUseDefaultParams,
-      onSelectModel,
-      onStartChat,
-      onCancleSettings,
-    };
-  },
+/**
+ * *************************
+ * 向server发送请求创建对应的对话的channel
+ * *************************
+ * */
+const onStartChat = async () => {
+  if (chatParams.value.chatName == "") {
+    showMessage("error", "😡 Chat 的名称不能为空!");
+    return;
+  }
+
+  // 提前关闭窗口, 再进行API请求, 使得新建chat的逻辑不会和编辑chat的时候的chatCid不为空的保存逻辑冲突
+  isOpenSettingDialog.value = false;
+
+  // 判断是新建还是保存
+  var flag = await handleSetChatParams();
+  if (!flag) {
+    showMessage("error", "Start Chat error!");
+    return;
+  }
 };
 </script>

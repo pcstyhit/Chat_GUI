@@ -3,8 +3,10 @@ import sys
 import time
 import json
 import configparser
-from .bms import OpenAIAPIParams, AzureAPIParams, APIServicesTypes
+from .bms import APIParams
+from .consts import APIServices
 from .encrypt import decryptDict
+from typing import Dict, List
 
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
@@ -14,57 +16,41 @@ class CaseSensitiveConfigParser(configparser.ConfigParser):
         return optionstr  # 保持原样，不转换为小写
 
 
-class ApiServiceTypesChecker:
-    '''用来校验Azure服务内的GPT模型的设置是不是对的'''
-    AZUREOBJ = AzureAPIParams()
-    OPENAIOBJ = OpenAIAPIParams()
-
-    @classmethod
-    def validAzureKeys(cls, data: dict) -> bool:
-        return set(cls.AZUREOBJ.__dict__.keys()).issubset(data.keys())
-
-    @classmethod
-    def validOpenAiKeys(cls, data: dict) -> bool:
-        return set(cls.OPENAIOBJ.__dict__.keys()).issubset(data.keys())
-
-
 class ProjectConfig:
     '''整个项目的配置文件'''
     DIR_LOOP = 3    # 当前文件相对于项目main.py的层级
 
-    # CFG文件必要的键, 这些键值和当前的文件的实例对象的属性也有关系, 实例对象的属性会在这些键值前面加default字符
-    MODELCFGKEYLIST: set = {'modelType', 'apiKey',
-                            'apiVersion', 'endPoint', 'maxToken', 'deployment'}
-
-    # 用户配置文件config.json内可以修改的实例对象的属性名
-    USERCONFIGFILEKEYLIST: set = {
-        'isLoginByTokenKey', 'isUseProxy', 'proxyURL', 'tokenKey', 'dataBasePath', 'host', 'port'}
-
     # 项目用到的文件夹结构和实例对象的属性是一样的命名
     PROJECTNESSDIR = {'dataBasePath', 'cachePath'}
 
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(ProjectConfig, cls).__new__(
+                cls, *args, **kwargs)
+            cls._instance.__initialized = False
+        return cls._instance
+
     def __init__(self) -> None:
-        self.adminUserPassword: str = 'pldz'                # 默认的管理员密码
-        self.isLoginByTokenKey: bool = False                # 是不是用tokenKey进行登录
-        self.tokenKey: str = ''                             # 如果是tokenKey运行的值
-        self.isUseProxy: bool = False                       # 是否使用代理来连接GPT
-        self.proxyURL: str = ''                             # GPT KEY请求的代理链接
+        # 确保是单例
+        if self.__initialized:
+            return
+        self.__initialized = True
 
-        self.host: str = '127.0.0.1'                        # 项目运行的Host address
-        self.port: int = 10080                              # 项目运行的port号
-
-        self.dataBasePath: str = '.dbpath'                  # 数据库相对项目的路径
-        self.cachePath: str = '.cache'                      # 缓存文件夹路径
-        self.staticsPath: str = 'statics'                   # 静态资源相对项目的路径
-        self.apiServiceListFileName = "cfg.json"            # 没有tokenKey情况下的api服务的全部参数配置
-        self.systemConfigFileName: str = 'config.cfg'
+        # ⭐⭐⭐用户配置项目的默认参数的文件, 下面的都是它的参数, 并且有必须要判断的条件
         self.userConfigFileName: str = 'config.json'
-
-        self.apiDefaultService = APIServicesTypes.OPENAI    # 区别是azure还是openai的服务
-        self.apiModelList = {}                              # api的模型列表
-
-        '''项目自己用来实现功能帮助变量'''
-        self.projectPath = self._getProjectAbsPath()
+        self.host: str = '127.0.0.1'                    # 项目运行的Host address
+        self.port: int = 10080                          # 项目运行的port号
+        self.dataBasePath: str = '.dbpath'              # 数据库相对项目的路径
+        self.cachePath: str = '.cache'                  # 缓存文件夹路径
+        self.staticsPath: str = 'statics'               # 静态资源相对项目的路径
+        self.apiParamsListFileName = "cfg.json"         # API服务的全部参数配置
+        self.isEncryptedApiParamsList: bool = False     # API参数是不是被加密
+        self.encryptData: str = ''                      # API的密文, ⭐如果API是被加密的,这个参数必须不为空
+        self.apiParamsList: Dict[str, APIParams] = {}   # API的模型列表
+        self.isUseProxy: bool = False                   # 默认是否使用代理来连接API
+        self.proxyURL: str = ''                         # 默认的代理链接, ⭐如果使用代理时, 这个参数必须不为空
 
         '''从外部依赖文件导入配置, 先加入用户的设置,这个优先级更高, 然后再加载模型的设置'''
         self.updateUserConfig()
@@ -74,18 +60,20 @@ class ProjectConfig:
         '''获得项目的入口脚本文件夹的绝对路径'''
         return os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-    def getAbsPath(self, path: str, fileName: str = None):
+    def _updateModelList(self, APIParamsDict: dict):
+        '''更新模型列表，确保模型参数一致'''
+        for modelName, modelParams in APIParamsDict.items():
+            tmpModel = APIParams()
+            tmpModel.__dict__.update(modelParams)
+            # 增加元素
+            self.apiParamsList[modelName] = tmpModel
+
+    def getAbsPath(self, path: str = None, fileName: str = None) -> str:
         '''获取任何项目文件的绝对路径'''
-        if path is None:
-            if fileName is None:
-                return self.projectPath
-            else:
-                return os.path.join(self.projectPath, fileName)
-        else:
-            if fileName is None:
-                return os.path.join(self.projectPath, path)
-            else:
-                return os.path.join(self.projectPath, path, fileName)
+        projectPath = self._getProjectAbsPath()
+        path = path if path is not None else ''
+        fileName = fileName if fileName is not None else ''
+        return os.path.normpath(os.path.join(projectPath, path, fileName))
 
     def updateUserConfig(self):
         '''如果有config.json的话, 用config.json更新用户的配置'''
@@ -106,16 +94,16 @@ class ProjectConfig:
                     continue
                 self.__dict__[key] = userConfigData[key]
 
-        # 注意 self.isLoginByTokenKey之后, 可以判断tokenKey是不是被嵌入在了config.json里面, 这个是打包成exe用这个项目的特别的行为
-        if self.isLoginByTokenKey:
-            if self.tokenKey == "":
-                # 😋 没有tokenKey那就需要用户用tokenKey来登录了, 这个功能没有用到, 也就不继续写了
-                print("You have configured a tokenKey, tokenKey cannot be empty!")
+        # ⭐ 注意 self.isEncryptedApiParamsList 之后, 必须判断encryptData是不是存在
+        if self.isEncryptedApiParamsList:
+            if self.encryptData == "":
+                print("The project uses an encrypted API model list, but your ciphertext is empty. The project does not have any models!")
                 sys.exit(1)
             else:
-                # 解析tokenKey
-                self.decryptDictTokenKey()
+                # ⭐⭐⭐ 解析加密的 API model List
+                self.decryptAPIParamsList()
         else:
+            # ⭐⭐⭐ 解析文件存放的json数据的 API model List
             self.loadApiServiceFromCfgFile()
 
         # 注意 self.isUserProxy之后, self.proxyURL不能为空
@@ -123,34 +111,26 @@ class ProjectConfig:
             print("You have configured a proxy, proxy url cannot be empty!")
             exit(1)
 
-    def decryptDictTokenKey(self):
-        '''如果配置的是用tokenkey的情况, 解析TokenKey'''
-        apiCfgData: dict = {}
+    def decryptAPIParamsList(self):
+        '''如果配置的是用加密的API model list的情况, 需要解析出结果'''
         try:
             # 解密
-            apiCfgData = decryptDict(self.tokenKey, 'secretkey')
-        except:
-            print(f'Error tokenKey ... ... exit(1)')
+            apiCfgData: dict = decryptDict(self.encryptData, 'secretkey')
+        except Exception as e:
+            print(f'Error tokenKey: {e} ... exit(1)')
             sys.exit(1)
 
         # 判断是不是过期的tokenKey
-        if (apiCfgData['expiredTime'] <= int(time.time())):
-            print(f'Sorry tokenKey is expired!')
+        if apiCfgData.get('expiredTime', 0) <= int(time.time()):
+            print('Sorry API model is expired!')
             sys.exit(1)
 
         # 更新全部的模型信息
-        apiModelDict = apiCfgData.get("modelList", {})
-        for modelName in apiModelDict:
-            flag = self.validApiKeyFormat(apiModelDict[modelName])
-            if not flag:
-                continue
-
-            # 增加元素
-            self.apiModelList.update({modelName: apiModelDict[modelName]})
+        self._updateModelList(apiCfgData.get("modelList", {}))
 
     def loadApiServiceFromCfgFile(self):
-        '''如果没有配置self.isLoginByTokenKey,从cfg.json中加载API的服务信息'''
-        apiCfgFile = self.getAbsPath(self.apiServiceListFileName)
+        '''从cfg.json中加载API的服务信息'''
+        apiCfgFile = self.getAbsPath(self.apiParamsListFileName)
 
         if not os.path.exists(apiCfgFile):
             print(f'Not find the api config ({apiCfgFile}) !!!')
@@ -161,26 +141,8 @@ class ProjectConfig:
         with open(apiCfgFile, 'r') as file:
             apiCfgData: dict = json.load(file)
 
-            # 直接赋值就行了, 也不用做时效判断
-            apiModelDict = apiCfgData.get("modelList", {})
-
-            for modelName in apiModelDict:
-                flag = self.validApiKeyFormat(apiModelDict[modelName])
-                if not flag:
-                    continue
-
-                # 增加元素
-                self.apiModelList.update({modelName: apiModelDict[modelName]})
-
-    def validApiKeyFormat(self, data: dict) -> bool:
-        '''把有效的配置信息的参数才放入最后的self.apiModelList里, 实际上这个检查有点多余, 都是自己写的 也不会出错👻'''
-        sType = data.get("serviceType", None)
-
-        if sType == APIServicesTypes.AZURE:
-            return ApiServiceTypesChecker.validAzureKeys(data)
-
-        if sType == APIServicesTypes.OPENAI:
-            return ApiServiceTypesChecker.validOpenAiKeys(data)
+        # 直接赋值就行了, 也不用做时效判断
+        self._updateModelList(apiCfgData.get("modelList", {}))
 
     def checkProjectNecessaryDirectory(self):
         '''判断项目必要的文件目录是不是存在'''
@@ -197,16 +159,6 @@ class ProjectConfig:
         '''获得静态资源的绝对路径'''
         return self.getAbsPath(self.staticsPath)
 
-    def findDictWithKey1Value(self, targetValue):
-        '''快速找到不同模型类型所对应的第一个模型的dict值'''
-        for key, subDict in self.apiModelList.items():
-            if subDict.get("serviceType") == targetValue:
-                return {key: subDict}
-        return None
-
     def getCacheDirectory(self):
         '''获得缓存的绝对路径'''
         return self.getAbsPath(self.cachePath)
-
-
-CONF = ProjectConfig()

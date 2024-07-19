@@ -17,14 +17,13 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from "vue";
-import { useStore } from "vuex";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
 import SettingsCard from "./SettingsCard.vue";
 import SidebarCard from "./SidebarCard.vue";
 import ChatCard from "./ChatCard.vue";
-import { getAllHistoryAPI } from "../../apis/chat.js";
+import { ref, onMounted, computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+import { showMessage } from "../../helper/customMessage.js";
 
 export default {
   name: "HomePage",
@@ -38,16 +37,12 @@ export default {
     /** ====================== 下面定义函数 ====================== */
     onMounted(async () => {
       if (!isLogged.value) {
-        ElMessage.error("请先登录！");
+        showMessage("error", "请先登录！");
         // 回到登录界面
         router.push({
           path: "/",
         });
       }
-      // 获取服务器的历史对话记录
-      var rea = await getAllHistoryAPI();
-      store.commit("SET_CHATLIST_STATE", rea.data);
-      store.commit("SET_CHATCID_STATE", "");
     });
 
     /** 根据子组件的信号来控制显示或者隐藏侧边栏 */

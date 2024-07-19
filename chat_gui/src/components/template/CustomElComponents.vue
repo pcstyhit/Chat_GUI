@@ -26,7 +26,7 @@ const open = async () => {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .container {
   width: 400px;
   height: 400px;

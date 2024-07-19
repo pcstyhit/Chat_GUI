@@ -2,14 +2,15 @@ import os
 import fastapi
 import uvicorn
 
-from .login import LOGIN_OUT_ROUTER
+from .user import USER_ROUTE
 from .chat import CHAT_ROUTE
 
 from scripts.libs import CONF
+from scripts.modules.umm import UserManage
 
 app = fastapi.FastAPI()
 # 挂载路由
-app.include_router(LOGIN_OUT_ROUTER)
+app.include_router(USER_ROUTE)
 app.include_router(CHAT_ROUTE)
 
 
@@ -28,6 +29,7 @@ def startDevMode():
 def runDev():
     '''启动fastapi webserver 服务'''
     startDevMode()
+    UserManage.init()
     uvicorn.run(app, host=CONF.host, port=CONF.port)
 
 

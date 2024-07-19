@@ -45,11 +45,11 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-import { logIN } from "../../apis/login.js";
+import { login } from "../../helper/user/common.js";
 import { random24Icon, token24Icon } from "../../assets/styles/home/svgs.js";
+import { showMessage } from "@/helper/customMessage";
 export default {
   setup() {
     const router = useRouter();
@@ -71,28 +71,14 @@ export default {
     const onLogin = async () => {
       // 限制操作
       isLoading.value = true;
-      // 存入登录信息，用于HTTP Request获取内容
-      store.commit("SET_USER_NAME", userName.value);
-      store.commit("SET_BASIC_AUTH", generateBasicAuth());
-      // 检验身份，进入界面
-      var rea = await logIN();
+      var flag = await login(userName.value, password.value);
       // 登录成功
-      if (rea.flag) {
-        store.commit("SET_LOGIN_STATE", true);
-        // 用path传参会出现警告，所以没有传参，走store获取信息
-        // https://blog.csdn.net/qq_43072786/article/details/121204960
-        router.push({
-          path: userName.value == "admin" ? "/admin" : "/chat",
-        });
-      } else {
-        ElMessage.info(rea.msg);
-      }
-      isLoading.value = false;
-    };
+      if (!flag) return;
 
-    /** 生成Basic Auth认证的header */
-    const generateBasicAuth = () => {
-      return "Basic " + btoa(userName.value + ":" + password.value);
+      router.push({
+        path: userName.value == "admin" ? "/admin" : "/chat",
+      });
+      isLoading.value = false;
     };
 
     const onLoginWithTokenKey = () => {
@@ -117,7 +103,7 @@ export default {
     };
 
     const onToDoButton = () => {
-      ElMessage.info("敬请期待 😋");
+      showMessage("info", "联系管理员获得登录凭证 😋");
     };
 
     return {

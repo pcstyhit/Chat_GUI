@@ -103,12 +103,12 @@ export default {
               return;
             }
             // 解析成功新建对话
-            store.commit("SET_NEWCHATCID_STATE", rea.chatCid);
+            store.commit("SET_NEWCHATCID", rea.chatCid);
             store.commit("SET_CHATHISTORY_STATE", rea.history);
             // 更新下次要发送的消息的tokens数量
-            store.commit("SET_TOKENS_STATE", rea.tokens);
+            store.commit("SET_TOKENS", rea.tokens);
             // 更新对话名称
-            store.commit("PUSH_CHATLIST_STATE", {
+            store.commit("PUSH_CHATNAMELIST", {
               chatCid: rea.chatCid,
               chatName: chatParams.value.chatName,
             });
@@ -129,9 +129,9 @@ export default {
       }
 
       // 解析成功新建对话
-      store.commit("SET_NEWCHATCID_STATE", rea.chatCid);
+      store.commit("SET_NEWCHATCID", rea.chatCid);
       // 设置对话的参数
-      store.commit("SET_CHATPARAMS_STATE", rea.chatParams);
+      store.commit("SET_CHATPARAMS", rea.chatParams);
       // 给个默认显示的对话内容
       store.commit("PUSH_CHATHISTORY_STATE", {
         chatIid: "xxx-xxx-xxx",
@@ -140,9 +140,9 @@ export default {
         text: item.msg,
       });
       // 更新下次要发送的消息的tokens数量
-      store.commit("SET_TOKENS_STATE", rea.tokens);
+      store.commit("SET_TOKENS", rea.tokens);
       // 更新对话名称
-      store.commit("PUSH_CHATLIST_STATE", {
+      store.commit("PUSH_CHATNAMELIST", {
         chatCid: rea.chatCid,
         chatName: item.name,
       });

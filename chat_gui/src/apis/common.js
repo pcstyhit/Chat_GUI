@@ -1,5 +1,5 @@
 import axios from "axios";
-import store from "../store/index.js";
+import StoreHelper from "../helper/storeHelper";
 
 const PORT = 5001;
 export const SHORTTIME = 2000;
@@ -19,7 +19,7 @@ export async function apiRequest(method, endpoint, body = {}) {
       method: method,
       url: `${URL}${endpoint}`,
       data: body,
-      headers: getHeaders(),
+      headers: StoreHelper.getHeaders(),
       timeout: 10000,
     });
     return response.data;
@@ -31,42 +31,4 @@ export async function apiRequest(method, endpoint, body = {}) {
     }
     return { data: error.message || "Network Error" };
   }
-}
-
-/** 从当前项目的store获得basic auth信息 */
-export const getHeaders = () => {
-  return {
-    "Content-Type": "application/json",
-    Authorization: store.state.user.basicAuth,
-  };
-};
-
-/** 更新流对话 */
-export async function updateStreamHistroy(data) {
-  store.state.chat.chatHistory[store.state.chat.chatHistory.length - 1] = data;
-}
-
-/** 新增流对话 */
-export async function addStreamHistroy(data) {
-  store.state.chat.chatHistory.push(data);
-}
-
-/** 控制当前对话是否处于进行状态 */
-export async function setIsChattingState(data) {
-  store.state.chat.isChatting = data;
-}
-
-/** 设置如果按照当前的内容发送一次对话要消耗的tokens数量 */
-export async function setTokens(data) {
-  store.state.chat.tokens = data;
-}
-
-/** 是否要更新请求的时间 */
-export async function updateTimeStamp(data) {
-  store.state.chat.updateTimeStamp(data);
-}
-
-/** 获取chatParams的webLen的值 */
-export function getWebRenderLen() {
-  return store.state.chat.chatParams.webRenderStrLen;
 }

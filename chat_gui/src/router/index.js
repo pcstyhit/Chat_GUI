@@ -6,6 +6,7 @@ import ChatPage from "../components/chat/HomePage.vue";
 import HomeEmpty from "../components/template/HomeEmptyPage.vue";
 import HomeLogin from "../components/template/HomeLoginPage.vue";
 import HomeAdmin from "../components/template/HomeAdminPage.vue";
+import HomeUserSettings from "../components/template/HomeUserSettings.vue";
 import ChatSidebar from "../components/template/ChatSidebar.vue";
 import ChatChat from "../components/template/ChatChatCard.vue";
 import ChatSettings from "../components/template/ChatSettings.vue";
@@ -49,6 +50,10 @@ const router = createRouter({
     {
       path: "/template/home/admin",
       component: HomeAdmin,
+    },
+    {
+      path: "/template/home/user",
+      component: HomeUserSettings,
     },
     {
       path: "/template/chat/sidebar",

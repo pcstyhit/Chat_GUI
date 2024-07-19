@@ -9,7 +9,7 @@ chatDbPath = CONF.getDateBaseDirectory('chats.db')
 userDbPath = CONF.getDateBaseDirectory('users.db')
 
 
-def getUserSQLHandle() -> ChatSQL:
+def getUserSQLHandle() -> UserSQL:
     '''获得一个访问chatSQL的对象'''
     return UserSQL(sqlFileName=userDbPath)
 

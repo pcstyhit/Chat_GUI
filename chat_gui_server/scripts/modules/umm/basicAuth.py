@@ -2,7 +2,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import secrets
 
-from scripts.libs import CONF
 security = HTTPBasic()
 
 

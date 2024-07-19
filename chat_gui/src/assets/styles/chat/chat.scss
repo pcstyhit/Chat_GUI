@@ -90,6 +90,7 @@
     display: flex;
     flex-wrap: wrap;
     align-content: center;
+    z-index: 2001;
   }
 
   .scroll-window {
@@ -118,7 +119,8 @@
 
       .user-content {
         max-width: 60%;
-        width: 60%;
+        min-width: 30%;
+        width: fit-content;
         border-radius: 16px;
         padding: 8px 16px;
         background-color: #f4f4f4;
@@ -140,17 +142,22 @@
     }
 
     .options-button {
-      width: 24px;
-      height: 24px;
-      background-color: transparent;
-      border: none;
-      border-radius: 12px;
-
-      &:hover {
-        background-color: #939393;
-      }
-      &:active {
-        background-color: #939393;
+      display: none;
+      &.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: transparent;
+        border: none;
+        border-radius: 12px;
+        &:hover {
+          background-color: #939393;
+        }
+        &:active {
+          background-color: #939393;
+        }
       }
     }
     .options-icon {

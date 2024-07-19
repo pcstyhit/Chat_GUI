@@ -19,9 +19,17 @@
     <div v-show="isShowSidebar" class="content">
       <div class="chats">
         <!-- chat history list -->
-        <div v-for="item in chatList" :key="item">
+        <div v-for="item in chatNameList" :key="item">
+          <el-input
+            v-if="item.chatCid == isEditChatCid"
+            class="chat-item-input"
+            v-model="editChatName"
+            placeholder="使用Enter键确认..."
+            @keyup.enter="handleEditChatName"
+          ></el-input>
           <!-- chat item -->
           <el-button
+            v-else
             @click="onLoadHistory(item)"
             :class="[
               'chat-item',
@@ -47,20 +55,31 @@
                   <!-- download or share -->
                   <el-dropdown-item @click.stop="onDownloadChat(item.chatCid)">
                     <div class="svg-icon" v-html="SVGS.downloadIcon"></div>
-                    <el-text style="margin-left: 8px">Download</el-text>
+                    <el-text
+                      style="margin-left: 8px; font-family: 'Microsoft YaHei'"
+                      >Download</el-text
+                    >
                   </el-dropdown-item>
                   <!-- rename -->
-                  <!-- <el-dropdown-item @click.stop="onEditChat(item.chatCid)">
+                  <el-dropdown-item @click.stop="onEditChat(item.chatCid)">
                     <div class="svg-icon" v-html="SVGS.editIcon"></div>
-                    <el-text style="margin-left: 8px">Edit</el-text>
-                  </el-dropdown-item> -->
+                    <el-text
+                      style="margin-left: 8px; font-family: 'Microsoft YaHei'"
+                      >Edit</el-text
+                    >
+                  </el-dropdown-item>
                   <!-- delete -->
                   <el-dropdown-item
-                    @click.stop="onDeleteChat(item.chatCid)"
+                    @click.stop="onDeleteChat(item.chatCid, item.chatName)"
                     style="color: red"
                   >
                     <div class="svg-icon" v-html="SVGS.deleteIcon"></div>
-                    <el-text style="color: red; margin-left: 8px"
+                    <el-text
+                      style="
+                        color: red;
+                        margin-left: 8px;
+                        font-family: 'Microsoft YaHei';
+                      "
                       >Delete</el-text
                     >
                   </el-dropdown-item>
@@ -75,10 +94,11 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { downloadChatHistory } from "../../apis/chat.js";
+import { editChatNameByCid, deletChatByCid } from "../../helper/chat/common.js";
+import { computed, ref } from "vue";
 import { useStore } from "vuex";
-import { ElMessageBox, ElMessage } from "element-plus";
-import { deleteChatAPI, downloadChatHistory } from "../../apis/chat.js";
+import { showMessageBox } from "../../helper/customMessage.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import * as DOMSIZE from "../../assets/styles/consts.js";
 export default {
@@ -92,9 +112,11 @@ export default {
     },
   },
   setup(props, context) {
-    const chatList = computed(() => store.state.user.chatList);
+    const chatNameList = computed(() => store.state.chat.chatNameList);
     const store = useStore();
     const chatCid = computed(() => store.state.chat.chatCid);
+    const isEditChatCid = ref("");
+    const editChatName = ref("");
 
     /** ====================== 下面定义函数 ====================== */
     /**
@@ -118,52 +140,20 @@ export default {
 
     /** 向父组件发送要新建对话的信号 */
     const onNewChat = () => {
-      store.commit("SET_CHATCID_STATE", "");
+      store.commit("SET_CHATCID", "");
     };
 
     /** 向父组件发送加载对话的信号，并`返回对话的chatCid */
     const onLoadHistory = async (item) => {
       if (item.chatCid == chatCid.value) return;
-      var flag = false;
-      await ElMessageBox.confirm("你想继续这个Chat进行对话吗?", "Warning", {
-        confirmButtonText: "Yes",
-        cancelButtonText: "Cancel",
-        type: "warning",
-      })
-        .then(() => {
-          flag = true;
-        })
-        .catch(() => {
-          flag = false;
-        });
-      if (flag) {
-        // 高亮显示当前对话
-        store.commit("SET_CHATCID_STATE", item.chatCid);
-      }
+      var flag = await showMessageBox("你想继续这个Chat进行对话吗?");
+      if (!flag) return;
+      // 高亮显示当前对话
+      store.commit("SET_CHATCID", item.chatCid);
     };
 
-    const onDeleteChat = async (cid) => {
-      var flag = false;
-      await ElMessageBox.confirm("删除这个对话?", "Warning", {
-        confirmButtonText: "Yes",
-        cancelButtonText: "Cancel",
-        type: "warning",
-      })
-        .then(() => {
-          flag = true;
-        })
-        .catch(() => {
-          flag = false;
-        });
-      if (flag) {
-        await deleteChatAPI(cid);
-        store.commit("DELETE_CHATLIST_STATE", cid);
-        flag = chatCid.value == cid;
-        if (flag) {
-          // 向父组件发出删除对话的信号，如果是当前对话需要更新界面
-          store.commit("SET_CHATCID_STATE", "");
-        }
-      }
+    const onDeleteChat = async (chatCid, chatName) => {
+      await deletChatByCid(chatCid, chatName);
     };
 
     const onDownloadChat = async (chatCid) => {
@@ -189,20 +179,29 @@ export default {
       }
     };
 
-    const onEditChat = () => {
-      ElMessage.info("修改对话名称, 敬请期待！😜");
+    const onEditChat = (chatCid) => {
+      isEditChatCid.value = chatCid;
+    };
+
+    const handleEditChatName = async () => {
+      await editChatNameByCid(isEditChatCid.value, editChatName.value);
+      isEditChatCid.value = "";
+      editChatName.value = "";
     };
 
     return {
       SVGS,
       chatCid,
-      chatList,
+      chatNameList,
+      isEditChatCid,
+      editChatName,
       onShowSidebar,
       onNewChat,
       onLoadHistory,
       onDeleteChat,
       onDownloadChat,
       onEditChat,
+      handleEditChatName,
     };
   },
 };

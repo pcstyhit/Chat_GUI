@@ -1,179 +1,111 @@
 '''
-### chat内的成员, 用于更新对话时候的这一个对话通道的参数
+#### chat内的成员, 用来记录用户一个对话里的全部配置信息
+- 包括模型的参数配置
+- 模型本身的类型信息
+- 以及这个对话里面的对话历史, 这样就不需要频繁访问数据库获取内容
 封装成类, 方便支持多个user使用
 '''
-
+import copy
 import tiktoken
+from typing import List, Tuple, Dict
 from .template import TEMPLATES
-from scripts.libs import CONF, AzureAPIParams, OpenAIAPIParams, APIServicesTypes
+from dataclasses import asdict
+from scripts.libs import CONF
+from scripts.libs.bms import ChatAPIParams, APIParams, ChatAPIModelLabel, ChatAPIMessage
 
 
 class Params:
-    # GPT对话的几个角色
-    SYS = 'system'
-    USER = 'user'
-    ASS = 'assistant'
-    # 最简单prompt的模板
-    PROMPTTEMP = {'role': 'system',
-                  'content': 'You are GPT-4o a large language model of OpenAI.'}
-    # 数据的默认值
-    DEFAULT_VALUE = {
-        "chatName": "New Chat",
-        "isUseProxy": False,
-        "proxyURL": '',
-        'modelList': [],
-        'modelType': '',
-        'modelName': '',
-        'maxTokens': 0,
-        'promptTemplate': [{'role': 'system', 'content': 'You are GPT-4o a large language model of OpenAI.'}],
-        'promptTemplateTokens': 15,
-        'passedMsgLen': 6,
-        'maxResponseTokens': 2000,
-        'temperature': 0.7,
-        'topP': 0.95,
-        'frequecyPenaty': 0,
-        'presentPenaty': 0,
-        'stopSequence': [],
-        'chatWithGptTimeout': 10,
-        'webRenderStrLen': 20,
-        "apiService": CONF.apiDefaultService,
-        'openaiAPIParams': OpenAIAPIParams(),
-        'azureAPIParams': AzureAPIParams(),
-        "isGhostChat": False,
-    }
-
-    # 不需要给到WEB的信息
-    NOTEXPOSETOWEB = ['apiService', 'openaiAPIParams',
-                      'azureAPIParams', 'encoding']
-
     def __init__(self) -> None:
-        '''OpenAI GPT 对话的默认几个参数'''
-        # 模型的标签信息
-        self.chatName = ''
-        self.isUseProxy = False,
-        self.proxyURL = '',
-        self.modelType = ''             # 当前模型的类型（gpt-n)
-        self.modelName: str = ''
-        self.modelList: list = []       # 可以用的模型列表
+        self.chatApi: APIParams = APIParams()          # 调用对话API的参数
+        self.curPrms = ChatAPIParams()                 # 当前对话的参数
+        # 对一个用户来说 有一份默认的参数 来决定每次新建对话的 参数是什么
+        self._defaultPrms = ChatAPIParams()            # 用户对于对话的默认参数
+        # 3.5 -> 4.0-* 的计算方法都是一样的
+        self._encoding = tiktoken.encoding_for_model('gpt-4')
+        # 用户能够用上的全部对话模型列表
+        self._modelList: List[ChatAPIModelLabel] = self._initChatModelList()
+        self._promptsTokens: int = 0                    # 提示词的tokens数量
 
-        self.apiService = CONF.apiDefaultService
-        self.openaiAPIParams = OpenAIAPIParams()
-        self.azureAPIParams = AzureAPIParams()
-
-        # 和GPT进行对话的prompt的模板信息
-        self.promptTemplate: list = [
-            {'role': 'system', 'content': 'You are GPT-4o a large language model of OpenAI.'}
-        ]
-        # 就当前的提示的template而言的prompt的tokens数量
-        self.promptTemplateTokens: int = 15
-
-        # 和GPT进行对话的参数
-        self.passedMsgLen: str = 6                    # 上下文长度，默认是20
-        self.maxResponseTokens: int = 2000             # 最大响应的tokens
-        self.temperature: float = 0.7
-        self.topP: float = 0.95
-        self.frequecyPenaty: float = 0
-        self.presentPenaty: float = 0
-        self.stopSequence: list = []
-        self.chatWithGptTimeout: int = 10               # 对话超过多少时间停止它
-
-        '''下面的参数是针对这个项目体验设计的'''
-        self.webRenderStrLen: int = 20                  # 设置字符长度大于20才yeild出内容，减少web渲染次数
-        self.isGhostChat = False                        # 幽灵对话不会记录上下文, 只有默认的prompt
-        '''辅助配置Chat功能设置的方法或者对象'''
-        # 默认3.5 -> 4.0-* 用的计算方法都是一样的 cl100k_base 这里就不改了
-        self.encoding = tiktoken.encoding_for_model('gpt-4')
-
-        # 初始化操作
-        self.useDefaultParams()
-
-    def useDefaultParams(self):
+    def _useDefaultParams(self):
         '''使用默认值'''
-        for key in Params.DEFAULT_VALUE:
-            self.__dict__[key] = Params.DEFAULT_VALUE.get(key)
-        # 更新当前模型的信息
-        self.useDefaultModelParams()
+        self.curPrms = copy.deepcopy(self._defaultPrms)
+        _, self._promptsTokens = self.getMessagesTokens(self.curPrms.prompts)
+        # 直接从 Chat 类型的 API list 里找到第一个模型参数作为对话的默认模型'''
+        if len(self._modelList) > 0:
+            firstItem = self._modelList[0]
+            self.chatApi = CONF.apiParamsList[firstItem.modelName]
+            self.curPrms.__dict__.update(firstItem.__dict__)
 
     def getCurrentParams(self) -> dict:
         '''获得当前用户对这个chat的配置信息,需要和前端约定,用的变量名字是一样的 这样省去了key和value分离的麻烦'''
-        reaDictData = {}
-        for key in self.__dict__:
-            if key in Params.NOTEXPOSETOWEB:
-                continue
-            reaDictData[key] = self.__dict__[key]
-        return reaDictData
+        return copy.deepcopy(self.curPrms.__dict__)
 
     def getDefaultParams(self) -> dict:
-        '''特殊函数,如果说chatCid是空的话,那表示正在创建对话,重置参数并返回结果给到WEB'''
-        self.useDefaultParams()
+        '''获得当前用户的默认chat的配置信息'''
+        tmpDict = copy.deepcopy(self._defaultPrms.__dict__)
+        firstLabel = self._modelList[0]
+        tmpDict.update(firstLabel.__dict__)
+        return tmpDict
+
+    def setDefaultParams(self, data) -> dict:
+        '''设置当前用户的默认chat的配置信息'''
+        self._defaultPrms.__dict__.update(data)
+
+    def setCurrenParamsBeDefault(self) -> dict:
+        '''设置参数是用户默认设置的参数'''
+        self._useDefaultParams()
         return self.getCurrentParams()
-
-    def updateModelType(self) -> bool:
-        '''根据选中的模型名字来重新选中模型的参数, 例如从GPT4切换到GPT3更新这些参数'''
-        modelDictData = CONF.apiModelList[self.modelName]
-        # 找出这个模型的类型
-        self.apiService = modelDictData['serviceType']
-
-        if self.apiService == APIServicesTypes.OPENAI:
-            for key in modelDictData:
-                self.openaiAPIParams.__dict__[key] = modelDictData[key]
-            self.modelType = self.openaiAPIParams.modelType
-            self.maxTokens = self.openaiAPIParams.maxToken
-
-        if self.apiService == APIServicesTypes.AZURE:
-            for key in modelDictData:
-                self.azureAPIParams.__dict__[key] = modelDictData[key]
-            self.modelType = self.azureAPIParams.modelType
-            self.maxTokens = self.azureAPIParams.maxToken
 
     def updateCurrentParams(self, data: dict):
         '''根据data里面包含了哪些参数就把当前实例的属性给更新'''
-        for key in data:
-            self.__dict__[key] = data[key]
-        # 设置信息自带了模型的选项,更新模型
-        self.updateModelType()
+        oldModelLabel = self.curPrms.modelName
+        self.curPrms.__dict__.update(data)
+        _, self._promptsTokens = self.getMessagesTokens(self.curPrms.prompts)
+        # 如果更换了模型 就需要更新APIParams的参数
+        if oldModelLabel != self.curPrms.modelName:
+            self.chatApi = CONF.apiParamsList[oldModelLabel]
 
-    def useDefaultModelParams(self):
-        '''从CONF拿全局的变量,更新当前的一些模型的信息'''
-        self.modelList = []
-        for key in CONF.apiModelList:
-            self.modelList.append(
-                {'label': key, 'value': CONF.apiModelList[key]['maxToken'], 'mtype': CONF.apiModelList[key]['modelType']})
+    def _initChatModelList(self) -> List[ChatAPIModelLabel]:
+        '''CONF中配置的Chat的模型 是固定的 要做的是去掉*gpt*之外的 语音和视觉的模型就行'''
+        rea = []
+        for key in CONF.apiParamsList:
+            tmpItem: APIParams = CONF.apiParamsList[key]
+            # ⭐ 初略过滤一下不是作为对话的模型 https://platform.openai.com/docs/models/continuous-model-upgrades
+            if "gpt" not in tmpItem.modelType:
+                continue
 
-        # OPENAI 服务的默认参数
-        if self.apiService == APIServicesTypes.OPENAI:
-            self.setDefaultAPIModel(
-                self.openaiAPIParams, APIServicesTypes.OPENAI)
+            rea.append(ChatAPIModelLabel(
+                modelName=key, maxTokens=tmpItem.maxTokens, modelType=tmpItem.modelType))
 
-        # AZURE 服务的默认参数
-        if self.apiService == APIServicesTypes.AZURE:
-            self.setDefaultAPIModel(
-                self.azureAPIParams, APIServicesTypes.AZURE)
+        return rea
 
-        self.isUseProxy = CONF.isUseProxy
-        self.proxyURL = CONF.proxyURL
+    def getModelDictList(self) -> list:
+        '''把能够使用的对话模型的列表 从 dataclass的list转成 dict的list'''
+        rea = [asdict(item) for item in self._modelList]
+        return rea
 
-    def setDefaultAPIModel(self, params, serviceType):
-        '''为了减少默认模型参数设置时候要判断模型的类型, 抽了一个函数来做这个事情'''
-        apiModelDict: dict = CONF.findDictWithKey1Value(serviceType)
-        # 模型名称
-        self.modelName = next(iter(apiModelDict.keys()))
-        for key in apiModelDict[self.modelName]:
-            params.__dict__[key] = apiModelDict[self.modelName][key]
+    def getPrmoptsTokens(self):
+        '''返回当前参数设置的默认的提示词的tokens'''
+        return self._promptsTokens
 
-        self.modelType = params.modelType
-        self.maxTokens = params.maxToken
-
-    def getPromptTemplate(self) -> list:
-        '''获得出当前设置的prompt的template'''
-        return self.promptTemplate
-
-    def getTokens(self, msg) -> int:
+    def getTokens(self, msg: str) -> int:
         '''从消息中计算这次消息要耗的tokens数量'''
-        tokenArray = self.encoding.encode(f'{msg}')
+        tokenArray = self._encoding.encode(msg)
         return len(tokenArray)
 
-    def checkTokens(self, msgList: list) -> bool:
+    def getMessagesTokens(self, messages: List[ChatAPIMessage]) -> Tuple[bool, int]:
+        '''从要发送给API的上下文的消息中计算这次要耗的tokens数量'''
+        tokens = 0
+        for msg in messages:
+            tmpTokenArray = self._encoding.encode(msg['content'])
+            tokens += len(tmpTokenArray)
+
+        if tokens > self.chatApi.maxTokens:
+            return False, tokens
+
+        return True, tokens
+
+    def getInvalidMessages(self, msgList: List[Tuple[int, str, str, str, int]]) -> Tuple[bool, List[ChatAPIMessage], int]:
         '''特定的函数,针对存在chat数据库的对话信息item来判断,
         这个数值的消息是否满足tokens数量要求可以被发送
 
@@ -184,23 +116,26 @@ class Params:
          - msg[3]是消息,
          - msg[4]是tokens数量
         '''
-        allTokens = sum(msg[4] for msg in msgList)
-        if allTokens < self.maxTokens:
-            return True
-        return False
+        if len(msgList) < 1:
+            return False, [], self.chatApi.maxTokens
+
+        tmpMessages: List[ChatAPIMessage] = []
+        tmpTokens = self._promptsTokens
+
+        for lenI in range(len(msgList) - 1, -1, -1):
+            tmpMsg = msgList[lenI]
+            tmpMessages.append({'role': tmpMsg[2], 'content':  tmpMsg[3]})
+            tmpTokens += tmpMsg[4]
+
+        if tmpTokens <= self.chatApi.maxTokens:
+            return True, self.curPrms.prompts + tmpMessages, tmpTokens
+        else:
+            del msgList[0]
+            self.getInvalidMessages(msgList)
 
     def setGhostChat(self, template) -> dict:
         '''特定的函数, 设置一个幽灵对话'''
-        self.useDefaultParams()
-        self.isGhostChat = True
-        # 获得模板
-        promptsTempDict: dict = TEMPLATES.get(template, {})
-        promptsDataTemp: list = promptsTempDict.get('data', [])
-
-        # 设置模板和信息
-        self.promptTemplate = promptsDataTemp
-        self.promptTemplateTokens = 0
-        for msg in self.promptTemplate:
-            self.promptTemplateTokens += self.getTokens(msg.get('content', ''))
-
+        self._useDefaultParams()
+        templateDict = TEMPLATES.get(template, {})
+        self.updateCurrentParams({'isGhost': True, 'prompts': templateDict.get('data', {})})
         return self.getCurrentParams()

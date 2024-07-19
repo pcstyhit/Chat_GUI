@@ -4,10 +4,9 @@
     "**/.gitkeep": true,
     "**/__pycache__": true
   },
-  "python.formatting.provider": "none",
   "editor.formatOnPaste": false,
   "editor.formatOnSave": true,
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.autopep8"
-  }
+    "autopep8.args": [
+      "--max-line-length", "125"
+    ],
 }

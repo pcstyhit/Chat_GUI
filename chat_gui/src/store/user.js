@@ -4,6 +4,13 @@ export const UserState = {
    * @type {string}
    */
   name: "",
+
+  /**
+   * 当前的用户头像 base64 的图像
+   * @type {string}
+   */
+  avatar: "",
+
   /**
    * 简单的base64加密的认证字符
    * @type {string}
@@ -16,10 +23,47 @@ export const UserState = {
   isLogged: false,
 
   /**
-   * 用户的全部对话
-   * @type {Array}
+   * 显示设置用户信息的弹框
+   * @type {boolean}
    */
-  chatList: [],
+  isShowUserSettings: false,
+
+  /**
+   * 当前用户的默认的对话参数
+   * @type {object}
+   */
+  userDefaultChatParams: {
+    chatName: "",
+    modelType: "",
+    modelName: "",
+    maxTokens: 0,
+    prompts: [
+      {
+        role: "system",
+        content: "You are GPT-4o a large language model of OpenAI.",
+      },
+    ],
+    tokens: 0,
+    passedMsgLen: 20,
+    maxResponseTokens: 2000,
+    temperature: 0.7,
+    topP: 0.95,
+    frequecyPenaty: 0,
+    presentPenaty: 0,
+    stopSequence: [],
+    timeout: 10,
+  },
+
+  /**
+   * 当前用户的默认的系统设置的参数
+   * @type {object}
+   */
+
+  userDefaultSettings: {
+    isUseProxy: false,
+    proxyURL: "",
+    wenMarkDownRenderChars: 5,
+  },
 
   /**
    * 设置用户名
@@ -46,30 +90,32 @@ export const UserState = {
   },
 
   /**
-   * 直接强制更新对话, 清空或者初始化用
-   * @param {list} data
+   * 设置是不是要显示用户设置的弹框
+   * @param {boolean} data;
    */
-  sethChat(data) {
-    this.chatList = data;
+  setShowUserSettings(data) {
+    this.isShowUserSettings = data;
   },
 
   /**
-   * 新增对话
-   * @param {object} data - 对话的对象 包括名称和chatCid
+   * 重置当前用户的默认的对话的参数信息
+   * @param {object} data - 要更新的数据
    */
-  pushChat(data) {
-    this.chatList.push(data);
+  resetUserDefaultChatParams(data) {
+    // 循环键值对赋值,更新对话的参数
+    Object.keys(data).forEach((key) => {
+      this.userDefaultChatParams[key] = data[key];
+    });
   },
 
   /**
-   * 根据chatCid删除对话
-   * @param {str} data - 状态
+   * 重置当前用户的默认的系统设置的信息
+   * @param {object} data - 要更新的数据
    */
-  deleteChatByChatCid(data) {
-    const index = this.chatList.findIndex((item) => item.chatCid === data);
-
-    if (index !== -1) {
-      this.chatList.splice(index, 1);
-    }
+  resetUserDefaultSettings(data) {
+    // 循环键值对赋值,更新对话的参数
+    Object.keys(data).forEach((key) => {
+      this.userDefaultSettings[key] = data[key];
+    });
   },
 };

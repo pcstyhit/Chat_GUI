@@ -6,6 +6,7 @@
 @import "./chat/markdown.scss";
 
 @import "./home/login.scss";
+@import "./home/user.scss";
 
 @import "./custom/messagebox.scss";
 @import "./custom/message.scss";

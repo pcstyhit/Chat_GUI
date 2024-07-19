@@ -20,7 +20,7 @@ import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
 
-import * as SVGS from "../assets/styles/chat/svgs";
+import * as SVGS from "../assets/styles/chat/svgs.js";
 
 // 语言包需要注册
 hljs.registerLanguage("accesslog", accesslog);

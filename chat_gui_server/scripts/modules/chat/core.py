@@ -2,6 +2,8 @@ import httpx
 from openai import AzureOpenAI
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
+from scripts.libs.bms import APIParams
+from scripts.libs.consts import APIServices
 
 
 class BaseChatClient:
@@ -26,23 +28,11 @@ class BaseChatClient:
 
 
 class AzureChatClient(BaseChatClient):
-    def __init__(self, endPoint, apiKey, apiVersion, deployment, proxyURL=False):
-        if proxyURL:
-            self.client = AzureOpenAI(
-                azure_endpoint=endPoint,
-                api_key=apiKey,
-                api_version=apiVersion,
-                http_client=httpx.Client(proxies={
-                    'http://': proxyURL,
-                    'https://': proxyURL
-                })
-            )
-        else:
-            self.client = AzureOpenAI(
-                azure_endpoint=endPoint,
-                api_key=apiKey,
-                api_version=apiVersion
-            )
+    def __init__(self, endPoint, apiKey, apiVersion, deployment, httpxClient):
+        self.client = AzureOpenAI(azure_endpoint=endPoint,
+                                  api_key=apiKey,
+                                  api_version=apiVersion,
+                                  http_client=httpxClient)
         self.deployment = deployment
 
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
@@ -61,21 +51,10 @@ class AzureChatClient(BaseChatClient):
 
 
 class OpenAIChatClient(BaseChatClient):
-    def __init__(self, model, baseURL, apiKey, proxyURL=False):
-        if proxyURL:
-            self.client = OpenAI(
-                base_url=baseURL,
-                api_key=apiKey,
-                http_client=httpx.Client(proxies={
-                    'http://': proxyURL,
-                    'https://': proxyURL
-                })
-            )
-        else:
-            self.client = OpenAI(
-                base_url=baseURL,
-                api_key=apiKey
-            )
+    def __init__(self, model, baseURL, apiKey, httpxClient):
+        self.client = OpenAI(base_url=baseURL,
+                             api_key=apiKey,
+                             http_client=httpxClient)
         self.model = model
 
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
@@ -98,15 +77,29 @@ class ChatHandle:
         '''默认就选用默认的模型参数'''
         self.client = None
 
-    def updateAzureGPTModel(self, endPoint, apiKey, apiVersion, deployment, isUseProxy=False, proxyURL=""):
+    def updateModel(self, apiParams: APIParams, httpxClient: httpx.Client = None):
+        '''设置模型'''
+        if apiParams.serviceType == APIServices.OPENAI:
+            self.updateOpenAIModel(model=apiParams.modelType,
+                                   baseURL=apiParams.baseUrl,
+                                   apiKey=apiParams.apiKey,
+                                   httpxClient=httpxClient)
+
+        if apiParams.serviceType == APIServices.AZURE:
+            self.updateAzureGPTModel(endPoint=apiParams.endPoint,
+                                     apiKey=apiParams.apiKey,
+                                     apiVersion=apiParams.apiVersion,
+                                     deployment=apiParams.deployment,
+                                     httpxClient=httpxClient)
+
+    def updateAzureGPTModel(self, endPoint, apiKey, apiVersion, deployment, httpxClient):
         '''根据最新的设置切换Azure模型'''
         self.client = AzureChatClient(
-            endPoint, apiKey, apiVersion, deployment, proxyURL if isUseProxy else False)
+            endPoint, apiKey, apiVersion, deployment, httpxClient)
 
-    def updateOpenAIModel(self, model, baseURL, apiKey, isUseProxy=False, proxyURL=""):
+    def updateOpenAIModel(self, model, baseURL, apiKey, httpxClient):
         '''根据最新的设置切换OpenAI模型'''
-        self.client = OpenAIChatClient(
-            model, baseURL, apiKey, proxyURL if isUseProxy else False)
+        self.client = OpenAIChatClient(model, baseURL, apiKey, httpxClient)
 
     def chatSync(self, messages: list, max_tokens=2000, temperature=0.7, top_p=0.95, stop=[], frequency_penalty=0, presence_penalty=0, timeout=10) -> tuple:
         '''结合上下文进行对话的核心函数'''

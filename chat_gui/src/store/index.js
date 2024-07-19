@@ -1,10 +1,13 @@
 import { createStore } from "vuex";
+import { AppState } from "./app";
 import { ChatState } from "./chat";
 import { UserState } from "./user";
 
-import { getSpecChatHistoryAPI, getChatParamsAPI } from "../apis/chat.js";
+import { getChatParamsAPI } from "../apis/chat.js";
+import chatCardHandler from "../helper/chat/chatCard.js";
 
 const state = {
+  app: { ...AppState },
   user: { ...UserState },
   chat: { ...ChatState },
 };
@@ -26,98 +29,71 @@ const mutations = {
   },
 
   /** @param {state} state */
-  SET_CHATLIST_STATE(state, data) {
-    state.user.sethChat(data);
+  SET_USER_DEFAULTCHATPARAMS(state, data) {
+    state.user.resetUserDefaultChatParams(data);
   },
 
   /** @param {state} state */
-  PUSH_CHATLIST_STATE(state, data) {
-    state.user.pushChat(data);
+  SET_USER_DEFAULTSETTINGS(state, data) {
+    state.user.resetUserDefaultSettings(data);
   },
 
   /** @param {state} state */
-  DELETE_CHATLIST_STATE(state, data) {
-    state.user.deleteChatByChatCid(data);
+  SET_USER_SHOWSETTINGUI(state, data) {
+    state.user.setShowUserSettings(data);
   },
 
   /** @param {state} state */
-  SET_CHATHISTORY_STATE(state, data) {
-    state.chat.resetChatHistory(data);
+  SET_CHATNAMELIST(state, data) {
+    state.chat.setChatNameList(data);
   },
 
   /** @param {state} state */
-  PUSH_CHATHISTORY_STATE(state, data) {
-    state.chat.pushChatHistory(data);
+  PUSH_CHATNAMELIST(state, data) {
+    state.chat.pushChatName(data);
+  },
+  /** @param {state} state */
+  EDIT_CHATNAMELIST(state, data) {
+    state.chat.editChatNameList(data);
   },
 
   /** @param {state} state */
-  CHANGE_SPEC_CHATITEM_HISTORY(state, chatItemObj) {
-    state.chat.changeSpecChatItemHistory(chatItemObj);
+  DELETE_CHATNAMELIST(state, data) {
+    state.chat.deleteChatNameList(data);
   },
 
   /** @param {state} state */
-  SET_ISCHATTING_STATE(state, data) {
-    state.chat.setIsChattingState(data);
+  SET_CHATMODELLIST(state, data) {
+    state.chat.setModelList(data);
   },
 
   /** @param {state} state */
-  SET_TOKENS_STATE(state, data) {
+  SET_TOKENS(state, data) {
     state.chat.setTokens(data);
   },
 
   /** @param {state} state */
-  SET_NEWCHATCID_STATE(state, data) {
+  SET_NEWCHATCID(state, data) {
     state.chat.setChatCid(data);
-    state.chat.chatHistory = [];
   },
 
   /** @param {state} state */
-  async SET_CHATCID_STATE(state, data) {
+  async SET_CHATCID(state, data) {
     state.chat.setChatCid(data);
-    state.chat.chatHistory = [];
-
     // 不为空的chatCid代表切换对话就需要更新对话的参数和历史记录
     var rea = await getChatParamsAPI(data);
     if (rea.flag) state.chat.resetChatParams(rea.data);
-
-    // 如果data是空""就代表进入了新建对话情况,不需要从SERVER加载对话了
-    if (data == "") {
-      state.chat.tokens = 0;
-      state.chat.requestTime = 0;
-      return;
-    }
-    // 更新这个对话的历史记录
-    rea = await getSpecChatHistoryAPI(data);
-    if (rea.flag) {
-      state.chat.resetChatHistory(rea.history);
-      // 更新下次要发送的消息的tokens数量
-      state.chat.tokens = rea.tokens;
-    }
+    state.chat.tokens = await chatCardHandler.initChatHistory(data);
   },
 
   /** @param {state} state */
-  SET_CHATPARAMS_STATE(state, data) {
+  SET_CHATPARAMS(state, data) {
     state.chat.resetChatParams(data);
   },
 
   /** @param {state} state */
-  DELETE_CHATHISTORY_ITEM(state, chatIid) {
-    state.chat.deleteChatHistoryItem(chatIid);
-  },
-
-  /** @param {state} state */
-  SET_EDIT_CHAT_SETTINGS_STATE(state, data) {
+  SET_CHAT_SHOWSETTINGUI(state, data) {
     state.chat.setEditChatSettings(data);
-  },
-
-  /** @param {state} state */
-  SET_IS_UPDATE_REQUEST_TIME(state, data) {
-    state.chat.updateTimeStamp(data);
-  },
-
-  /** @param {state} state */
-  SET_REGENERATE_CHATHISTORY(state, data) {
-    state.chat.reGenerateChatHistory(data);
   },
 };
 

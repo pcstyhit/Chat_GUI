@@ -2,14 +2,16 @@
   background-color: white;
   border: none;
   border-radius: 30px;
-  height: 200px;
-  width: 450px;
+  height: 170px;
+  width: 448px;
 
   .el-message-box__header {
     position: relative;
     padding: var(--el-messagebox-padding-primary);
     padding-bottom: 20px;
     top: 10px;
+    border-bottom: 1px solid #e4e7ed;
+    padding-bottom: 10px;
 
     .el-message-box__title {
       padding-left: 0;
@@ -37,10 +39,10 @@
     padding: 10px 20px;
     color: var(--el-messagebox-content-color);
     font-size: var(--el-messagebox-content-font-size);
-    height: 80px;
+    height: 60px;
     width: 380px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
   }
 

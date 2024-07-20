@@ -3,10 +3,13 @@
 
 UserSQL管理两张表: users, users_settings_table 和 users_chats_table, 其中: 
 
-对于users表单的信息 主要管理登录的一些特有的用户属性:
+对于 users 表单的信息 主要管理登录的一些特有的用户属性:
     - id: 数据的主键
     - uid: 用户的唯一身份id, 可以是登录时会分配, uid适合拓展登录情况 没有做, 先埋坑👻
     - userName: 用户名称, 这个也是唯一的
+    - sessionId: 存放登录的session信息
+    - expiredTime: 用户的session的过期时间
+    - maxAge: 会话的最大存活时间
 
 对于 users_settings_table 表单, 主要存放用户的默认设置信息:
     - id: 数据库的id标志
@@ -26,6 +29,8 @@ import sqlite3
 from typing import List, Optional, Tuple
 from scripts.libs import LOGGER
 from scripts.libs.cuuid import oruuid, reuuid
+from scripts.libs.consts import APIAuth
+from datetime import datetime, timezone, timedelta
 
 
 class UserSQL:
@@ -48,7 +53,10 @@ class UserSQL:
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
                 uid TEXT UNIQUE,
-                userName TEXT
+                userName TEXT,
+                sessionId TEXT UNIQUE,
+                expiredTime TIMESTAMP,
+                maxAge INTEGER
             )
         ''')
 
@@ -71,18 +79,6 @@ class UserSQL:
         # 提交修改
         self.conn.commit()
 
-    def print_all_user_settings(self):
-        # 执行查询语句，获取表中的所有内容
-        self.cursor.execute('SELECT * FROM users_settings_table')
-        rows = self.cursor.fetchall()
-
-        # 打印表中的所有内容
-        if rows:
-            for row in rows:
-                print(row)
-        else:
-            print("No records found in users_settings_table.")
-
     def initUsersChatsTable(self):
         '''users_chats_table 表单,主要存放用户的一些操作行为,用uid来挂用户信息
         '''
@@ -100,29 +96,37 @@ class UserSQL:
         # 提交修改
         self.conn.commit()
 
-    def addUserLoginInfo(self, userName) -> str:
+    def addUserLoginInfo(self, userName) -> Optional[str]:
         '''根据用户名创建一个users表来存放相关信息,创建用户记录'''
         self.cursor.execute('SELECT id FROM users WHERE userName=?', (userName,))
         existingUser = self.cursor.fetchone()
 
+        tmpUid = reuuid(20)
+        tmpSsid = oruuid(24)
+        tmpExpiredTime = datetime.now(timezone.utc) + timedelta(days=APIAuth.EXPIREDDAYS)
+
         # 不存在的用户 创建新的条目
         if existingUser is None:
-            uid = reuuid(20)
-            LOGGER.info(f'SERVER add a new user: {userName}.')
             # 存入登录的属性
-            self.cursor.execute("INSERT INTO users (userName, uid) VALUES (?,?)", (userName, uid,))
+            self.cursor.execute("INSERT INTO users (userName,uid,sessionId,expiredTime,maxAge) VALUES (?,?,?,?,?)",
+                                (userName, tmpUid, tmpSsid, tmpExpiredTime, APIAuth.maxAge))
             self.cursor.execute(
                 "INSERT INTO users_settings_table (userName,chatSettings,proxySettings) VALUES (?,?,?)", (userName, None, None))
 
             # 提交修改
             self.conn.commit()
+            LOGGER.info(f'SERVER add a new user: {userName}. session: {tmpSsid}')
+            return tmpUid
 
-            return uid
-        else:
-            self.cursor.execute('SELECT uid FROM users WHERE userName=?', (userName,))
-            uid = self.cursor.fetchone()[0]
-            LOGGER.info(f'User: {userName}. has already in USER SQL; uid: {uid}')
-            return uid
+        # 已经创建过信息的用户
+        flag = self.checkSessionValidByUserName(userName)
+        if not flag:
+            self.setSessionNExpiredTimeByUserName(userName, tmpSsid, tmpExpiredTime)
+
+        self.cursor.execute('SELECT uid FROM users WHERE userName=?', (userName,))
+        uid = self.cursor.fetchone()[0]
+        LOGGER.info(f'User: {userName}. has already in USER SQL; uid: {uid}')
+        return uid
 
     def addChatInfoForSpecUser(self, userName: str, chatParams: str) -> str:
         '''用户操作新建对话,这个时候需要生成一个唯一的chatCid,这个唯一的ChatCid也是生成后面存放具体的对话信息表的名称'''
@@ -216,14 +220,58 @@ class UserSQL:
 
     def getProxySettingsForSpecUser(self, userName: str) -> str:
         '''根据对话用户身份得到默认的对话的设置'''
-        self.cursor.execute(
-            "SELECT proxySettings FROM users_settings_table WHERE userName = ?", (userName,))
+        self.cursor.execute("SELECT proxySettings FROM users_settings_table WHERE userName = ?", (userName,))
         result = self.cursor.fetchone()
         if result:
             # 实际上要用的时候还要转成dict: json.loads(result[0])
             return result[0]
         else:
             return None
+
+    def setSessionNExpiredTimeByUserName(self, userName: str, ssid: str, expiredTime: timedelta) -> bool:
+        '''根据sessionId获得过期时间 判断是不是有效 或者 session本身就是不存在的'''
+        self.cursor.execute(f"UPDATE users SET sessionId=?, expiredTime=?  WHERE userName=?", (ssid, expiredTime, userName,))
+        # 提交更改
+        self.conn.commit()
+
+    def checkSessionValidByUserName(self, userName: str) -> bool:
+        '''根据sessionId获得过期时间 判断是不是有效 或者 session本身就是不存在的'''
+        self.cursor.execute("SELECT expiredTime FROM users WHERE sessionId = ?", (userName,))
+        result = self.cursor.fetchone()
+
+        if result:
+            expiredTime = datetime.fromisoformat(result[0])
+            if expiredTime > datetime.now(timezone.utc):
+                return True
+
+        return False
+
+    def getUserNameBySession(self, ssid: str) -> Optional[str]:
+        '''根据sessionId获得过用户名称 返回值可能是None 或者用户名'''
+        self.cursor.execute("SELECT userName FROM users WHERE sessionId = ?", (ssid,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
+
+    def getSessionByUserName(self, userName: str) -> bool:
+        '''根据用户名称 获得session'''
+        self.cursor.execute("SELECT sessionId FROM users WHERE userName = ?", (userName,))
+        result = self.cursor.fetchone()
+        return result[0]
+
+    def getExpiredTimeByUserName(self, userName: str) -> datetime:
+        '''根据用户名称 获得session'''
+        self.cursor.execute("SELECT expiredTime FROM users WHERE userName = ?", (userName,))
+        result = self.cursor.fetchone()
+        return datetime.fromisoformat(result[0])
+
+    def getMaxAgeByUserName(self, userName: str) -> datetime:
+        '''根据用户名称 获得session'''
+        self.cursor.execute("SELECT maxAge FROM users WHERE userName = ?", (userName,))
+        result = self.cursor.fetchone()
+        return result[0]
 
     def releaseCursor(self):
         '''释放游标，关闭资源'''

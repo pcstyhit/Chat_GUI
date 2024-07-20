@@ -3,6 +3,12 @@
 '''
 
 
+class APIAuth:
+    SESSIONKEY: str = '_cg_ssid'
+    EXPIREDDAYS: int = 15
+    maxAge = 1296000
+
+
 class APIServices:
     AZURE: str = "azure"
     OPENAI: str = "openai"

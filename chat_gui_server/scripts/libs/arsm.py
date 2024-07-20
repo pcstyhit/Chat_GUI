@@ -9,7 +9,7 @@ from pydantic import BaseModel
 class LoginAndLogoutResponse(BaseModel):
     '''login和logout的应答体'''
     flag: bool = False
-    msg: str = 'Password error'
+    log: str = 'Invalid identity.'
 
 
 class GetChatModelListResponse(BaseModel):

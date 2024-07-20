@@ -11,8 +11,6 @@ import {
 } from "../../apis/user.js";
 
 export const login = async (userName, passWord) => {
-  console.log("userName: ", userName);
-  console.log("passWord: ", passWord);
   StoreHelper.setUserLoginInfo(userName, passWord);
   var rea = await loginAPI();
   // 登录成功

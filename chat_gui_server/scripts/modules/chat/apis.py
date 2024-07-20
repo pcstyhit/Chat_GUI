@@ -148,7 +148,7 @@ class ChatAPI(ChatHandle):
     async def updateHttpx(self, httpxp: HttpxProxy):
         '''更新当前对话的网络代理的handler'''
         self.httpxp = httpxp
-        self.updateModel(self.params.chatApi, self.httpxp)
+        self.updateModel(self.params.chatApi, self.httpxp.client)
 
     async def getChatParams(self, chatCid) -> dict:
         '''根据用户名和唯一的对话ChatCid来从数据库中加载对话的配置

@@ -78,6 +78,7 @@ export const createEventSourceAPI = async (chatCid, assHTMLElem, ctrl) => {
   await fetchEventSource(`${URL}/chat/sse/${chatCid}`, {
     method: "POST",
     headers: StoreHelper.getHeaders(),
+    credentials: "include",
     signal: ctrl.signal,
     onmessage(event) {
       const data = JSON.parse(event.data);

@@ -21,6 +21,7 @@ export async function apiRequest(method, endpoint, body = {}) {
       data: body,
       headers: StoreHelper.getHeaders(),
       timeout: 10000,
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {

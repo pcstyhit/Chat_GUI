@@ -6,11 +6,6 @@
 from pydantic import BaseModel
 
 
-class LoginAndLogoutRequest(BaseModel):
-    '''login和logout的请求体'''
-    data: str = ''  # 保留 可能是用户名
-
-
 class SetChatNameAPIRequest(BaseModel):
     '''加载对话历史的函数的请求体'''
     chatCid: str  # 对话的名称

@@ -1,7 +1,6 @@
 import fastapi
-from scripts.modules.umm import authenticateUser, UserManage
-from scripts.libs.arqm import LoginAndLogoutRequest
-from scripts.libs.arsm import LoginAndLogoutResponse
+from scripts.modules.umm import authenticateUser, UmmAPI, SessionParams
+from scripts.libs.consts import APIAuth
 from scripts.libs.arqm import *
 from scripts.libs.arsm import *
 
@@ -9,15 +8,25 @@ USER_ROUTE = fastapi.APIRouter()
 
 
 @USER_ROUTE.post('/login')
-async def loginAPI(_: LoginAndLogoutRequest,
-                   user: str = fastapi.Depends(authenticateUser)):
+async def loginAPI(user: str = fastapi.Depends(authenticateUser)):
     '''插件模式 fastapi.Deepends添加对身份信息的验证
     实际上 可以写成 @LOGINANLOGOUTROUTER.post('/login', dependencies=[fastapi.Depends(authenticateUser)])
     只是如果再想获取headers内的身份会再次调用fastapi.Depends(authenticateUser)
     '''
-    rea: LoginAndLogoutResponse = await UserManage.loginAPI(user)
-    # FastAPI 可以直接返回 rea，它将会自动的转换为 JSON格式
-    return rea
+    rea = LoginAndLogoutResponse()
+    if not user:
+        rea.flag = False
+        return rea
+
+    rea, session = await UmmAPI.loginAPI(user)
+    if not rea.flag:
+        return rea
+
+    # fastapi 设置cookie的几个办法 https://cloud.tencent.com/developer/article/1886073
+    response = fastapi.responses.JSONResponse(content=rea.model_dump())
+    response.set_cookie(key=APIAuth.SESSIONKEY, value=session.ssid, expires=session.expiredTime,
+                        max_age=session.maxAge, httponly=True, secure=False, samesite='lax')
+    return response
 
 
 # ==================================================
@@ -28,7 +37,7 @@ async def loginAPI(_: LoginAndLogoutRequest,
 @USER_ROUTE.get('/user/getUserChatParams')
 async def getUserChatParamsAPI(user: str = fastapi.Depends(authenticateUser)):
     rea = GetUserChatParamsResponse()
-    rea.data = await UserManage.getUserChatDefParamsAPI(user)
+    rea.data = await UmmAPI.getUserChatDefParamsAPI(user)
     rea.flag = True
     return rea
 
@@ -40,7 +49,7 @@ async def getUserChatParamsAPI(user: str = fastapi.Depends(authenticateUser)):
 @USER_ROUTE.post('/user/setUserChatParams')
 async def setUserChatParamsAPI(item: SetUserChatParamsAPIRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetUserChatParamsResponse()
-    rea.flag = await UserManage.setUserChatDefParamsAPI(user, item.data)
+    rea.flag = await UmmAPI.setUserChatDefParamsAPI(user, item.data)
     return rea
 
 # ==================================================
@@ -51,7 +60,7 @@ async def setUserChatParamsAPI(item: SetUserChatParamsAPIRequest, user: str = fa
 @USER_ROUTE.get('/user/getUserSetting')
 async def getUserSettingAPI(user: str = fastapi.Depends(authenticateUser)):
     rea = GetUserSettingResponse()
-    rea.data = await UserManage.getUserSettingsAPI(user)
+    rea.data = await UmmAPI.getUserSettingsAPI(user)
     rea.flag = True
     return rea
 
@@ -63,5 +72,5 @@ async def getUserSettingAPI(user: str = fastapi.Depends(authenticateUser)):
 @USER_ROUTE.post('/user/setUserSetting')
 async def setUserSettingAPI(item: SetUserSettingAPIRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetUserSettingResponse()
-    rea.flag = await UserManage.setUserSettingsAPI(user, item.data)
+    rea.flag = await UmmAPI.setUserSettingsAPI(user, item.data)
     return rea

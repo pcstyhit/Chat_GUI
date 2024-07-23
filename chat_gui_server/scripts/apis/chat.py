@@ -299,37 +299,3 @@ async def newGhostChatAPI(item: NewGhostChatRequest, user: str = fastapi.Depends
     rea.chatCid, rea.chatParams, rea.tokens = await handle.newGhostChat(item.data)
     rea.flag = True
     return rea
-
-
-# ==================================================
-# 🔊 chatAudioAPI 生成语音播报的请求参数信息
-# 调用接口 生成一个mp3文件, 然后和SSE请求一样, 用URL内挂chatCid来进行audio的返回
-# 📝 TODO: 可以直接用OpenAI client做stream的返回, 但是请求体携带用户信息还没有做考虑
-# ==================================================
-
-
-@CHAT_ROUTE.post('/chat/chatAudio')
-async def chatAudioAPI(item: ChatAudioRequest, user: str = fastapi.Depends(authenticateUser)):
-    handle = UserManage.getChatHandle(user)
-    rea = ChatAudioResponse()
-    rea.flag = True
-    rea.data = await handle.getChatItemAudio(item.data)
-    return rea
-
-
-@CHAT_ROUTE.get("/chat/audio/{fileName}")
-async def chatAudioFileAPI(fileName: str):
-    '''直接通过文件名来获取音频, 这里不做异常处理了,方便排除错误'''
-    def iterfile(filePath: str):
-        with open(filePath, mode="rb") as audioChunk:
-            yield from audioChunk
-
-    filePath = f"{CONF.getCacheDirectory()}/{fileName}"
-    return fastapi.responses.StreamingResponse(iterfile(filePath), media_type="audio/mpeg")
-
-
-@CHAT_ROUTE.get("/chat/audio/{chatCid}")
-async def chatAudioStreamAPI(chatCid: str):
-    ''' 📝TODO: 需要传入data进入这个函数才能使用stream的方法'''
-    handle = getChatHandleByChatCid(chatCid)
-    return fastapi.responses.StreamingResponse(handle.getChatItemStreamAudio(), media_type="audio/mpeg")

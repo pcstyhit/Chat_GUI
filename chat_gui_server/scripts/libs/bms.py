@@ -32,10 +32,22 @@ class APIParams:
     maxTokens: int = 0
 
 
+class ChatImageContent(TypedDict):
+    '''对话内容的image的信息'''
+    url: str
+
+
+class ChatContent(TypedDict):
+    '''对话内容的主体信息'''
+    type: str
+    text: str
+    image_url: ChatImageContent
+
+
 class ChatAPIMessage(TypedDict):
-    '''调用API的上下文的字典的类型'''
+    '''调用API的上下文的数据的类型'''
     role: str
-    content: str
+    content: List[ChatContent]
 
 
 @dataclass
@@ -46,7 +58,7 @@ class ChatAPIParams:
     maxTokens: int = 0
     modelType: str = ''
     prompts: List[ChatAPIMessage] = field(default_factory=lambda: [
-        {'role': 'system', 'content': 'You are GPT-4o a large language model of OpenAI.'}])
+        {'role': 'system', 'content': [{'type': 'text', 'text': 'You are GPT-4o a large language model of OpenAI.'}]}])
     passedMsgLen: int = 6
     maxResponseTokens: int = 600
     temperature: float = 0.7

@@ -372,3 +372,62 @@ export const copyMarkdownIcon = /*HTML*/ `<svg
     stroke-linejoin="round"
   />
 </svg>`;
+
+export const chatAttachIcon = /*HTML*/ `<svg
+  fill="#000000"
+  width="24px"
+  height="24px"
+  viewBox="0 0 1.05 1.05"
+  data-name="Layer 2"
+  id="Layer_2"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path d="M0.54 1.042A0.34 0.34 0 0 1 0.201 0.703V0.24a0.233 0.233 0 0 1 0.467 0V0.675a0.137 0.137 0 1 1 -0.275 0V0.279a0.037 0.037 0 0 1 0.075 0V0.675a0.062 0.062 0 1 0 0.124 0V0.24a0.158 0.158 0 0 0 -0.316 0v0.463a0.265 0.265 0 0 0 0.264 0.264c0.138 0 0.234 -0.109 0.234 -0.264v-0.413a0.037 0.037 0 0 1 0.075 0v0.414c0 0.196 -0.129 0.338 -0.309 0.338" />
+</svg>`;
+
+export const chatDeleteImgIcon = /*HTML*/ `<svg
+  version="1.1"
+  id="Layer_1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  width="32px"
+  height="32px"
+  viewBox="0 0 2 2"
+  enable-background="new 0 0 50 50"
+  xml:space="preserve"
+>
+  <path
+    fill="none"
+    stroke="#F45389"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    x1="35.253"
+    y1="14.747"
+    x2="14.747"
+    y2="35.254"
+    d="m1.41 0.59 -0.82 0.82"
+    stroke-width="0.04"
+  />
+  <path
+    fill="none"
+    stroke="#000000"
+    stroke-linejoin="round"
+    cx="25"
+    cy="25"
+    r="23.668"
+    d="M1.946 1A0.946 0.946 0 0 1 1 1.946 0.946 0.946 0 0 1 0.054 1a0.946 0.946 0 0 1 1.892 0z"
+    stroke-width="0.04"
+  />
+  <path
+    fill="none"
+    stroke="#F45389"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    x1="35.253"
+    y1="35.254"
+    x2="14.747"
+    y2="14.747"
+    d="m1.41 1.41 -0.82 -0.82"
+    stroke-width="0.04"
+  />
+</svg>`;

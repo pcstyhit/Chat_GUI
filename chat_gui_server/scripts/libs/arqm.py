@@ -24,7 +24,7 @@ class DeleteChatRequest(BaseModel):
 
 class SetUserMsgRequest(BaseModel):
     '''Chat的中user的消息的请求体, 接受消息存入数据库, 并返回对话的唯一chatIid'''
-    msg: str
+    msg: object
 
 
 class EditChatItemRequest(BaseModel):

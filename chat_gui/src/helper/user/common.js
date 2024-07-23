@@ -60,6 +60,7 @@ export const confirmUserSettings = async (chatParams, userSettings) => {
       showMessage("error", "设置用户默认的对话参数失败 🤡");
       return false;
     }
+    StoreHelper.setUserChatParams(chatParams);
   }
 
   // 不一样才发送接口更改信息
@@ -70,5 +71,6 @@ export const confirmUserSettings = async (chatParams, userSettings) => {
       showMessage("error", "设置用户默认的配置参数失败 🤡");
       return false;
     }
+    StoreHelper.setUserSettings(userSettings);
   }
 };

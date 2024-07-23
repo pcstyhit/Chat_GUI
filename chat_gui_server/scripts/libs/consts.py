@@ -18,3 +18,9 @@ class ChatRoles:
     SYS = 'system'
     USER = 'user'
     ASS = 'assistant'
+
+
+class ChatMessageType:
+    TEXT = 'text'
+    IMAGE = 'image_url'
+    IMAGEURL = 'url'

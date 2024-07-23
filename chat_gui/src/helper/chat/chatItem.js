@@ -7,6 +7,7 @@ import {
   eidtChatItemIcon,
   copyMarkdownIcon,
   deleteChatItemIcon,
+  chatDeleteImgIcon,
 } from "../../assets/styles/chat/svgs.js";
 import {
   getChatItemAPI,
@@ -118,7 +119,7 @@ class ChatItemHelper {
     }
   }
 
-  _addUserQHTMLElem = (chatIid, text) => {
+  _addUserQHTMLElem = (chatIid, contentList) => {
     if (!this._init()) return;
     const userDiv = document.createElement("div");
     userDiv.classList.add("user");
@@ -127,9 +128,34 @@ class ChatItemHelper {
     const userContentDiv = document.createElement("div");
     userContentDiv.classList.add("user-content");
 
+    const contentAreaDiv = document.createElement("div");
+    contentAreaDiv.classList.add("content-area");
+
+    const imgAreaElem = document.createElement("div");
+    imgAreaElem.classList.add("img-area");
     const textDiv = document.createElement("div");
     textDiv.classList.add("text");
-    textDiv.innerHTML = textToHtml(text);
+
+    contentList.forEach((content) => {
+      if (content.type == "text") {
+        textDiv.innerHTML = textToHtml(content.text);
+      }
+
+      if (content.type == "image_url") {
+        const imgItem = document.createElement("img");
+        imgItem.classList.add("item");
+        imgItem.src = content.image_url.url;
+        imgAreaElem.appendChild(imgItem);
+      }
+    });
+
+    const hasImgContent = contentList.some((obj) => obj.type === "image_url");
+    if (hasImgContent) {
+      contentAreaDiv.appendChild(imgAreaElem);
+    }
+
+    contentAreaDiv.appendChild(textDiv);
+    userContentDiv.appendChild(contentAreaDiv);
 
     const optionsDiv = document.createElement("div");
     optionsDiv.classList.add("options");
@@ -161,7 +187,6 @@ class ChatItemHelper {
       this._deleteChatItem(userDiv.id);
     });
 
-    userContentDiv.appendChild(textDiv);
     userContentDiv.appendChild(optionsDiv);
     userDiv.appendChild(userContentDiv);
     this._chatContainer.appendChild(userDiv);
@@ -222,6 +247,46 @@ class ChatItemHelper {
 
     return assistantDiv;
   };
+
+  /** 监听剪切板的内容 开始做图像的粘贴 */
+  displayImage = (base64Image) => {
+    const imgContainer = document.getElementById("chat-input-imgs");
+    const itemElem = document.createElement("div");
+    itemElem.classList.add("item");
+    itemElem.addEventListener("click", () => {
+      itemElem.remove();
+    });
+
+    const imgElement = document.createElement("img");
+    imgElement.classList.add("image");
+    imgElement.src = base64Image;
+
+    const hoverItem = document.createElement("div");
+    hoverItem.classList.add("hover-item");
+
+    const deleteButtonElem = document.createElement("div");
+    deleteButtonElem.classList.add("hover-button");
+    deleteButtonElem.innerHTML = chatDeleteImgIcon;
+    hoverItem.appendChild(deleteButtonElem);
+
+    itemElem.appendChild(hoverItem);
+    itemElem.appendChild(imgElement);
+    imgContainer.appendChild(itemElem);
+  };
+
+  _getAllImgs() {
+    const imgContainer = document.getElementById("chat-input-imgs");
+    const imgs = imgContainer.getElementsByTagName("img");
+    const srcs = [];
+    for (let i = 0; i < imgs.length; i++) {
+      srcs.push({
+        type: "image_url",
+        image_url: { url: imgs[i].getAttribute("src") },
+      });
+    }
+    imgContainer.innerHTML = "";
+    return srcs;
+  }
 
   async _getAssistantResponse(chatCid) {
     // 从服务端获得输出,并创建一个HTMLElement来缓存值

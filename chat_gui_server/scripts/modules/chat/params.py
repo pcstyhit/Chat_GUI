@@ -6,12 +6,14 @@
 封装成类, 方便支持多个user使用
 '''
 import copy
+import json
 import tiktoken
 from typing import List, Tuple, Dict
 from .template import TEMPLATES
 from dataclasses import asdict
 from scripts.libs import CONF
-from scripts.libs.bms import ChatAPIParams, APIParams, ChatAPIModelLabel, ChatAPIMessage
+from scripts.libs.bms import *
+from scripts.libs.consts import ChatMessageType
 
 
 class Params:
@@ -88,50 +90,63 @@ class Params:
         '''返回当前参数设置的默认的提示词的tokens'''
         return self._promptsTokens
 
-    def getTokens(self, msg: str) -> int:
+    def getStrTokens(self, data: str) -> int:
+        '''获得字符串的tokens数量'''
+        tmpTokenArray = self._encoding.encode(data)
+        return len(tmpTokenArray)
+
+    def getOneMsgTokens(self, msg: ChatAPIMessage) -> int:
         '''从消息中计算这次消息要耗的tokens数量'''
-        tokenArray = self._encoding.encode(msg)
-        return len(tokenArray)
+        tokens = 0
+        for content in msg['content']:
+            if content['type'] == ChatMessageType.TEXT:
+                tokens += self.getStrTokens(content['text'])
+            if content['type'] == ChatMessageType.IMAGE:
+                # 图像的tokens 默认先用70 按照官网给的解释是 LOW 精度的图像 都是固定的 tokens
+                tokens += 70
+        return tokens
 
     def getMessagesTokens(self, messages: List[ChatAPIMessage]) -> Tuple[bool, int]:
         '''从要发送给API的上下文的消息中计算这次要耗的tokens数量'''
         tokens = 0
         for msg in messages:
-            tmpTokenArray = self._encoding.encode(msg['content'])
-            tokens += len(tmpTokenArray)
+            tokens += self.getOneMsgTokens(msg)
 
         if tokens > self.chatApi.maxTokens:
             return False, tokens
 
         return True, tokens
 
-    def getInvalidMessages(self, msgList: List[Tuple[int, str, str, str, int]]) -> Tuple[bool, List[ChatAPIMessage], int]:
-        '''特定的函数,针对存在chat数据库的对话信息item来判断,
-        这个数值的消息是否满足tokens数量要求可以被发送
+    def getValidMessage(self, msgTupleList: List[Tuple[int, str, str, int]]) -> Tuple[bool, List[ChatAPIMessage], int]:
+        '''特定的函数,针对存在chat数据库的对话信息item来判断, 这个数值的消息是否满足tokens数量要求可以被发送'''
+        flag, msgStrList, tokens = self.getMessagesStrList(msgTupleList)
+        msgList = self.curPrms.prompts + [json.loads(msg) for msg in msgStrList]
+        return flag, msgList, tokens
 
-        `msgList` 其中每个msg的格式是元组: `msg = (1, 'TYR_YGHGH', 'user', 'Hello!', 10)`
+    def getMessagesStrList(self, msgList: List[Tuple[int, str, str, int]]) -> Tuple[bool, List[ChatAPIMessage], int]:
+        ''' 处理数据库拿到的消息列表的内容 
+        `msgList` 其中每个msg的格式是元组: `msg = (1, 'TYR_YGHGH', '{"role":"system", "content":[...]}', 'Hello!', 10)`
          - msg[0]是数据库的id位,
          - msg[1]是chatIid
-         - msg[2]是角色信息,
-         - msg[3]是消息,
-         - msg[4]是tokens数量
+         - msg[2]是消息,
+         - msg[3]是tokens数量
         '''
         if len(msgList) < 1:
             return False, [], self.chatApi.maxTokens
 
-        tmpMessages: List[ChatAPIMessage] = []
+        tmpMessages: List[str] = []
         tmpTokens = self._promptsTokens
 
         for lenI in range(len(msgList) - 1, -1, -1):
             tmpMsg = msgList[lenI]
-            tmpMessages.append({'role': tmpMsg[2], 'content':  tmpMsg[3]})
-            tmpTokens += tmpMsg[4]
+            tmpMessages.append(tmpMsg[2])
+            tmpTokens += tmpMsg[3]
 
         if tmpTokens <= self.chatApi.maxTokens:
-            return True, self.curPrms.prompts + tmpMessages, tmpTokens
+            return True, tmpMessages, tmpTokens
         else:
             del msgList[0]
-            self.getInvalidMessages(msgList)
+            self.getMessagesStrList(msgList)
 
     def setGhostChat(self, template) -> dict:
         '''特定的函数, 设置一个幽灵对话'''

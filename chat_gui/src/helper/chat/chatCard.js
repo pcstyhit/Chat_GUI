@@ -100,9 +100,9 @@ class ChatCardHelper extends ChatItemHelper {
     var rea = await getSpecChatHistoryAPI(chatCid);
     if (rea.flag) {
       rea.history.forEach((item) => {
-        if (item.role == "user")
-          this._addUserQHTMLElem(item.chatIid, item.content);
-        else this._addAssAHTMLElem(item.chatIid, item.content);
+        if (item.message.role == "user")
+          this._addUserQHTMLElem(item.chatIid, item.message.content);
+        else this._addAssAHTMLElem(item.chatIid, item.message.content[0].text);
       });
       return rea.tokens;
     }
@@ -112,11 +112,15 @@ class ChatCardHelper extends ChatItemHelper {
   async sendChat(msg) {
     this.removeListener();
     var chatCid = await this._newChat();
+
     // 发送消息
-    var rea = await setUserMsgAPI(msg);
+    var imgObjList = this._getAllImgs();
+    var content = msg.concat(imgObjList);
+    var rea = await setUserMsgAPI({ role: "user", content: content });
+
     if (rea.flag) {
       // 更新UI
-      this._addUserQHTMLElem(rea.chatIid, msg);
+      this._addUserQHTMLElem(rea.chatIid, content);
       // 更新tokens
       StoreHelper.setTokens(rea.tokens);
       // 开始更新Assistant的回答

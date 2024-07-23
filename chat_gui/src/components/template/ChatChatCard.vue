@@ -117,14 +117,21 @@
     </el-scrollbar>
     <!-- Message Input -->
     <div class="input-card">
-      <el-input
-        class="custom-textarea"
-        type="textarea"
-        v-model="inputText"
-        placeholder="Please input your question ..."
-        @keyup.enter="sendContent"
-        :autosize="{ minRows: 1, maxRows: 8 }"
-      ></el-input>
+      <el-button class="attach-button">
+        <!-- pause chat button -->
+        <div class="icon" v-html="SVGS.chatAttachIcon"></div>
+      </el-button>
+      <div class="input-area">
+        <div class="imgs" id="chat-input-imgs"></div>
+        <el-input
+          class="custom-textarea"
+          type="textarea"
+          v-model="inputText"
+          placeholder="Please input your question ..."
+          @keyup.enter="sendContent"
+          :autosize="{ minRows: 1, maxRows: 4 }"
+        ></el-input>
+      </div>
       <!-- send and pause button -->
       <el-button
         class="send-button"
@@ -163,7 +170,9 @@ export default {
     const innerRef = ref();
     const isStreamResponse = ref(true);
     const isAutoToBottom = ref(true);
-    onMounted(() => {});
+    onMounted(() => {
+      pasteImage();
+    });
     /** 模仿向服务器发送数据 */
     const sendContent = async () => {
       chatting.value = true;
@@ -194,6 +203,56 @@ export default {
       const max = innerRef.value.clientHeight;
       console.log("max", max);
       scrollbarRef.value.setScrollTop(max);
+    };
+
+    const pasteImage = () => {
+      document
+        .querySelector(".input-card")
+        .addEventListener("paste", function (event) {
+          const items = event.clipboardData.items;
+          for (let i = 0; i < items.length; i++) {
+            if (
+              items[i].kind === "file" &&
+              items[i].type.startsWith("image/")
+            ) {
+              const file = items[i].getAsFile();
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                console.log(e.target.result); // 打印图片的 base64 编码
+                displayImage(e.target.result);
+              };
+              reader.readAsDataURL(file);
+              // 阻止默认的粘贴行为，防止文本粘贴
+              event.preventDefault();
+              return;
+            }
+          }
+        });
+    };
+
+    const displayImage = (base64Image) => {
+      const imgContainer = document.getElementById("chat-input-imgs");
+      const itemElem = document.createElement("div");
+      itemElem.classList.add("item");
+      itemElem.addEventListener("click", () => {
+        itemElem.remove();
+      });
+
+      const imgElement = document.createElement("img");
+      imgElement.classList.add("image");
+      imgElement.src = base64Image;
+
+      const hoverItem = document.createElement("div");
+      hoverItem.classList.add("hover-item");
+
+      const deleteButtonElem = document.createElement("div");
+      deleteButtonElem.classList.add("hover-button");
+      deleteButtonElem.innerHTML = SVGS.chatDeleteImgIcon;
+      hoverItem.appendChild(deleteButtonElem);
+
+      itemElem.appendChild(hoverItem);
+      itemElem.appendChild(imgElement);
+      imgContainer.appendChild(itemElem);
     };
 
     return {

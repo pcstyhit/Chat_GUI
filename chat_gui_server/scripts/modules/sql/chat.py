@@ -6,10 +6,10 @@
 对于userName_chatCid的表 管理对话的一些消息属性:
     - id: 数据的主键
     - chatIid: 要表达的意思是对话内的item的id, 一条对话的一个随机的唯一标志
-    - role: 角色,分为 user和assistant, system的在usersmap的chatParams里面
-    - message: 具体的消息内容
+    - message: 具体的消息内容一个chatAPIMessage类型的字典
     - tokens: 这个消息的tokens数量
 '''
+
 import sqlite3
 from typing import List, Tuple
 from scripts.libs import LOGGER
@@ -31,17 +31,16 @@ class ChatSQL:
             CREATE TABLE IF NOT EXISTS {userName}_{chatCid} (
                 id INTEGER PRIMARY KEY,
                 chatIid TEXT,
-                role TEXT,
                 message TEXT,
                 tokens INTEGER
             )
         ''')
         self.conn.commit()
 
-    def addItemToSpecTable(self, userName, chatCid, chatIid, role, message, tokens):
+    def addItemToSpecTable(self, userName, chatCid, chatIid, message, tokens):
         '''根据指定的chat table中(由userName_chatCid组成), 插入一条chat记录'''
         self.cursor.execute(
-            f"INSERT INTO {userName}_{chatCid} (chatIid,role,message,tokens) VALUES (?,?,?,?)", (chatIid, role, message, tokens,))
+            f"INSERT INTO {userName}_{chatCid} (chatIid,message,tokens) VALUES (?,?,?)", (chatIid, message, tokens,))
         LOGGER.info(f'Chat item added to {userName}_{chatCid} table.')
         # 提交更改
         self.conn.commit()

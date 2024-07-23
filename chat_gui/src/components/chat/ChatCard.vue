@@ -42,14 +42,21 @@
     </el-scrollbar>
     <!-- Message Input -->
     <div class="input-card">
-      <el-input
-        class="custom-textarea"
-        type="textarea"
-        v-model="userQuestionText"
-        placeholder="Please input your question ..."
-        @keydown.enter="onEnterKeydown"
-        :autosize="{ minRows: 1, maxRows: 8 }"
-      ></el-input>
+      <el-button class="attach-button">
+        <!-- pause chat button -->
+        <div class="icon" v-html="SVGS.chatAttachIcon"></div>
+      </el-button>
+      <div class="input-area">
+        <div class="imgs" id="chat-input-imgs"></div>
+        <el-input
+          class="custom-textarea"
+          type="textarea"
+          v-model="userQuestionText"
+          placeholder="Please input your question ..."
+          @keydown.enter="onEnterKeydown"
+          :autosize="{ minRows: 1, maxRows: 4 }"
+        ></el-input>
+      </div>
       <!-- send and pause button -->
       <el-button
         class="send-button"
@@ -84,7 +91,7 @@
 import TextEditor from "../common/TextEditor.vue";
 import RolesCard from "./RolesCard.vue";
 import UserSettings from "../home/UserSettings.vue";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import { showMessage } from "../../helper/customMessage.js";
@@ -104,6 +111,10 @@ const requestTimeObj = ref({
 
 const isShowRoleCard = ref(true);
 
+onMounted(() => {
+  pasteImage();
+});
+
 watch(
   () => store.state.chat.chatCid,
   async (value) => {
@@ -115,6 +126,28 @@ watch(
     }
   }
 );
+
+const pasteImage = () => {
+  document
+    .querySelector(".input-card")
+    .addEventListener("paste", function (event) {
+      const items = event.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === "file" && items[i].type.startsWith("image/")) {
+          const file = items[i].getAsFile();
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            // 生成图像到div下
+            chatCardHandler.displayImage(e.target.result);
+          };
+          reader.readAsDataURL(file);
+          // 阻止默认的粘贴行为，防止文本粘贴
+          event.preventDefault();
+          return;
+        }
+      }
+    });
+};
 
 /** 输入框的按键组合键 */
 const onEnterKeydown = async (event) => {
@@ -143,7 +176,7 @@ const onSendContent = async () => {
   isChatting.value = true;
   startRequestTime();
 
-  await chatCardHandler.sendChat(msg);
+  await chatCardHandler.sendChat([{ type: "text", text: msg }]);
   isChatting.value = false;
   chatCardHandler.addListener();
   stopRequestTime();

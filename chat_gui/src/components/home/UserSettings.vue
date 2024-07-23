@@ -286,8 +286,13 @@ watch(
 /**  定义一个函数来获取指定角色的提示内容 */
 const getPromptContentByRole = (role) => {
   if (chatParams.value.prompts) {
-    return (chatParams.value.prompts.find((item) => item.role === role) || {})
-      .content;
+    const contentList = (
+      chatParams.value.prompts.find((item) => item.role === role) || {}
+    ).content;
+
+    if (contentList) {
+      return contentList[0].text;
+    }
   }
   return "";
 };
@@ -312,11 +317,23 @@ const validStopSequence = () => {
 const updateChatPrompts = () => {
   const key = "content";
   const tmpPrompts = [
-    { role: "system", content: (chatSysPrompt.value || "").replace(/\n/g, "") },
-    { role: "user", content: (chatUserPrompt.value || "").replace(/\n/g, "") },
+    {
+      role: "system",
+      content: [
+        { type: "text", text: (chatSysPrompt.value || "").replace(/\n/g, "") },
+      ],
+    },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: (chatUserPrompt.value || "").replace(/\n/g, "") },
+      ],
+    },
     {
       role: "assistant",
-      content: (chatAssPrompt.value || "").replace(/\n/g, ""),
+      content: [
+        { type: "text", text: (chatAssPrompt.value || "").replace(/\n/g, "") },
+      ],
     },
   ];
   chatParams.value.prompts = tmpPrompts.filter(

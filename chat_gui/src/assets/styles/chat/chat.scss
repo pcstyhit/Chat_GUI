@@ -147,6 +147,7 @@
             .item {
               height: 80px;
               width: 80px;
+              object-fit: contain;
             }
           }
 
@@ -221,7 +222,6 @@
 
           .code-rendered {
             position: relative;
-            /* margin: -35px 0px -35px 0px; */
           }
 
           .code-block {
@@ -232,6 +232,7 @@
 
             .copy-header {
               margin-bottom: 0px;
+              /* margin-top: -30px; */
               background: #000000;
               position: absolute;
               display: flex;
@@ -274,6 +275,7 @@
 
             .hljs {
               margin: -15px 0px -20px 0px;
+              /* margin: -30px 0px -30px 0px; */
               padding: 8px;
               width: calc(100% - 16px);
               max-width: calc(100% - 16px);
@@ -335,6 +337,7 @@
           .image {
             height: 50px;
             width: 50px;
+            object-fit: contain;
           }
 
           .hover-item {

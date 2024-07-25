@@ -8,7 +8,7 @@ from scripts.libs.consts import APIServices
 
 class BaseChatClient:
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
-             frequency_penalty: float, presence_penalty: float, timeout: int, stream: bool):
+             frequency_penalty: float, presence_penalty: float, stream: bool):
         """
         这个方法应该由子类实现以处理聊天功能。
 
@@ -20,7 +20,6 @@ class BaseChatClient:
         - stop (list): 停止序列列表。
         - frequency_penalty (float): 频率惩罚。
         - presence_penalty (float): 出现惩罚。
-        - timeout (int): 超时时间。
         - stream (bool): 是否流式输出。
         """
         # 参数 'messages' 将在子类中使用
@@ -36,7 +35,7 @@ class AzureChatClient(BaseChatClient):
         self.deployment = deployment
 
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
-             frequency_penalty: float, presence_penalty: float, timeout: int, stream: bool):
+             frequency_penalty: float, presence_penalty: float, stream: bool):
         response: ChatCompletion = self.client.chat.completions.create(model=self.deployment,
                                                                        messages=messages,
                                                                        stream=stream,
@@ -45,8 +44,7 @@ class AzureChatClient(BaseChatClient):
                                                                        top_p=top_p,
                                                                        stop=stop,
                                                                        frequency_penalty=frequency_penalty,
-                                                                       presence_penalty=presence_penalty,
-                                                                       timeout=timeout)
+                                                                       presence_penalty=presence_penalty)
         return response
 
 
@@ -58,7 +56,7 @@ class OpenAIChatClient(BaseChatClient):
         self.model = model
 
     def chat(self, messages: list, max_tokens: int, temperature: float, top_p: float, stop: list,
-             frequency_penalty: float, presence_penalty: float, timeout: int, stream: bool):
+             frequency_penalty: float, presence_penalty: float, stream: bool):
         response: ChatCompletion = self.client.chat.completions.create(model=self.model,
                                                                        messages=messages,
                                                                        stream=stream,
@@ -67,8 +65,7 @@ class OpenAIChatClient(BaseChatClient):
                                                                        top_p=top_p,
                                                                        stop=stop,
                                                                        frequency_penalty=frequency_penalty,
-                                                                       presence_penalty=presence_penalty,
-                                                                       timeout=timeout)
+                                                                       presence_penalty=presence_penalty)
         return response
 
 
@@ -101,14 +98,14 @@ class ChatHandle:
         '''根据最新的设置切换OpenAI模型'''
         self.client = OpenAIChatClient(model, baseURL, apiKey, httpxClient)
 
-    def chatSync(self, messages: list, max_tokens=2000, temperature=0.7, top_p=0.95, stop=[], frequency_penalty=0, presence_penalty=0, timeout=10) -> tuple:
+    def chatSync(self, messages: list, max_tokens=2000, temperature=0.7, top_p=0.95, stop=[], frequency_penalty=0, presence_penalty=0) -> tuple:
         '''结合上下文进行对话的核心函数'''
         response = self.client.chat(messages, max_tokens, temperature, top_p,
-                                    stop, frequency_penalty, presence_penalty, timeout, stream=False)
+                                    stop, frequency_penalty, presence_penalty, stream=False)
         return response.choices[0].message.content, response.usage.total_tokens
 
-    def chatStream(self, messages: list, max_tokens=2000, temperature=0.7, top_p=0.95, stop=[], frequency_penalty=0, presence_penalty=0, timeout=10):
+    def chatStream(self, messages: list, max_tokens=2000, temperature=0.7, top_p=0.95, stop=[], frequency_penalty=0, presence_penalty=0):
         '''只用于对话使用的流式输出'''
         response = self.client.chat(messages, max_tokens, temperature, top_p,
-                                    stop, frequency_penalty, presence_penalty, timeout, stream=True)
+                                    stop, frequency_penalty, presence_penalty, stream=True)
         return response

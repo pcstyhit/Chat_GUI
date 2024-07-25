@@ -2,6 +2,7 @@ import StoreHelper from "../helper/storeHelper";
 import { URL, apiRequest } from "./common.js";
 import { marked } from "../helper/formatHelper.js";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { showMessage } from "@/helper/customMessage";
 
 /** 📜 获取能使用的全部对话模型列表 */
 export const getChatModelListAPI = () =>
@@ -80,6 +81,7 @@ export const createEventSourceAPI = async (chatCid, assHTMLElem, ctrl) => {
     headers: StoreHelper.getHeaders(),
     credentials: "include",
     signal: ctrl.signal,
+    openWhenHidden: true,
     onmessage(event) {
       const data = JSON.parse(event.data);
       chatRes += data.data;
@@ -104,9 +106,17 @@ export const createEventSourceAPI = async (chatCid, assHTMLElem, ctrl) => {
         textElem.innerHTML = marked.render(chatRes);
         chatRes = "";
       }
+
+      // 服务端异常强制结束
+      if (data.flag == -1) {
+        textElem.innerHTML = marked.render(`${data.data}`);
+        showMessage("error", `服务器流对话出错 ${data.data}`);
+        ctrl.abort();
+      }
     },
-    onerror() {
-      console.error("EventSource closed by the server.");
+    onerror(e) {
+      showMessage("error", `EventSource Error ${e}.`);
+      ctrl.abort();
     },
     onclose() {
       // console.error("close");

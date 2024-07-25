@@ -2,17 +2,15 @@
   <div class="container">
     <!-- Settings overlay -->
     <SettingsCard />
-
     <!-- Sidebar -->
     <SidebarCard
       :isShowSidebar="isShowSidebar"
       @onShowSidebar="onShowSidebar"
     />
-
     <!-- Chat main worksapce -->
-    <div class="right-card">
-      <ChatCard />
-    </div>
+    <div class="right-card"><ChatCard /></div>
+    <!-- 隐藏的文件输入元素 -->
+    <input id="chat-file-input" type="file" style="display: none" />
   </div>
 </template>
 

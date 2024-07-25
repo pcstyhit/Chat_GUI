@@ -53,7 +53,9 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <!-- download or share -->
-                  <el-dropdown-item @click.stop="onDownloadChat(item.chatCid)">
+                  <el-dropdown-item
+                    @click.stop="downloadSpecChatMsgs(item.chatCid)"
+                  >
                     <div class="svg-icon" v-html="SVGS.downloadIcon"></div>
                     <el-text
                       style="margin-left: 8px; font-family: 'Microsoft YaHei'"
@@ -70,7 +72,7 @@
                   </el-dropdown-item>
                   <!-- delete -->
                   <el-dropdown-item
-                    @click.stop="onDeleteChat(item.chatCid, item.chatName)"
+                    @click.stop="deletChatByCid(item.chatCid, item.chatName)"
                     style="color: red"
                   >
                     <div class="svg-icon" v-html="SVGS.deleteIcon"></div>
@@ -94,36 +96,36 @@
 </template>
 
 <script>
-import { downloadChatHistory } from "../../apis/chat.js";
-import { editChatNameByCid, deletChatByCid } from "../../helper/chat/common.js";
-import { computed, ref } from "vue";
-import { useStore } from "vuex";
-import { showMessageBox } from "../../helper/customMessage.js";
 import * as SVGS from "../../assets/styles/chat/svgs.js";
 import * as DOMSIZE from "../../assets/styles/consts.js";
+import { useStore } from "vuex";
+import { computed, ref } from "vue";
+import { showMessageBox } from "../../helper/customMessage.js";
+import {
+  editChatNameByCid,
+  deletChatByCid,
+  downloadSpecChatMsgs,
+} from "../../helper/chat/common.js";
+
 export default {
+  // vue3父子传值（setup函数和setup语法糖两版 https://juejin.cn/post/7246596605956194341
   emits: ["onShowSidebar"],
-  // vue3父子传值（setup函数和setup语法糖两版
-  // https://juejin.cn/post/7246596605956194341
   props: {
     isShowSidebar: {
       type: Boolean,
       default: true,
     },
   },
+
   setup(props, context) {
-    const chatNameList = computed(() => store.state.chat.chatNameList);
     const store = useStore();
     const chatCid = computed(() => store.state.chat.chatCid);
+    const chatNameList = computed(() => store.state.chat.chatNameList);
+
     const isEditChatCid = ref("");
     const editChatName = ref("");
 
-    /** ====================== 下面定义函数 ====================== */
-    /**
-     * ********************
-     * 向父组件发送显示或者隐藏侧边栏的信号, `返回是否开关侧边栏的布尔量
-     * ********************
-     * */
+    /** onShowSidebar 向父组件发送显示或者隐藏侧边栏的信号, 返回是否开关侧边栏的布尔量 */
     const onShowSidebar = () => {
       var val = props.isShowSidebar ? false : true;
       var sidebarDOM = document.getElementById("chat-sidebar-container");
@@ -138,12 +140,12 @@ export default {
       context.emit("onShowSidebar", val);
     };
 
-    /** 向父组件发送要新建对话的信号 */
+    /** onNewChat 向父组件发送要新建对话的信号 */
     const onNewChat = () => {
       store.commit("SET_CHATCID", "");
     };
 
-    /** 向父组件发送加载对话的信号，并`返回对话的chatCid */
+    /** onLoadHistory 向父组件发送加载对话的信号，并返回对话的chatCid */
     const onLoadHistory = async (item) => {
       if (item.chatCid == chatCid.value) return;
       var flag = await showMessageBox("你想继续这个Chat进行对话吗?");
@@ -152,37 +154,12 @@ export default {
       store.commit("SET_CHATCID", item.chatCid);
     };
 
-    const onDeleteChat = async (chatCid, chatName) => {
-      await deletChatByCid(chatCid, chatName);
-    };
-
-    const onDownloadChat = async (chatCid) => {
-      var rea = await downloadChatHistory(chatCid);
-      if (rea.flag) {
-        // 将对象转换成JSON字符串
-        const jsonData = JSON.stringify(rea.data);
-        // 创建一个包含JSON字符串的Blob对象
-        const jsonBlob = new Blob([jsonData], { type: "application/json" });
-
-        // 使用URL.createObjectURL创建一个链接
-        const url = URL.createObjectURL(jsonBlob);
-
-        // 创建一个下载链接
-        let downloadLink = document.createElement("a");
-        downloadLink.href = url;
-        downloadLink.download = "prompt.json"; // 指定下载文件名
-
-        // 自动触发下载
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-      }
-    };
-
+    /** onEditChat 点击edit对话后记录要修改名称的对话的 chatCid 并且让它显示成文本编辑框 */
     const onEditChat = (chatCid) => {
       isEditChatCid.value = chatCid;
     };
 
+    /** handleEditChatName 用键盘的enter表示确认修改对话名称 */
     const handleEditChatName = async () => {
       await editChatNameByCid(isEditChatCid.value, editChatName.value);
       isEditChatCid.value = "";
@@ -198,8 +175,8 @@ export default {
       onShowSidebar,
       onNewChat,
       onLoadHistory,
-      onDeleteChat,
-      onDownloadChat,
+      deletChatByCid,
+      downloadSpecChatMsgs,
       onEditChat,
       handleEditChatName,
     };

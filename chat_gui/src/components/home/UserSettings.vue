@@ -28,12 +28,14 @@
             <div class="profile">
               <div class="avatar">
                 <img :src="avatarImg" />
-                <button class="upload-button">Upload avatar</button>
+                <button class="upload-button" @click="onUploadAvatar">
+                  Upload avatar
+                </button>
               </div>
               <div class="avatar-info">
-                <el-text class="text">User name: </el-text>
-                <el-text class="text">Uid: </el-text>
-                <el-button class="logout"> Logout </el-button>
+                <el-text class="text">User name: {{ userName }}</el-text>
+                <el-text class="text">Uid: {{ userId }}</el-text>
+                <el-button class="logout" @click="onLogout"> Logout </el-button>
               </div>
             </div>
           </div>
@@ -58,7 +60,7 @@
                   :key="item.modelName"
                   :label="item.modelName"
                   :value="item.modelName"
-                  @change="onSelectModel(item)"
+                  @click="onSelectModel(chatParams, item)"
                 />
               </el-select>
             </div>
@@ -178,7 +180,7 @@
               <el-input
                 class="input-fit"
                 v-model="chatStopSequence"
-                @input="validStopSequence"
+                @input="validStopSequence(chatParams, chatStopSequence)"
               />
             </div>
           </el-scrollbar>
@@ -213,7 +215,11 @@
                 <div class="tips" v-html="SVGS.tipsIcon" />
                 <el-text class="text">Use proxy: </el-text>
               </div>
-              <el-switch class="c-switch" v-model="userSettings.isUseProxy" />
+              <el-switch
+                class="c-switch"
+                v-model="userSettings.isUseProxy"
+                @change="onChangeProxy"
+              />
             </div>
             <div class="item">
               <div class="item-label">
@@ -221,12 +227,6 @@
                 <el-text class="text">Proxy URL: </el-text>
               </div>
               <el-input class="input-fit" v-model="userSettings.proxyURL" />
-            </div>
-            <div class="item">
-              <div class="item-label">
-                <el-text class="text">Delete All Chat: </el-text>
-              </div>
-              <el-button> Delete all </el-button>
             </div>
           </div>
         </el-tab-pane>
@@ -251,9 +251,17 @@ import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/home/svgs.js";
 import { showMessage } from "../../helper/customMessage.js";
 import { confirmUserSettings } from "../../helper/user/common.js";
+import {
+  onSelectModel,
+  getPromptByRole,
+  handleChatPrompts,
+  validStopSequence,
+} from "../../helper/chat/settings.js";
 
 const store = useStore();
-const isShowUserSettings = computed(() => store.state.user.isShowUserSettings);
+const isShowUserSettings = ref(false);
+const userName = computed(() => store.state.user.name);
+const userId = computed(() => store.state.user.uid);
 const avatarImg = computed(() => store.state.user.avatar);
 
 const chatModelList = computed(() => store.state.chat.modelList);
@@ -266,8 +274,9 @@ const chatStopSequence = ref("");
 const userSettings = ref({});
 
 watch(
-  () => isShowUserSettings.value,
+  () => store.state.user.isShowUserSettings,
   async (value) => {
+    isShowUserSettings.value = value;
     if (value) {
       Object.keys(store.state.user.userDefaultChatParams).forEach((key) => {
         chatParams.value[key] = store.state.user.userDefaultChatParams[key];
@@ -275,28 +284,15 @@ watch(
       Object.keys(store.state.user.userDefaultSettings).forEach((key) => {
         userSettings.value[key] = store.state.user.userDefaultSettings[key];
       });
-      chatSysPrompt.value = getPromptContentByRole("system");
-      chatUserPrompt.value = getPromptContentByRole("user");
-      chatAssPrompt.value = getPromptContentByRole("assistant");
+      chatSysPrompt.value = getPromptByRole(chatParams.value, "system");
+      chatUserPrompt.value = getPromptByRole(chatParams.value, "user");
+      chatAssPrompt.value = getPromptByRole(chatParams.value, "assistant");
       chatStopSequence.value = chatParams.value.stopSequence.join(";");
     }
   }
 );
 
-/**  定义一个函数来获取指定角色的提示内容 */
-const getPromptContentByRole = (role) => {
-  if (chatParams.value.prompts) {
-    const contentList = (
-      chatParams.value.prompts.find((item) => item.role === role) || {}
-    ).content;
-
-    if (contentList) {
-      return contentList[0].text;
-    }
-  }
-  return "";
-};
-
+/** validateRange 限制参数的范围 这个内容可以不用抽出去 */
 const validateRange = (param, min, max) => {
   chatParams.value[param] = Math.max(
     min,
@@ -304,55 +300,39 @@ const validateRange = (param, min, max) => {
   );
 };
 
-const validStopSequence = () => {
-  const resultArray = chatStopSequence.value.replace(/\n/g, "").split(";");
-  // 检查结果是否是数组
-  if (Array.isArray(resultArray)) {
-    chatParams.value.stopSequence = resultArray;
-  } else {
-    showMessage("error", "Chat stop sequence必须是数组类型的字符串");
-  }
-};
-
+/** updateChatPrompts 动态更新提示词的内容 */
 const updateChatPrompts = () => {
-  const key = "content";
-  const tmpPrompts = [
-    {
-      role: "system",
-      content: [
-        { type: "text", text: (chatSysPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-    {
-      role: "user",
-      content: [
-        { type: "text", text: (chatUserPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-    {
-      role: "assistant",
-      content: [
-        { type: "text", text: (chatAssPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-  ];
-  chatParams.value.prompts = tmpPrompts.filter(
-    (item) => item[key] !== "" && item[key] !== undefined
+  handleChatPrompts(
+    chatParams.value,
+    chatSysPrompt.value,
+    chatUserPrompt.value,
+    chatAssPrompt.value
   );
 };
 
-const onSelectModel = (item) => {
-  chatParams.value.modelName = item.modelName;
-  chatParams.value.maxTokens = item.maxTokens;
-  chatParams.value.modelType = item.modelType;
+/** onUploadAvatar 更新头像 */
+const onUploadAvatar = () => {
+  showMessage("info", "没做这个功能 🚀");
 };
 
-/** 点击保存用户的设置 */
+/** onChangeProxy 开关代理时候会更新代理的互斥条件 */
+const onChangeProxy = () => {
+  if (userSettings.value.isUseProxy == false) userSettings.value.proxyURL = "";
+};
+
+/** onLogout 点击logout触发的函数 */
+const onLogout = () => {
+  showMessage("info", "就不让你logout 🤣");
+};
+
+/** onConfirmSetting 点击保存用户的设置 */
 const onConfirmSetting = async () => {
   var flag = await confirmUserSettings(chatParams.value, userSettings.value);
   if (flag) showMessage("success", "设置用户的参数成功! 😀");
-  store.commit("SET_USER_SHOWSETTINGUI", false);
+  onCloseUserSettingOverlay();
 };
+
+/** onCloseUserSettingOverlay 关掉用户设置的overlay */
 const onCloseUserSettingOverlay = () => {
   store.commit("SET_USER_SHOWSETTINGUI", false);
 };

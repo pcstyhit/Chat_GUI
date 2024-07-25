@@ -43,10 +43,7 @@ const store = useStore();
 watch(
   () => store.state.app.textEditObj,
   (newObject) => {
-    console.log("newvalue: ", newObject);
     if (newObject.data) {
-      console.log("newObject.data: ", newObject.data);
-      console.log("newObject.options: ", newObject.options);
       beEditedData.value = newObject.data;
       options.value = newObject.options;
       isShowDialog.value = true;

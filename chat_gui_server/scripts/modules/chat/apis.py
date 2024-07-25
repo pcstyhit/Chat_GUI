@@ -35,8 +35,7 @@ class ChatAPI(ChatHandle):
                                                          top_p=self.params.curPrms.topP,
                                                          stop=self.params.curPrms.stopSequenceList,
                                                          frequency_penalty=self.params.curPrms.frequecyPenaty,
-                                                         presence_penalty=self.params.curPrms.presentPenaty,
-                                                         timeout=self.params.curPrms.timeout)
+                                                         presence_penalty=self.params.curPrms.presentPenaty)
 
         allMessages = ''
         allToken = 0
@@ -63,21 +62,6 @@ class ChatAPI(ChatHandle):
 
         # 更新数据库的值
         await self.storeAssResponseMessage(chatIid, allMessages, allToken)
-
-    async def chatSyncAPI(self):
-        '''获取非流式的API对话返回结果, 这个函数是setUserMsg之后调用的, 此时已经从数据库获取prompt'''
-        chatIid = oruuid()
-        outgoingMsg, outgoingTokens = self.chatSync(self.chatMessages,
-                                                    max_tokens=self.params.curPrms.maxResponseTokens,
-                                                    temperature=self.params.curPrms.temperature,
-                                                    top_p=self.params.curPrms.topP,
-                                                    stop=self.params.curPrms.stopSequenceList,
-                                                    frequency_penalty=self.params.curPrms.frequecyPenaty,
-                                                    presence_penalty=self.params.curPrms.presentPenaty,
-                                                    timeout=self.params.curPrms.timeout)
-
-        yield outgoingMsg, outgoingTokens, chatIid
-        await self.storeAssResponseMessage(chatIid, outgoingMsg, outgoingTokens)
 
     async def getChatModelList(self) -> list:
         '''返回当前用户下能够用上的模型列表 注意 如果是dataclass需要转成dict'''
@@ -263,7 +247,7 @@ class ChatAPI(ChatHandle):
 
     async def editChatItemMsgByID(self, chatIid, msg: ChatAPIMessage):
         '''根据提供的chat的id和新消息, 对chatItem表的内容进行更新'''
-        tokens = self.params.getMessagesTokens(msg)
+        tokens = self.params.getOneMsgTokens(msg)
         try:
             msgStr = json.dumps(msg)
             self.chatSql.setItemInSpecTable(self.userName, self.chatCid, chatIid, msgStr, tokens)
@@ -295,57 +279,37 @@ class ChatAPI(ChatHandle):
         '''根据提供的chatCid将对话给到WEB下载,注意不用附带prompts'''
         flag = self.userSql.checkChatCidbyUserName(self.userName, chatCid)
         if not flag:
-            return [], 0, False, 'Chat has been deleted by others.'
-
-        msgList = self.chatSql.getAllItemInSpecTable(
-            self.userName, self.chatCid)
-
+            return []
+        msgList = self.chatSql.getAllItemInSpecTable(self.userName, self.chatCid)
         # 获取chatHistory
-        chatHistoy = []
-        for lenI in range(0, len(msgList)):
-            item = msgList[lenI]
-            chatHistoy.append(
-                {'role': item[2], 'content':  item[3]})
-
+        chatHistoy = [json.loads(message[2]) for message in msgList]
         return chatHistoy
 
     async def uploadChatHistory(self, data: dict):
         '''解析上传的json数据,用默认的模型参数开始对话'''
         allParams = json.dumps(self.params.getCurrentParams())
         # 将最开始的配置参数存入数据库, 其实可以不放入任何内容,但是只是保证操作的统一
-        self.chatCid = self.userSql.addChatInfoForSpecUser(
-            self.userName, self.params.chatName, allParams)
+        self.chatCid = self.userSql.addChatInfoForSpecUser(self.userName, allParams)
 
         self.userSql.setChatParamsForSpecUser(self.chatCid, allParams)
-        self.setAssistantModel()
+        self.updateModel(self.params.chatApi, self.httpxp.client)
 
         # 创建一个存放这个新对话的表单到chatSQL里
-        self.chatSql.createTableByUserNameNChatCid(
-            self.userName, self.chatCid)
+        self.chatSql.createTableByUserNameNChatCid(self.userName, self.chatCid)
 
         chatHistory = []
         chatTokens = 0
 
         # 开始向数据库塞入数据
         for sit in range(len(data)):
-            msg = data[sit]
-            role = msg.get('role', '')
-            content = msg.get('content', 'Invalid content')
-            tokens = self.params.getTokens(content)
-            self.params.iid = oruuid()
-
-            if role == Params.USER:
-                chatHistory.append(
-                    {'chatIid': self.params.iid, 'role': role, 'content': content})
-                await self.storeMessage(Params.USER, content, tokens)
-
-            if role == Params.ASS:
-                chatHistory.append(
-                    {'chatIid': self.params.iid, 'role': role, 'content': content})
-                await self.storeMessage(Params.ASS, content, tokens)
+            iid = oruuid()
+            msg: ChatAPIMessage = data[sit]
+            tokens = self.params.getOneMsgTokens(msg)
+            chatHistory.append({'chatIid': iid, 'message': msg})
+            await self.storeMessage(iid, msg, tokens)
 
             # 更新下次要发送的tokens数量
-            if sit >= len(data) - self.params.passedMsgLen:
+            if sit >= len(data) - self.params.curPrms.passedMsgLen:
                 chatTokens += tokens
 
         return self.chatCid, chatHistory, chatTokens

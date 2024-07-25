@@ -1,6 +1,7 @@
-import ChatItemHelper from "./chatItem.js";
+import ChatItemHelper from "./item.js";
 import StoreHelper from "../storeHelper.js";
 import { showMessage } from "../customMessage.js";
+import { getUserMsg } from "./message.js";
 import {
   addNewChatAPI,
   setUserMsgAPI,
@@ -9,8 +10,8 @@ import {
 } from "../../apis/chat.js";
 
 class ChatCardHelper extends ChatItemHelper {
-  // 单例
   static instance = null;
+
   constructor() {
     super();
     if (ChatCardHelper.instance) {
@@ -26,6 +27,7 @@ class ChatCardHelper extends ChatItemHelper {
     return ChatCardHelper.instance;
   }
 
+  /** _mouseMoveLister 是鼠标移动到对话的HTMLElement上要处理显示Options的函数 */
   _mouseMoveLister = (event) => {
     const targetClass = event.target.closest(
       ".user-content, .assistant-content"
@@ -38,6 +40,7 @@ class ChatCardHelper extends ChatItemHelper {
     }
   };
 
+  /** _mouseMoveLister 是鼠标移出了对话的HTMLElement上要处理隐藏Options的DIV的函数 */
   _mouseOutLister = () => {
     const activeOptionButtons = document.querySelectorAll(
       ".options-button.active"
@@ -47,22 +50,29 @@ class ChatCardHelper extends ChatItemHelper {
     });
   };
 
-  async _newChat() {
+  /** _newChat 是个特殊函数, 用来给没有设置任何参数的情况下 直接用默认参数开始一个新的对话,
+   *  返回一个chatCid, 如果是 '' 就表示没有得到正确的对话参数! */
+  async getValidChatCid() {
     var tmpChatCid = StoreHelper.getChatCid();
     var chatCid = tmpChatCid !== "" ? tmpChatCid : "";
 
     // 没有新建对话需要新建对话
     if (chatCid == "") {
-      showMessage("info", "默认参数开始对话, 初始化数据库 ... ...");
       var rea = await addNewChatAPI();
-      if (!rea.flag) return false;
+      if (!rea.flag) {
+        showMessage("error", `初始化对话参数和数据库失败! 【${rea.log}】 🤡`);
+        return "";
+      }
 
       // 得到chatCid
       chatCid = rea.chatCid;
       //  切换chatCid的时候 已经从SERVER更新过参数了
       var chatParams = StoreHelper.getChatParams();
       rea = await setChatParamsAPI(chatCid, chatParams);
-      if (!rea.flag) return false;
+      if (!rea.flag) {
+        showMessage("error", `设置对话参数失败!【${rea.log}】 退出对话. `);
+        return "";
+      }
 
       // 🎉 有效的ChatCid, 新建对话成功！ 存入store
       StoreHelper.setChatCid(chatCid);
@@ -72,7 +82,7 @@ class ChatCardHelper extends ChatItemHelper {
     return chatCid;
   }
 
-  /** 给显示对话消息的界面增加鼠标移动事件的监听器, 单例 必须保证事件监听器的开关是挂锁的 */
+  /** addListener 是给显示对话消息的界面增加鼠标移动事件的监听器, 单例 必须保证事件监听器的开关是挂锁的 */
   addListener = () => {
     if (!this._init()) return;
     if (this._isListenerActive) return;
@@ -81,7 +91,7 @@ class ChatCardHelper extends ChatItemHelper {
     this._isListenerActive = true;
   };
 
-  /** 移除对话消息的界面的鼠标移动事件监听器*/
+  /** removeListener 是移除对话消息的界面的鼠标移动事件监听器*/
   removeListener = () => {
     if (!this._init()) return;
     if (!this._isListenerActive) return;
@@ -90,49 +100,62 @@ class ChatCardHelper extends ChatItemHelper {
     this._isListenerActive = false;
   };
 
-  /** 初始化时候从SERVER加载的对话历史渲染消息到`ChatCard.vue`上 */
+  /** drawChatHistory 绘制对话的历史到网页上 */
+  drawChatHistory(data) {
+    data.forEach((item) => {
+      if (item.message.role == "user")
+        this._addUserQHTMLElem(item.chatIid, item.message.content);
+      else this._addAssAHTMLElem(item.chatIid, item.message.content[0].text);
+    });
+  }
+
+  /** initChatHistory 会在初始化时候从SERVER加载的对话历史渲染消息到`ChatCard.vue`上 */
   initChatHistory = async (chatCid) => {
     if (!this._init()) return;
-    this._removeAllElem();
+    this.removeAllElem();
     // 新对话 清空DIV就返回了
     if (chatCid === "") return;
     this.addListener();
     var rea = await getSpecChatHistoryAPI(chatCid);
     if (rea.flag) {
-      rea.history.forEach((item) => {
-        if (item.message.role == "user")
-          this._addUserQHTMLElem(item.chatIid, item.message.content);
-        else this._addAssAHTMLElem(item.chatIid, item.message.content[0].text);
-      });
+      this.drawChatHistory(rea.history);
       return rea.tokens;
     }
     return 0;
   };
 
-  async sendChat(msg) {
+  /** sendChat ⭐⭐ 发送对话给到SERVER然后获得来自SERVER返回的Assistant的回答, 输出到网页上
+   * 要注意的是, 这个函数也会提取判断是不是新建对话.*/
+  async sendChat(texts) {
     this.removeListener();
-    var chatCid = await this._newChat();
 
-    // 发送消息
-    var imgObjList = this._getAllImgs();
-    var content = msg.concat(imgObjList);
-    var rea = await setUserMsgAPI({ role: "user", content: content });
+    var chatCid = await this.getValidChatCid();
+    // 没有得到正确的对话参数 不处理对话
+    if (chatCid == "") return;
 
-    if (rea.flag) {
-      // 更新UI
-      this._addUserQHTMLElem(rea.chatIid, content);
-      // 更新tokens
-      StoreHelper.setTokens(rea.tokens);
-      // 开始更新Assistant的回答
-      console.log("chatCid: ", chatCid);
-      await this._getAssistantResponse(chatCid);
-    } else {
-      showMessage("error", "GPT API tokens error");
+    var message = getUserMsg(texts);
+    var rea = await setUserMsgAPI(message);
+    if (!rea.flag) {
+      showMessage("error", `SERVER 处理用户问题出错! 【${rea.log}】 🤡`);
+      return;
     }
+
+    // 更新UI和tokens
+    this._addUserQHTMLElem(rea.chatIid, message.content);
+    StoreHelper.setTokens(rea.tokens);
+
+    // 开始更新Assistant的回答
+    await this._getAssistantResponse(chatCid);
+
     this.addListener();
+  }
+
+  /** stopChat ⭐⭐ 用信号暂停/取消SSE */
+  async stopChat() {
+    this.ctrl.abort();
   }
 }
 
-// 单例
+/** @type ChatCardHelper  */
 const chatCardHandler = ChatCardHelper.getInstance();
 export default chatCardHandler;

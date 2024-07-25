@@ -96,6 +96,12 @@ class UserSQL:
         # 提交修改
         self.conn.commit()
 
+    def getAllUser(self) -> None:
+        '''从当前的 users 表里查询出全部的用户数据'''
+        self.cursor.execute('SELECT * FROM users')
+        rows = self.cursor.fetchall()
+        LOGGER.info(f"All users: {rows}")
+
     def addUserLoginInfo(self, userName) -> Optional[str]:
         '''根据用户名创建一个users表来存放相关信息,创建用户记录'''
         self.cursor.execute('SELECT id FROM users WHERE userName=?', (userName,))
@@ -116,6 +122,7 @@ class UserSQL:
             # 提交修改
             self.conn.commit()
             LOGGER.info(f'SERVER add a new user: {userName}. session: {tmpSsid}')
+            self.getAllUser()
             return tmpUid
 
         # 已经创建过信息的用户
@@ -124,9 +131,10 @@ class UserSQL:
             self.setSessionNExpiredTimeByUserName(userName, tmpSsid, tmpExpiredTime)
 
         self.cursor.execute('SELECT uid FROM users WHERE userName=?', (userName,))
-        uid = self.cursor.fetchone()[0]
-        LOGGER.info(f'User: {userName}. has already in USER SQL; uid: {uid}')
-        return uid
+        tmpUid = self.cursor.fetchone()[0]
+        LOGGER.info(f'User: {userName}. has already in USER SQL; uid: {tmpUid}')
+        self.getAllUser()
+        return tmpUid
 
     def addChatInfoForSpecUser(self, userName: str, chatParams: str) -> str:
         '''用户操作新建对话,这个时候需要生成一个唯一的chatCid,这个唯一的ChatCid也是生成后面存放具体的对话信息表的名称'''
@@ -153,14 +161,12 @@ class UserSQL:
 
     def setChatParamsForSpecUser(self, chatCid, chatParams) -> bool:
         '''根据指定的ID修改对应的chat的设置params内容'''
-        self.cursor.execute(
-            f"UPDATE users_chats_table SET chatParams = ? WHERE chatCid = ?", (chatParams, chatCid,))
+        self.cursor.execute(f"UPDATE users_chats_table SET chatParams = ? WHERE chatCid = ?", (chatParams, chatCid,))
         self.conn.commit()
 
     def checkChatCidbyUserName(self, userName, chatCid) -> bool:
         '''判断对应用户名下的ChatCid是不是还存在,有没有被其他用户给删除'''
-        self.cursor.execute(
-            "SELECT 1 FROM users_chats_table WHERE userName=? AND chatCid=?", (userName, chatCid))
+        self.cursor.execute("SELECT 1 FROM users_chats_table WHERE userName=? AND chatCid=?", (userName, chatCid))
         bExit = self.cursor.fetchone()
 
         # 如果查询结果不为空，说明存在相同名称的cid

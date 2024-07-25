@@ -9,8 +9,10 @@ class StoreHelper {
   }
 
   /** 设置登录的状态 */
-  static setLoginState(data) {
-    store.state.user.setLoginState(data);
+  static setLoginInfo(state, userName, uid) {
+    store.state.user.setLoginState(state);
+    store.state.user.setUserName(userName);
+    store.state.user.setUid(uid);
   }
 
   static getChatCid() {
@@ -94,6 +96,7 @@ class StoreHelper {
   static getUserDefaultChatParams() {
     return store.state.user.userDefaultChatParams;
   }
+
   /** 获得默认的用户设置参数 */
   static getUserDefaultSettings() {
     return store.state.user.userDefaultSettings;

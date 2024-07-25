@@ -231,9 +231,10 @@ async def sseAPI(user: str = fastapi.Depends(authenticateUser)):
 
         except asyncio.CancelledError:
             print("WEB Close the sse connection")
-        except Exception as e:
-            rea.flag = 0
-            rea.data = "API tokens error! Please delete some chat item."
+        except Exception as eMsg:
+            # 异常返回 -1
+            rea.flag = -1
+            rea.data = str(eMsg)
             resp, _ = dict2Str(rea.__dict__)
             yield f"data: {resp}\n\n"
             raise fastapi.HTTPException(
@@ -298,4 +299,25 @@ async def newGhostChatAPI(item: NewGhostChatRequest, user: str = fastapi.Depends
     handle = UserManage.getChatHandle(user)
     rea.chatCid, rea.chatParams, rea.tokens = await handle.newGhostChat(item.data)
     rea.flag = True
+    return rea
+
+# ==================================================
+# 👻 newGhostChatAPI的请求参数信息
+# 使用默认的对话参数创建一个幽灵对话, 然后WEB 设置对话的固定名称,这个都是很随意的
+# 幽灵对话其实是没有上下文记忆的对话
+# ==================================================
+
+
+@CHAT_ROUTE.post('/chat/sync')
+async def chatSyncAPI(request: fastapi.requests.Request, user: str = fastapi.Depends(authenticateUser)):
+    rea = ChatSyncAPIsAPIResponse()
+    handle = UserManage.getChatHandle(user)
+    body = await request.json()
+    try:
+        rea.context, rea.tokens = handle.chatSync(**body)
+        rea.flag = True
+        rea.log = 'Success'
+    except Exception as eMsg:
+        rea.flag = False
+        rea.log = eMsg
     return rea

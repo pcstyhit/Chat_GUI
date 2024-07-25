@@ -9,6 +9,8 @@ from pydantic import BaseModel
 class LoginAndLogoutResponse(BaseModel):
     '''login和logout的应答体'''
     flag: bool = False
+    uid: str = ''
+    userName: str = ''
     log: str = 'Invalid identity.'
 
 
@@ -163,4 +165,12 @@ class GetUserSettingResponse(BaseModel):
 class SetUserSettingResponse(BaseModel):
     '''setUserSettingAPI响应内容的格式'''
     flag: bool = False
+    log: str = ''
+
+
+class ChatSyncAPIsAPIResponse(BaseModel):
+    '''chatSyncAPIsAPI返回的response的格式'''
+    flag: bool = False
+    context: str = ''
+    tokens: int = 0
     log: str = ''

@@ -41,8 +41,8 @@
       <div id="chat-messages-container"></div>
     </el-scrollbar>
     <!-- Message Input -->
-    <div class="input-card">
-      <el-button class="attach-button">
+    <div class="input-card" id="chat-input-card">
+      <el-button class="attach-button" @click="uploadImageFile">
         <!-- pause chat button -->
         <div class="icon" v-html="SVGS.chatAttachIcon"></div>
       </el-button>
@@ -58,11 +58,7 @@
         ></el-input>
       </div>
       <!-- send and pause button -->
-      <el-button
-        class="send-button"
-        :disabled="userQuestionText == '' && isChatting"
-        @click="onSendContent"
-      >
+      <el-button class="send-button" @click="onSendContent">
         <!-- send chat button -->
         <div
           v-if="!isChatting"
@@ -88,28 +84,28 @@
 </template>
 
 <script setup>
+import * as SVGS from "../../assets/styles/chat/svgs.js";
 import TextEditor from "../common/TextEditor.vue";
 import RolesCard from "./RolesCard.vue";
 import UserSettings from "../home/UserSettings.vue";
-import { ref, computed, watch, onMounted } from "vue";
+import chatCardHandler from "../../helper/chat/card.js";
+
 import { useStore } from "vuex";
-import * as SVGS from "../../assets/styles/chat/svgs.js";
-import { showMessage } from "../../helper/customMessage.js";
-import chatCardHandler from "../../helper/chat/chatCard.js";
+import { ref, computed, watch, onMounted } from "vue";
+import { showMessage, showMessageBox } from "../../helper/customMessage.js";
+import { pasteImage, uploadImageFile } from "../../helper/user/files.js";
 
 const store = useStore();
+const chatParams = computed(() => store.state.chat.chatParams);
+const tokens = computed(() => store.state.chat.tokens);
+
 const userQuestionText = ref("");
 const isChatting = ref(false);
-
-const chatParams = computed(() => store.state.chat.chatParams);
-
-const tokens = computed(() => store.state.chat.tokens);
+const isShowRoleCard = ref(true);
 const requestTimeObj = ref({
   startTime: 0,
   time: 0,
 });
-
-const isShowRoleCard = ref(true);
 
 onMounted(() => {
   pasteImage();
@@ -127,28 +123,6 @@ watch(
   }
 );
 
-const pasteImage = () => {
-  document
-    .querySelector(".input-card")
-    .addEventListener("paste", function (event) {
-      const items = event.clipboardData.items;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].kind === "file" && items[i].type.startsWith("image/")) {
-          const file = items[i].getAsFile();
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            // 生成图像到div下
-            chatCardHandler.displayImage(e.target.result);
-          };
-          reader.readAsDataURL(file);
-          // 阻止默认的粘贴行为，防止文本粘贴
-          event.preventDefault();
-          return;
-        }
-      }
-    });
-};
-
 /** 输入框的按键组合键 */
 const onEnterKeydown = async (event) => {
   // Enter 和 Shift 键表示换行的操作
@@ -162,21 +136,28 @@ const onEnterKeydown = async (event) => {
 
 /** 向服务器发送数据 */
 const onSendContent = async () => {
-  // 及时清空对话框
-  var msg = userQuestionText.value;
-  userQuestionText.value = "";
-
   if (isChatting.value) {
-    showMessage("warning", "请等待服务器回答完成！");
+    const flag = await showMessageBox("取消继续生成对话吗?");
+    if (flag) {
+      chatCardHandler.stopChat();
+      isChatting.value = false;
+    }
     return;
   }
 
+  // 及时清空对话框
+  var msg = userQuestionText.value;
+  if (msg == "") {
+    showMessage("warning", "输入正确的问题");
+    return;
+  }
+  userQuestionText.value = "";
+
   // 请求API
-  chatCardHandler.removeListener();
   isChatting.value = true;
   startRequestTime();
 
-  await chatCardHandler.sendChat([{ type: "text", text: msg }]);
+  await chatCardHandler.sendChat(msg);
   isChatting.value = false;
   chatCardHandler.addListener();
   stopRequestTime();
@@ -194,7 +175,7 @@ const stopRequestTime = () => {
 
 /** 显示对话的编辑弹窗 chat-settings-overlay */
 const onShowSettings = () => {
-  store.commit("SET_CHAT_SHOWSETTINGUI", 1);
+  store.commit("SET_CHAT_SHOWSETTINGUI", true);
 };
 
 const onShowUserSettingOverlay = () => {

@@ -40,19 +40,21 @@ class UmmAPI:
     @classmethod
     async def loginAPI(cls, userName) -> Tuple[LoginAndLogoutResponse, SessionParams]:
         '''登录成功的操作 也就是开辟各种handler'''
-        rea = LoginAndLogoutResponse()
-
+        response = LoginAndLogoutResponse()
         user = UserManage.isUserOnline(userName)
-        if user:
-            rea.log = 'The user is already online. Login success!'
-            rea.flag = True
-            return rea, user.session
 
-        user = UserManage.addOnlineUser(userName)
-        await cls.initUserSettings(user)
-        rea.flag = True
-        rea.log = "Add new user into SERVER. Login success!"
-        return rea, user.session
+        if user:
+            response.log = 'The user is already online. Login success!'
+            response.flag = True
+        else:
+            user = UserManage.addOnlineUser(userName)
+            await cls.initUserSettings(user)
+            response.log = "Add new user into SERVER. Login success!"
+            response.flag = True
+
+        response.uid = user.uid
+        response.userName = user.userName
+        return response, user.session
 
     @classmethod
     async def getUserChatDefParamsAPI(cls, userName) -> dict:

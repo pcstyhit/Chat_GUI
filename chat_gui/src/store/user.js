@@ -6,6 +6,12 @@ export const UserState = {
   name: "",
 
   /**
+   * 当前的用户名称
+   * @type {string}
+   */
+  uid: "",
+
+  /**
    * 当前的用户头像 base64 的图像
    * @type {string}
    */
@@ -87,6 +93,10 @@ export const UserState = {
    */
   setLoginState(data) {
     this.isLogged = data;
+  },
+
+  setUid(data) {
+    this.uid = data;
   },
 
   /**

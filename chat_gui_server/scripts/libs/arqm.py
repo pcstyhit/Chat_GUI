@@ -30,7 +30,7 @@ class SetUserMsgRequest(BaseModel):
 class EditChatItemRequest(BaseModel):
     '''editChatItemAPI前端请求体内的参数'''
     chatIid: str    # 对话每个元素的唯一标志
-    msg: str
+    msg: object     # 新的用户问题
 
 
 class GetChatItemRequest(BaseModel):
@@ -86,4 +86,9 @@ class SetUserChatParamsAPIRequest(BaseModel):
 
 class SetUserSettingAPIRequest(BaseModel):
     '''setUserSettingAPI函数的请求体'''
+    data: object  # 新的对话名称
+
+
+class ChatSyncAPIsAPIRequest(BaseModel):
+    '''chatSyncAPI函数的请求体'''
     data: object  # 新的对话名称

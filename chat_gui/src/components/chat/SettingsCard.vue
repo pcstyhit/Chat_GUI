@@ -33,18 +33,18 @@
               :key="item.modelName"
               :label="item.modelName"
               :value="item.modelName"
-              @change="onSelectModel(item)"
+              @click="onSelectModel(chatParams, item)"
             />
           </el-select>
+        </div>
+        <div class="item">
+          <el-text class="item-text">Use default settings: </el-text>
+          <el-switch class="c-switch" v-model="isUseDefault" :disabled="true" />
         </div>
         <el-divider class="divider" />
         <!-- chat prompts -->
         <div class="title">
           <el-text class="label">Edit chat prompts</el-text>
-        </div>
-        <div class="item">
-          <el-text class="item-text">Use default settings: </el-text>
-          <el-switch class="c-switch" v-model="isUseDefaultPrompt" />
         </div>
         <div class="item-textarea">
           <el-text class="item-text">System: </el-text>
@@ -77,10 +77,6 @@
         <!-- chat parameters -->
         <div class="title">
           <el-text class="label">Edit chat parameters.</el-text>
-        </div>
-        <div class="item">
-          <el-text class="item-text">Use default settings: </el-text>
-          <el-switch class="c-switch" v-model="isUseDefaultParams" />
         </div>
         <div class="item">
           <el-text class="item-text">Passed Message(1~20): </el-text>
@@ -176,7 +172,7 @@
             class="input"
             type="textarea"
             v-model="chatStopSequence"
-            @input="validStopSequence"
+            @input="validStopSequence(chatParams, chatStopSequence)"
           />
         </div>
       </el-scrollbar>
@@ -185,12 +181,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button class="cancel" @click="onCancleSettings">Cancel</el-button>
-        <el-button v-if="isNewChat" class="confirm" @click="onStartChat">
-          Confirm
-        </el-button>
-        <el-button v-else class="confirm" @click="onStartChat">
-          Save
-        </el-button>
+        <el-button class="confirm" @click="onStartChat"> Confirm </el-button>
       </div>
     </template>
   </el-drawer>
@@ -200,18 +191,20 @@
 import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
 import { showMessage } from "../../helper/customMessage.js";
-import { addNewChatAPI, setChatParamsAPI } from "../../apis/chat.js";
+import {
+  onSelectModel,
+  getPromptByRole,
+  handleChatPrompts,
+  validStopSequence,
+  handleSetChatParams,
+} from "../../helper/chat/settings.js";
 
 // 从store中得到关于chat的状态
 const store = useStore();
+const chatModelList = computed(() => store.state.chat.modelList);
 
 // 控制对话框的属性
 const isOpenSettingDialog = ref(false);
-
-// 根据store存的chat的chatCid是不是''判断是不是新建对话
-const isNewChat = computed(() => store.state.chat.chatCid == "");
-const chatCid = computed(() => store.state.chat.chatCid);
-const chatModelList = computed(() => store.state.chat.modelList);
 
 // 要被修改的对话的全部参数
 const chatParams = ref({});
@@ -219,66 +212,27 @@ const chatSysPrompt = ref("");
 const chatUserPrompt = ref("");
 const chatAssPrompt = ref("");
 const chatStopSequence = ref("");
-
-const isUseDefaultPrompt = ref(true);
-const isUseDefaultParams = ref(true);
+const isUseDefault = ref(true);
 
 // 绕过v-model提示的computed是readonly的行为
 watch(
   () => store.state.chat.isEditChatSettings,
   async (value) => {
-    isOpenSettingDialog.value = value == 1;
-    if (isOpenSettingDialog.value) {
+    isOpenSettingDialog.value = value;
+    if (value) {
       Object.keys(store.state.chat.chatParams).forEach((key) => {
         chatParams.value[key] = store.state.chat.chatParams[key];
       });
       // 更新对应的 chat prompt的值
-      chatSysPrompt.value = getPromptContentByRole("system");
-      chatUserPrompt.value = getPromptContentByRole("user");
-      chatAssPrompt.value = getPromptContentByRole("assistant");
-      chatStopSequence.value = JSON.stringify(chatParams.value.stopSequence);
+      chatSysPrompt.value = getPromptByRole(chatParams.value, "system");
+      chatUserPrompt.value = getPromptByRole(chatParams.value, "user");
+      chatAssPrompt.value = getPromptByRole(chatParams.value, "assistant");
+      chatStopSequence.value = chatParams.value.stopSequence.join(";");
     }
   }
 );
 
-/**
- * *************************
- * 处理Save/Confirm(也就是新建对话)的逻辑函数
- * *************************
- * */
-const handleSetChatParams = async () => {
-  // 要编辑/新建的chatCid的值
-  var currentChatCid = chatCid.value;
-  // 是否新建对话的标志
-  if (isNewChat.value) {
-    // 发送请求来获取有效的ChatCid
-    var rea = await addNewChatAPI();
-    if (!rea.flag) return false;
-    // 🎉 有效的ChatCid, 新建对话成功！ 存入store
-    store.commit("SET_NEWCHATCID", rea.chatCid);
-    currentChatCid = rea.chatCid;
-
-    // 新建的对话存入store里
-    store.commit("PUSH_CHATNAMELIST", {
-      chatCid: rea.chatCid,
-      chatName: chatParams.value.chatName,
-    });
-  }
-
-  // 开始设置对话的参数到数据库
-  rea = await setChatParamsAPI(currentChatCid, chatParams.value);
-  if (!rea.flag) return false;
-
-  store.commit("SET_CHATPARAMS", chatParams.value);
-  // 参数修改完成之后更新label
-  store.commit("SET_CHAT_SHOWSETTINGUI", -1);
-  store.commit("EDIT_CHATNAMELIST", {
-    chatCid: currentChatCid,
-    chatName: chatParams.value.chatName,
-  });
-  return true;
-};
-
+/** validateRange 限制参数的范围 这个内容可以不用抽出去 */
 const validateRange = (param, min, max) => {
   chatParams.value[param] = Math.max(
     min,
@@ -286,97 +240,28 @@ const validateRange = (param, min, max) => {
   );
 };
 
-const validStopSequence = () => {
-  const resultArray = chatStopSequence.value.replace(/\n/g, "").split(";");
-  // 检查结果是否是数组
-  if (Array.isArray(resultArray)) {
-    chatParams.value.stopSequence = resultArray;
-  } else {
-    showMessage("error", "Chat stop sequence必须是数组类型的字符串");
-  }
-};
-
+/** updateChatPrompts 动态更新提示词的内容 */
 const updateChatPrompts = () => {
-  const key = "content";
-  const tmpPrompts = [
-    {
-      role: "system",
-      content: [
-        { type: "text", text: (chatSysPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-    {
-      role: "user",
-      content: [
-        { type: "text", text: (chatUserPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-    {
-      role: "assistant",
-      content: [
-        { type: "text", text: (chatAssPrompt.value || "").replace(/\n/g, "") },
-      ],
-    },
-  ];
-  chatParams.value.prompts = tmpPrompts.filter(
-    (item) => item[key] !== "" && item[key] !== undefined
+  handleChatPrompts(
+    chatParams.value,
+    chatSysPrompt.value,
+    chatUserPrompt.value,
+    chatAssPrompt.value
   );
 };
 
-/**
- * *************************
- * 选择合适的模型
- * *************************
- * */
-const onSelectModel = (item) => {
-  chatParams.value.modelName = item.modelName;
-  chatParams.value.maxTokens = item.maxTokens;
-  chatParams.value.modelType = item.modelType;
-};
-
-/**  定义一个函数来获取指定角色的提示内容 */
-const getPromptContentByRole = (role) => {
-  if (chatParams.value.prompts) {
-    const contentList = (
-      chatParams.value.prompts.find((item) => item.role === role) || {}
-    ).content;
-
-    if (contentList) {
-      return contentList[0].text;
-    }
-  }
-  return "";
-};
-
-/**
- * *************************
- * 关闭当前的setting窗口
- * *************************
- * */
+/** onCancleSettings关闭当前的setting窗口 */
 const onCancleSettings = async () => {
-  isOpenSettingDialog.value = false;
-  store.commit("SET_CHAT_SHOWSETTINGUI", 0);
+  store.commit("SET_CHAT_SHOWSETTINGUI", false);
 };
 
-/**
- * *************************
- * 向server发送请求创建对应的对话的channel
- * *************************
- * */
+/** onStartChat 向server发送请求创建对应的对话的channel */
 const onStartChat = async () => {
   if (chatParams.value.chatName == "") {
     showMessage("error", "😡 Chat 的名称不能为空!");
     return;
   }
-
-  // 提前关闭窗口, 再进行API请求, 使得新建chat的逻辑不会和编辑chat的时候的chatCid不为空的保存逻辑冲突
-  isOpenSettingDialog.value = false;
-
-  // 判断是新建还是保存
-  var flag = await handleSetChatParams();
-  if (!flag) {
-    showMessage("error", "Start Chat error!");
-    return;
-  }
+  await handleSetChatParams(chatParams.value);
+  onCancleSettings();
 };
 </script>

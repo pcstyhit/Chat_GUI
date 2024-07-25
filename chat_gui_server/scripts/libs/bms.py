@@ -60,13 +60,12 @@ class ChatAPIParams:
     prompts: List[ChatAPIMessage] = field(default_factory=lambda: [
         {'role': 'system', 'content': [{'type': 'text', 'text': 'You are GPT-4o a large language model of OpenAI.'}]}])
     passedMsgLen: int = 6
-    maxResponseTokens: int = 600
+    maxResponseTokens: int = 800
     temperature: float = 0.7
     topP: float = 0.95
     frequecyPenaty: float = 0.0
     presentPenaty: float = 0.0
     stopSequenceList: List[str] = field(default_factory=list)
-    timeout: int = 10
 
 
 @dataclass

@@ -32,10 +32,14 @@ export const ChatState = {
     prompts: [
       {
         role: "system",
-        content: "You are GPT-4o a large language model of OpenAI.",
+        content: [
+          {
+            type: "text",
+            text: "You are GPT-4o a large language model of OpenAI.",
+          },
+        ],
       },
     ],
-    tokens: 0,
     passedMsgLen: 20,
     maxResponseTokens: 2000,
     temperature: 0.7,
@@ -60,9 +64,9 @@ export const ChatState = {
 
   /**
    * 是否处于编辑聊天参数的状态。
-   * @type {number}: 1表示正在修改, 0表示修改结束无更改, -1表示修改结束但是有更改
+   * @type {boolean}: 是否在修改的状态
    */
-  isEditChatSettings: 0,
+  isEditChatSettings: false,
 
   /**
    * 直接强制更新对话, 清空或者初始化用
@@ -96,10 +100,7 @@ export const ChatState = {
   /** 根据chatCid删除对话*/
   deleteChatNameList(data) {
     const index = this.chatNameList.findIndex((item) => item.chatCid === data);
-
-    if (index !== -1) {
-      this.chatNameList.splice(index, 1);
-    }
+    if (index !== -1) this.chatNameList.splice(index, 1);
   },
 
   /**

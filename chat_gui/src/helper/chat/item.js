@@ -1,5 +1,5 @@
+import ChatOptions from "./options.js";
 import StoreHelper from "../storeHelper.js";
-import { showMessage, showMessageBox } from "../customMessage.js";
 import { textToHtml, marked } from "../formatHelper.js";
 import {
   assistantIcon,
@@ -9,18 +9,13 @@ import {
   deleteChatItemIcon,
   chatDeleteImgIcon,
 } from "../../assets/styles/chat/svgs.js";
-import {
-  getChatItemAPI,
-  deleteChatItemAPI,
-  editChatItemAPI,
-  reGenerateContentAPI,
-  createEventSourceAPI,
-} from "../../apis/chat.js";
+import { createEventSourceAPI } from "../../apis/chat.js";
 
 class ChatItemHelper {
   constructor() {
     this._chatContainer = this._init();
-    this._ctrl = new AbortController();
+    /** @type {AbortController} */
+    this.ctrl = null;
   }
 
   _init() {
@@ -31,91 +26,10 @@ class ChatItemHelper {
   }
 
   /** 删除容器下的全部div */
-  _removeAllElem() {
+  removeAllElem() {
     const divs = this._chatContainer.getElementsByTagName("div");
     while (divs.length > 0) {
       divs[0].remove();
-    }
-  }
-
-  async _copyChatItem(chatIid) {
-    var rea = await getChatItemAPI(chatIid);
-    if (rea.flag) {
-      try {
-        await navigator.clipboard.writeText(rea.data);
-        showMessage("success", "复制markdown成功");
-      } catch (err) {
-        showMessage("error", "复制失败(WEB ERROR)");
-      }
-    }
-  }
-
-  async editChatItemCallback(newValue, chatIid, role) {
-    var rea = await editChatItemAPI(chatIid, newValue);
-    if (rea.flag) {
-      var tmpParentElem = this._chatContainer.querySelector(`#${chatIid}`);
-      var tmpTextElem = tmpParentElem.querySelector(`.text`);
-      if (role === "user") tmpTextElem.innerHTML = textToHtml(newValue);
-      if (role === "assistant") tmpTextElem.innerHTML = marked.render(newValue);
-    }
-  }
-
-  /** 从服务器先获得对话内容的文本 再把它通过事件总线传递给文本编辑的组件 */
-  async _editChatItem(chatIid, role) {
-    var rea = await getChatItemAPI(chatIid);
-    if (!rea.flag) {
-      showMessage("error", "服务器获取对话内容失败！");
-      return;
-    }
-
-    // 向通用的文本编辑组件发送文本和回调函数
-    StoreHelper.setTextEditObj({
-      data: rea.data,
-      options: {
-        // 使用箭头函数确保 `this` 指向正确的上下文
-        confirmCallback: (newValue) =>
-          this.editChatItemCallback(newValue, chatIid, role),
-      },
-    });
-  }
-
-  /** 对于删除操作先确定是否真的删除 然后SERVER删除元素成功之后再删除网页的DIV */
-  async _deleteChatItem(chatIid) {
-    var flag = await showMessageBox("确定删除吗? (操作不可逆)");
-    // 取消删除 退出
-    if (!flag) return;
-
-    var rea = await deleteChatItemAPI(chatIid);
-    if (!rea.flag) {
-      showMessage("error", "服务器删除对话内容失败!");
-      return;
-    }
-
-    var tmpDeleteElem = this._chatContainer.querySelector(`#${chatIid}`);
-    if (tmpDeleteElem) {
-      this._chatContainer.removeChild(tmpDeleteElem);
-      showMessage("info", "删除成功");
-    }
-  }
-
-  async _reGenerateMessage(chatIid) {
-    var rea = await reGenerateContentAPI(chatIid);
-    if (rea.flag) {
-      // 删除目标 div 之后的所有 div 元素
-      const targetDiv = this._chatContainer.querySelector(`#${chatIid}`);
-      if (this._chatContainer && targetDiv) {
-        let targetIndex = Array.prototype.indexOf.call(
-          this._chatContainer.children,
-          targetDiv
-        );
-        while (this._chatContainer.children.length > targetIndex + 1) {
-          this._chatContainer.removeChild(this._chatContainer.lastChild);
-        }
-      }
-
-      // 重新开始生成Assistant的内容
-      const chatCid = StoreHelper.getChatCid();
-      this._getAssistantResponse(chatCid);
     }
   }
 
@@ -166,7 +80,11 @@ class ChatItemHelper {
     optionsDiv.appendChild(reGenerateButtonDiv);
 
     reGenerateButtonDiv.addEventListener("click", async () => {
-      await this._reGenerateMessage(userDiv.id);
+      const flag = await ChatOptions.reGenerateMessage(userDiv.id);
+      if (!flag) return;
+      // 重新开始生成Assistant的内容
+      const chatCid = StoreHelper.getChatCid();
+      this._getAssistantResponse(chatCid);
     });
 
     const editButtonDiv = document.createElement("div");
@@ -175,7 +93,7 @@ class ChatItemHelper {
     optionsDiv.appendChild(editButtonDiv);
 
     editButtonDiv.addEventListener("click", async () => {
-      await this._editChatItem(userDiv.id, "user");
+      await ChatOptions.editChatItem(userDiv.id);
     });
 
     const deleteButtonDiv = document.createElement("div");
@@ -183,8 +101,8 @@ class ChatItemHelper {
     deleteButtonDiv.innerHTML = deleteChatItemIcon;
     optionsDiv.appendChild(deleteButtonDiv);
 
-    deleteButtonDiv.addEventListener("click", () => {
-      this._deleteChatItem(userDiv.id);
+    deleteButtonDiv.addEventListener("click", async () => {
+      await ChatOptions.deleteChatItem(userDiv.id);
     });
 
     userContentDiv.appendChild(optionsDiv);
@@ -215,28 +133,20 @@ class ChatItemHelper {
     const optionsDiv = document.createElement("div");
     optionsDiv.classList.add("options");
 
-    const editButtonDiv = document.createElement("div");
-    editButtonDiv.classList.add("options-button");
-    editButtonDiv.innerHTML = eidtChatItemIcon;
-    optionsDiv.appendChild(editButtonDiv);
-    editButtonDiv.addEventListener("click", async () => {
-      await this._editChatItem(assistantDiv.id, "assistant");
-    });
-
     const copyMarkdownButtonDiv = document.createElement("div");
     copyMarkdownButtonDiv.classList.add("options-button");
     copyMarkdownButtonDiv.innerHTML = copyMarkdownIcon;
     optionsDiv.appendChild(copyMarkdownButtonDiv);
     copyMarkdownButtonDiv.addEventListener("click", async () => {
-      await this._copyChatItem(assistantDiv.id);
+      await ChatOptions.copyChatItem(assistantDiv.id);
     });
 
     const deleteButtonDiv = document.createElement("div");
     deleteButtonDiv.classList.add("options-button");
     deleteButtonDiv.innerHTML = deleteChatItemIcon;
     optionsDiv.appendChild(deleteButtonDiv);
-    deleteButtonDiv.addEventListener("click", () => {
-      this._deleteChatItem(assistantDiv.id);
+    deleteButtonDiv.addEventListener("click", async () => {
+      await ChatOptions.deleteChatItem(assistantDiv.id);
     });
 
     assistantContentDiv.appendChild(textDiv);
@@ -274,27 +184,22 @@ class ChatItemHelper {
     imgContainer.appendChild(itemElem);
   };
 
-  _getAllImgs() {
-    const imgContainer = document.getElementById("chat-input-imgs");
-    const imgs = imgContainer.getElementsByTagName("img");
-    const srcs = [];
-    for (let i = 0; i < imgs.length; i++) {
-      srcs.push({
-        type: "image_url",
-        image_url: { url: imgs[i].getAttribute("src") },
-      });
-    }
-    imgContainer.innerHTML = "";
-    return srcs;
+  /** 判断当前的对话历史里面 是不是包含了图像 */
+  checkImgsExit() {
+    if (!this._init()) return false;
+    const imgElem = this._chatContainer.querySelector("img");
+    return imgElem ? true : false;
   }
 
+  /** ⭐⭐⭐ _getAssistantResponse 是根据用户返回*/
   async _getAssistantResponse(chatCid) {
     // 从服务端获得输出,并创建一个HTMLElement来缓存值
     const assHTMLElem = this._addAssAHTMLElem(
       "",
       "Connect to WEB server... ..."
     );
-    await createEventSourceAPI(chatCid, assHTMLElem, this._ctrl);
+    this.ctrl = new AbortController();
+    await createEventSourceAPI(chatCid, assHTMLElem, this.ctrl);
   }
 }
 

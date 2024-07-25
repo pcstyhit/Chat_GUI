@@ -50,31 +50,6 @@ if [ ! -d "$DEST_DIR" ]; then
   exit 1
 fi
 
-# 定义递归复制函数
-copy_items() {
-  local src="$1"
-  local dest="$2"
-
-  for item in "$src"/*; do
-    local filename=$(basename "$item")
-    local dest_item="$dest/$filename"
-
-    if [ -d "$item" ]; then
-      # 如果是文件夹，递归复制内容
-      echo "Copying directory: $item"
-      cp -rf "$item" "$dest_item"
-    else
-      # 复制文件
-      echo "Copying file: $item"
-      cp -f "$item" "$dest_item"
-    fi
-  done
-}
-
-# 开始复制内容
-copy_items "$SRC_DIR" "$DEST_DIR"
-
-
 cp -r "./.dbpath" "$DEST_DIR"
 cp -r "./statics" "$DEST_DIR"
 cp "./config.json" "$DEST_DIR"

@@ -17,10 +17,11 @@ class HttpxProxy:
         self.updateClient()
 
     def updateClient(self) -> httpx.Client:
-        self.client = None
+        timeout = httpx.Timeout(timeout=10.0, connect=5.0, read=10.0, write=15.0)
+        self.client = httpx.Client(timeout=timeout)
         if self.isUseProxy and self.proxyURL != '':
             self.client = httpx.Client(
-                proxies={'http://': self.proxyURL, 'https://': self.proxyURL})
+                proxies={'http://': self.proxyURL, 'https://': self.proxyURL}, timeout=timeout)
 
     def setHttpxClient(self, data: dict):
         isUseProxy = data.get("isUseProxy", False)

@@ -21,7 +21,7 @@ export const login = async (userName, passWord) => {
   showMessage("success", "登录成功! 😀");
   await initUserSettings();
   await initChatPage();
-  StoreHelper.setLoginState(true);
+  StoreHelper.setLoginInfo(true, rea.userName, rea.uid);
   return true;
 };
 

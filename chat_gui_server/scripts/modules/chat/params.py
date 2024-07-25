@@ -27,6 +27,7 @@ class Params:
         # 用户能够用上的全部对话模型列表
         self._modelList: List[ChatAPIModelLabel] = self._initChatModelList()
         self._promptsTokens: int = 0                    # 提示词的tokens数量
+        self._useDefaultParams()
 
     def _useDefaultParams(self):
         '''使用默认值'''

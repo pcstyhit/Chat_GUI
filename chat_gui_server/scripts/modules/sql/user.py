@@ -96,11 +96,11 @@ class UserSQL:
         # 提交修改
         self.conn.commit()
 
-    def getAllUser(self) -> None:
-        '''从当前的 users 表里查询出全部的用户数据'''
-        self.cursor.execute('SELECT * FROM users')
+    def getTableInfo(self, tableName) -> None:
+        '''从当前的 tableName 表里查询出全部的用户数据'''
+        self.cursor.execute(f'SELECT * FROM {tableName}')
         rows = self.cursor.fetchall()
-        LOGGER.info(f"All users: {rows}")
+        LOGGER.info(f"{tableName} all information: {rows}")
 
     def addUserLoginInfo(self, userName) -> Optional[str]:
         '''根据用户名创建一个users表来存放相关信息,创建用户记录'''
@@ -115,14 +115,13 @@ class UserSQL:
         if existingUser is None:
             # 存入登录的属性
             self.cursor.execute("INSERT INTO users (userName,uid,sessionId,expiredTime,maxAge) VALUES (?,?,?,?,?)",
-                                (userName, tmpUid, tmpSsid, tmpExpiredTime, APIAuth.maxAge))
-            self.cursor.execute(
-                "INSERT INTO users_settings_table (userName,chatSettings,proxySettings) VALUES (?,?,?)", (userName, None, None))
+                                (userName, tmpUid, tmpSsid, tmpExpiredTime, APIAuth.maxAge,))
+            self.cursor.execute("INSERT INTO users_settings_table (userName) VALUES (?)", (userName,))
 
             # 提交修改
             self.conn.commit()
             LOGGER.info(f'SERVER add a new user: {userName}. session: {tmpSsid}')
-            self.getAllUser()
+            self.getTableInfo('users')
             return tmpUid
 
         # 已经创建过信息的用户
@@ -132,8 +131,8 @@ class UserSQL:
 
         self.cursor.execute('SELECT uid FROM users WHERE userName=?', (userName,))
         tmpUid = self.cursor.fetchone()[0]
-        LOGGER.info(f'User: {userName}. has already in USER SQL; uid: {tmpUid}')
-        self.getAllUser()
+        LOGGER.info(f'User: {userName} has already in USER SQL; uid: {tmpUid}')
+        self.getTableInfo('users')
         return tmpUid
 
     def addChatInfoForSpecUser(self, userName: str, chatParams: str) -> str:
@@ -177,8 +176,7 @@ class UserSQL:
 
     def getChatParamsByChatCid(self, chatCid) -> Optional[str]:
         '''根据对话用户身份和唯一的对话chatCid来找出对话的设置'''
-        self.cursor.execute(
-            "SELECT chatParams FROM users_chats_table WHERE chatCid = ?", (chatCid,))
+        self.cursor.execute("SELECT chatParams FROM users_chats_table WHERE chatCid = ?", (chatCid,))
         result = self.cursor.fetchone()
         if result:
             # 实际上要用的时候还要转成dict: json.loads(result[0])
@@ -204,8 +202,10 @@ class UserSQL:
 
     def setChatSettingsForSpecUser(self, userName: str, chatParams: str) -> str:
         '''将用户的默认的对话参数 存入数据库'''
-        self.cursor.execute(f"UPDATE users_settings_table SET proxySettings=? WHERE userName=?", (chatParams, userName,))
+        self.cursor.execute(f"UPDATE users_settings_table SET chatSettings=? WHERE userName=?", (chatParams, userName,))
         # 提交更改
+        print("setChatSettingsForSpecUser")
+        self.getTableInfo('users_settings_table')
         self.conn.commit()
 
     def getChatSettingsForSpecUser(self, userName: str) -> str:
@@ -222,6 +222,8 @@ class UserSQL:
         '''将用户的默认的对话参数 存入数据库'''
         self.cursor.execute("UPDATE users_settings_table SET proxySettings=? WHERE userName=?", (proxySettings, userName))
         # 提交更改
+        print("setProxySettingsForSpecUser")
+        self.getTableInfo('users_settings_table')
         self.conn.commit()
 
     def getProxySettingsForSpecUser(self, userName: str) -> str:

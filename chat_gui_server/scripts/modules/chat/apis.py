@@ -125,7 +125,8 @@ class ChatAPI(ChatHandle):
 
     async def setChatDefaultParams(self, data) -> dict:
         '''设置对话里的默认的对话参数'''
-        return self.params.setDefaultParams(data)
+        self.params.setDefaultParams(data)
+        LOGGER.info(f"Current defalt params: {data}")
 
     async def updateHttpx(self, httpxp: HttpxProxy):
         '''更新当前对话的网络代理的handler'''
@@ -161,7 +162,7 @@ class ChatAPI(ChatHandle):
             self.params.updateCurrentParams(data)
             self.updateModel(self.params.chatApi, self.httpxp.client)
 
-        print(f"current chat params: {self.params.getCurrentParams()}")
+        LOGGER.info(f"Current chat params: {self.params.getCurrentParams()}")
 
     async def setChatName(self, chatCid, chatName: str) -> None:
         '''根据用户名和唯一的对话ChatCid来设置数据库或者是当前对话的对话名称
@@ -177,7 +178,7 @@ class ChatAPI(ChatHandle):
         if chatCid == self.chatCid:
             self.params.curPrms.chatName = chatName
 
-        print(f"current chat params: {self.params.getCurrentParams()}")
+        LOGGER.info(f"Chat params: {self.params.getCurrentParams()}")
         return True
 
     async def setUserMsg(self, msg: ChatAPIMessage) -> tuple:
@@ -238,23 +239,15 @@ class ChatAPI(ChatHandle):
 
     async def deleteChatItemByID(self, chatIid: str):
         '''根据用户提供的id信息来删除数据库的那条信息'''
-        try:
-            self.chatSql.deleteItemInSpecTable(self.userName, self.chatCid, chatIid)
-            return True
-        except Exception as eMsg:
-            print(f'deleteChatItem error : {eMsg}')
-            return False
+        self.chatSql.deleteItemInSpecTable(self.userName, self.chatCid, chatIid)
+        return True
 
     async def editChatItemMsgByID(self, chatIid, msg: ChatAPIMessage):
         '''根据提供的chat的id和新消息, 对chatItem表的内容进行更新'''
         tokens = self.params.getOneMsgTokens(msg)
-        try:
-            msgStr = json.dumps(msg)
-            self.chatSql.setItemInSpecTable(self.userName, self.chatCid, chatIid, msgStr, tokens)
-            return True
-        except Exception as eMsg:
-            print(f'deleteChatItem error : {eMsg}')
-            return False
+        msgStr = json.dumps(msg)
+        self.chatSql.setItemInSpecTable(self.userName, self.chatCid, chatIid, msgStr, tokens)
+        return True
 
     async def reGenerateContent(self, chatIid):
         '''根据提供的chat的id和新消息, 对chatItem表的内容进行更新'''

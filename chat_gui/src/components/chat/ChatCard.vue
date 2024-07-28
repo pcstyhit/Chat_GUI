@@ -37,8 +37,8 @@
       <RolesCard />
     </div>
     <!-- Message Output -->
-    <el-scrollbar class="scroll-window">
-      <div id="chat-messages-container"></div>
+    <el-scrollbar class="scroll-window" ref="scrollbarRef">
+      <div id="chat-messages-container" ref="innerRef"></div>
     </el-scrollbar>
     <!-- Message Input -->
     <div class="input-card" id="chat-input-card">
@@ -79,7 +79,6 @@
   </div>
   <!-- item editor ovelay -->
   <TextEditor />
-  <audio id="audioElement"></audio>
   <UserSettings />
 </template>
 
@@ -91,7 +90,7 @@ import UserSettings from "../home/UserSettings.vue";
 import chatCardHandler from "../../helper/chat/card.js";
 
 import { useStore } from "vuex";
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { showMessage, showMessageBox } from "../../helper/customMessage.js";
 import { pasteImage, uploadImageFile } from "../../helper/user/files.js";
 
@@ -106,6 +105,9 @@ const requestTimeObj = ref({
   startTime: 0,
   time: 0,
 });
+
+const scrollbarRef = ref();
+const innerRef = ref();
 
 onMounted(() => {
   pasteImage();
@@ -157,7 +159,7 @@ const onSendContent = async () => {
   isChatting.value = true;
   startRequestTime();
 
-  await chatCardHandler.sendChat(msg);
+  await chatCardHandler.sendChat(msg, setScrollToBottom);
   isChatting.value = false;
   chatCardHandler.addListener();
   stopRequestTime();
@@ -171,6 +173,17 @@ const startRequestTime = () => {
 const stopRequestTime = () => {
   requestTimeObj.value.time =
     new Date().getTime() - requestTimeObj.value.startTime;
+};
+
+/**
+ * 默认显示最新的内容，拖拉条滚动到最底部
+ * Element-plus】如何让滚动条永远在最底部（支持在线演示）
+ * https://blog.csdn.net/qq_42203909/article/details/133816286
+ */
+const setScrollToBottom = async () => {
+  await nextTick();
+  const max = innerRef.value.clientHeight;
+  scrollbarRef.value.setScrollTop(max);
 };
 
 /** 显示对话的编辑弹窗 chat-settings-overlay */

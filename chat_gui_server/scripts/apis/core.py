@@ -4,6 +4,7 @@ import uvicorn
 
 from .user import USER_ROUTE
 from .chat import CHAT_ROUTE
+from .app import APP_ROUTE
 
 from scripts.libs import CONF
 
@@ -11,6 +12,7 @@ app = fastapi.FastAPI()
 # 挂载路由
 app.include_router(USER_ROUTE)
 app.include_router(CHAT_ROUTE)
+# app.include_router(APP_ROUTE)
 
 
 def startDevMode():
@@ -20,7 +22,7 @@ def startDevMode():
     # 启用 CORS 中间件, 配置允许跨域请求的来源
     app.add_middleware(CORSMiddleware,
                        allow_credentials=True,
-                       allow_origins=["http://127.0.0.1:10090"],  # 允许所有 跨越URL 方法
+                       allow_origins=["*"],  # 允许所有 跨越URL 方法
                        allow_methods=["*"],  # 允许所有 HTTP 方法
                        allow_headers=["*"],  # 允许所有 HTTP 头部
                        )
@@ -38,7 +40,6 @@ def runWithStatics():
 
     if not os.path.exists(staticsDir):
         errorMsg = f"Failed to start the server with static files: no static resources found {staticsDir}"
-        print(errorMsg)
         raise FileNotFoundError(errorMsg)
 
     # 挂载静态资源

@@ -29,7 +29,3 @@ def reuuid(length=20):
     '''逆序的uuid'''
     orStr = oruuid(length)
     return orStr[::-1]
-
-
-if __name__ == '__main__':
-    print(f"Time-Random: {reuuid(20)}")

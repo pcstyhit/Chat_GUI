@@ -49,7 +49,7 @@ class ChatSQL:
         '''删除指定用户和聊天表'''
         self.cursor.execute(f"DROP TABLE IF EXISTS {userName}_{chatCid}")
 
-        LOGGER.info(f'Chat table{userName}_{chatCid} deleted successfully.')
+        LOGGER.info(f'Chat table: {userName}_{chatCid} has been deleted successfully.')
         # 提交更改并关闭连接
         self.conn.commit()
 

@@ -175,12 +175,8 @@ async def getChatParamsAPI(item: GetChatParamsRequest, user: str = fastapi.Depen
 async def setChatParamsAPI(item: SetChatParamsRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = SetChatParamsResponse()
     handle = UserManage.getChatHandle(user)
-    try:
-        await handle.setChatParams(item.chatCid, item.data)
-        rea.flag = True
-    except Exception as e:
-        print(f"Get chat: {item.chatCid} error: {e}")
-
+    await handle.setChatParams(item.chatCid, item.data)
+    rea.flag = True
     return rea
 
 # ==================================================
@@ -228,18 +224,12 @@ async def sseAPI(user: str = fastapi.Depends(authenticateUser)):
             rea.data = ""
             resp, _ = dict2Str(rea.__dict__)
             yield f"data: {resp}\n\n"
-
-        except asyncio.CancelledError:
-            print("WEB Close the sse connection")
         except Exception as eMsg:
             # 异常返回 -1
             rea.flag = -1
             rea.data = str(eMsg)
             resp, _ = dict2Str(rea.__dict__)
             yield f"data: {resp}\n\n"
-            raise fastapi.HTTPException(
-                status_code=500, detail="Server error!"
-            )
 
     return fastapi.responses.StreamingResponse(sseEventGenerator(), media_type="text/event-stream")
 

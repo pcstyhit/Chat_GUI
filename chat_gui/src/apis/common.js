@@ -1,11 +1,8 @@
 import axios from "axios";
 import StoreHelper from "../helper/storeHelper";
 
-const PORT = 5001;
 export const SHORTTIME = 2000;
 export const LONGTIME = 10000;
-export const URL = `http://127.0.0.1:${PORT}`;
-export const WSURL = `ws://127.0.0.1:${PORT}`;
 
 /** 调用登录的接口
  * Axios中，第一个参数是URL
@@ -17,7 +14,7 @@ export async function apiRequest(method, endpoint, body = {}) {
   try {
     const response = await axios({
       method: method,
-      url: `${URL}${endpoint}`,
+      url: `${endpoint}`,
       data: body,
       headers: StoreHelper.getHeaders(),
       timeout: 10000,

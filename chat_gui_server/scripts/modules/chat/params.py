@@ -46,8 +46,6 @@ class Params:
     def getDefaultParams(self) -> dict:
         '''获得当前用户的默认chat的配置信息'''
         tmpDict = copy.deepcopy(self._defaultPrms.__dict__)
-        firstLabel = self._modelList[0]
-        tmpDict.update(firstLabel.__dict__)
         return tmpDict
 
     def setDefaultParams(self, data) -> dict:

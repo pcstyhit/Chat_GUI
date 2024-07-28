@@ -22,7 +22,7 @@ class UmmAPI:
             # 不存在需要新设置
             tmpCsDict: dict = await userHandler.chat.getChatDefaultParams()
             tmpCsStr = json.dumps(tmpCsDict)
-            userHandler.userSql.setChatParamsForSpecUser(userHandler.userName, tmpCsStr)
+            userHandler.userSql.setChatSettingsForSpecUser(userHandler.userName, tmpCsStr)
 
         # 对于其他设置也是一样的
         tmpCsStr = userHandler.userSql.getProxySettingsForSpecUser(userHandler.userName)
@@ -67,7 +67,7 @@ class UmmAPI:
     async def setUserChatDefParamsAPI(cls, userName, data) -> bool:
         '''修改掉这个用户的对话handle的默认参数'''
         userHandler = UserManage.getUserHandle(userName)
-        userHandler.userSql.setChatParamsForSpecUser(userName, json.dumps(data))
+        userHandler.userSql.setChatSettingsForSpecUser(userName, json.dumps(data))
         await userHandler.chat.setChatDefaultParams(data)
         return True
 

@@ -1,5 +1,5 @@
 import StoreHelper from "../helper/storeHelper";
-import { URL, apiRequest } from "./common.js";
+import { apiRequest } from "./common.js";
 import { marked } from "../helper/formatHelper.js";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { showMessage } from "@/helper/customMessage";
@@ -76,7 +76,7 @@ export const createEventSourceAPI = async (chatCid, assHTMLElem, ctrl) => {
   const webRenderLen = 4;
   const textElem = assHTMLElem.querySelector(".text");
 
-  await fetchEventSource(`${URL}/chat/sse/${chatCid}`, {
+  await fetchEventSource(`/chat/sse/${chatCid}`, {
     method: "POST",
     headers: StoreHelper.getHeaders(),
     credentials: "include",

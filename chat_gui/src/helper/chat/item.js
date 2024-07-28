@@ -192,12 +192,14 @@ class ChatItemHelper {
   }
 
   /** ⭐⭐⭐ _getAssistantResponse 是根据用户返回*/
-  async _getAssistantResponse(chatCid) {
+  async _getAssistantResponse(chatCid, callback) {
     // 从服务端获得输出,并创建一个HTMLElement来缓存值
     const assHTMLElem = this._addAssAHTMLElem(
       "",
       "Connect to WEB server... ..."
     );
+
+    if (callback) await callback();
     this.ctrl = new AbortController();
     await createEventSourceAPI(chatCid, assHTMLElem, this.ctrl);
   }

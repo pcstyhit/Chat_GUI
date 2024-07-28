@@ -7,7 +7,7 @@ import ctypes
 import webview
 import threading
 
-from scripts.libs import CONF
+from scripts.libs import CONF, LOGGER
 from scripts.apis.core import runWithStatics
 
 
@@ -36,7 +36,7 @@ def setConsoleMode():
     # 设置新的控制台模式
     kernel32.SetConsoleMode(hStdin, new_mode)
 
-    print("QUICK_EDIT_MODE and INSERT_MODE are disable!")
+    LOGGER.info("QUICK_EDIT_MODE and INSERT_MODE are disable!")
 
 
 def startPywebview():

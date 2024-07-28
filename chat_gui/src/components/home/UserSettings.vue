@@ -52,16 +52,13 @@
             <div class="item">
               <div class="item-label">
                 <div class="tips" v-html="SVGS.tipsIcon" />
-                <el-text class="text">Model: </el-text>
+                <el-text class="text">Default Model: </el-text>
               </div>
-              <el-select v-model="chatParams.modelName" class="item-select">
-                <el-option
-                  v-for="item in chatModelList"
-                  :key="item.modelName"
-                  :label="item.modelName"
-                  :value="item.modelName"
-                  @click="onSelectModel(chatParams, item)"
-                />
+              <el-select
+                v-model="chatParams.modelName"
+                class="item-select"
+                :disabled="true"
+              >
               </el-select>
             </div>
             <div class="item-textarea">
@@ -252,7 +249,6 @@ import * as SVGS from "../../assets/styles/home/svgs.js";
 import { showMessage } from "../../helper/customMessage.js";
 import { confirmUserSettings } from "../../helper/user/common.js";
 import {
-  onSelectModel,
   getPromptByRole,
   handleChatPrompts,
   validStopSequence,
@@ -264,7 +260,6 @@ const userName = computed(() => store.state.user.name);
 const userId = computed(() => store.state.user.uid);
 const avatarImg = computed(() => store.state.user.avatar);
 
-const chatModelList = computed(() => store.state.chat.modelList);
 const chatParams = ref({});
 const chatSysPrompt = ref("");
 const chatUserPrompt = ref("");

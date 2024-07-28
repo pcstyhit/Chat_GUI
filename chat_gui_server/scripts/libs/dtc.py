@@ -11,8 +11,7 @@ def dict2Str(dictObj: dict) -> tuple:
         rea = json.dumps(dictObj)
         flag = True
     except Exception as eMsg:
-        rea = ""
-        print('[ERROR] - dict2Str', eMsg)
+        raise ValueError(f"[ERROR] - dict2Str: {eMsg}")
     return rea, flag
 
 
@@ -26,5 +25,5 @@ def str2Dict(strObj: str) -> dict:
         try:
             rea = json.loads(strObj)
         except Exception as eMsg:
-            print('[ERROR] - str2Dict', eMsg)
+            raise ValueError(f"[ERROR] - str2Dict', {eMsg}")
     return rea

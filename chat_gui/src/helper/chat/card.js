@@ -126,7 +126,7 @@ class ChatCardHelper extends ChatItemHelper {
 
   /** sendChat ⭐⭐ 发送对话给到SERVER然后获得来自SERVER返回的Assistant的回答, 输出到网页上
    * 要注意的是, 这个函数也会提取判断是不是新建对话.*/
-  async sendChat(texts) {
+  async sendChat(texts, callback) {
     this.removeListener();
 
     var chatCid = await this.getValidChatCid();
@@ -145,7 +145,7 @@ class ChatCardHelper extends ChatItemHelper {
     StoreHelper.setTokens(rea.tokens);
 
     // 开始更新Assistant的回答
-    await this._getAssistantResponse(chatCid);
+    await this._getAssistantResponse(chatCid, callback);
 
     this.addListener();
   }

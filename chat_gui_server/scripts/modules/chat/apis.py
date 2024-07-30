@@ -126,7 +126,7 @@ class ChatAPI(ChatHandle):
     async def setChatDefaultParams(self, data) -> dict:
         '''设置对话里的默认的对话参数'''
         self.params.setDefaultParams(data)
-        LOGGER.info(f"Current defalt params: {data}")
+        # LOGGER.info(f"Current defalt params: {data}")
 
     async def updateHttpx(self, httpxp: HttpxProxy):
         '''更新当前对话的网络代理的handler'''
@@ -156,13 +156,12 @@ class ChatAPI(ChatHandle):
         如果chatCid对应是当前的对话,那需要更新当前的self.params的属性
         '''
         self.userSql.setChatParamsForSpecUser(chatCid, json.dumps(data))
-
         # 是不是要更新当前的配置和模型
         if chatCid == self.chatCid:
             self.params.updateCurrentParams(data)
             self.updateModel(self.params.chatApi, self.httpxp.client)
 
-        LOGGER.info(f"Current chat params: {self.params.getCurrentParams()}")
+        # LOGGER.info(f"Current chat params: {self.params.getCurrentParams()}")
 
     async def setChatName(self, chatCid, chatName: str) -> None:
         '''根据用户名和唯一的对话ChatCid来设置数据库或者是当前对话的对话名称
@@ -178,7 +177,7 @@ class ChatAPI(ChatHandle):
         if chatCid == self.chatCid:
             self.params.curPrms.chatName = chatName
 
-        LOGGER.info(f"Chat params: {self.params.getCurrentParams()}")
+        # LOGGER.info(f"Chat params: {self.params.getCurrentParams()}")
         return True
 
     async def setUserMsg(self, msg: ChatAPIMessage) -> tuple:

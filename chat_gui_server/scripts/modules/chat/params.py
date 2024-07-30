@@ -46,6 +46,8 @@ class Params:
     def getDefaultParams(self) -> dict:
         '''获得当前用户的默认chat的配置信息'''
         tmpDict = copy.deepcopy(self._defaultPrms.__dict__)
+        firstLabel = self._modelList[0]
+        tmpDict.update(firstLabel.__dict__)
         return tmpDict
 
     def setDefaultParams(self, data) -> dict:
@@ -64,7 +66,7 @@ class Params:
         _, self._promptsTokens = self.getMessagesTokens(self.curPrms.prompts)
         # 如果更换了模型 就需要更新APIParams的参数
         if oldModelLabel != self.curPrms.modelName:
-            self.chatApi = CONF.apiParamsList[oldModelLabel]
+            self.chatApi = CONF.apiParamsList[self.curPrms.modelName]
 
     def _initChatModelList(self) -> List[ChatAPIModelLabel]:
         '''CONF中配置的Chat的模型 是固定的 要做的是去掉*gpt*之外的 语音和视觉的模型就行'''

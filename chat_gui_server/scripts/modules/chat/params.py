@@ -8,8 +8,9 @@
 import copy
 import json
 import tiktoken
-from typing import List, Tuple, Dict
-from .template import TEMPLATES
+from typing import List, Tuple
+from random import randint
+from .template import TEMPLATES, EMOJILIST
 from dataclasses import asdict
 from scripts.libs import CONF
 from scripts.libs.bms import *
@@ -32,6 +33,7 @@ class Params:
     def _useDefaultParams(self):
         '''使用默认值'''
         self.curPrms = copy.deepcopy(self._defaultPrms)
+        self.curPrms.chatName += f' - {EMOJILIST[randint(0, 99)]}'
         _, self._promptsTokens = self.getMessagesTokens(self.curPrms.prompts)
         # 直接从 Chat 类型的 API list 里找到第一个模型参数作为对话的默认模型'''
         if len(self._modelList) > 0:
@@ -149,9 +151,10 @@ class Params:
             del msgList[0]
             self.getMessagesStrList(msgList)
 
-    def setGhostChat(self, template) -> dict:
+    def setGhostChat(self, name: str, template) -> dict:
         '''特定的函数, 设置一个幽灵对话'''
         self._useDefaultParams()
         templateDict = TEMPLATES.get(template, {})
-        self.updateCurrentParams({'isGhost': True, 'prompts': templateDict.get('data', {})})
+        self.updateCurrentParams({'isGhost': True, 'prompts': templateDict.get(
+            'data', {}), 'passedMsgLen': 1, 'chatName': name})
         return self.getCurrentParams()

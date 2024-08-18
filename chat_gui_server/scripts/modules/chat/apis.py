@@ -306,9 +306,9 @@ class ChatAPI(ChatHandle):
 
         return self.chatCid, chatHistory, chatTokens
 
-    async def newGhostChat(self, template: str):
+    async def newGhostChat(self, name: str, template: str):
         '''设置幽灵对话的参数'''
-        allParams = self.params.setGhostChat(template)
+        allParams = self.params.setGhostChat(name, template)
         allParamsStr = json.dumps(allParams)
         # 将最开始的配置参数存入数据库, 其实可以不放入任何内容,但是只是保证操作的统一
         self.chatCid = self.userSql.addChatInfoForSpecUser(self.userName, allParamsStr)

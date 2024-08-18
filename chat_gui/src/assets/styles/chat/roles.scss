@@ -50,7 +50,9 @@
         .label {
           height: 50%;
           width: 100%;
+          max-width: 125px;
           font-size: 16px;
+          text-wrap: wrap;
         }
 
         .tips {

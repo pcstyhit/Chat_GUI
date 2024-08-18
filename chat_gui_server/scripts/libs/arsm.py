@@ -174,3 +174,9 @@ class ChatSyncAPIsAPIResponse(BaseModel):
     context: str = ''
     tokens: int = 0
     log: str = ''
+
+
+class deleteAllChatAPIResponse(BaseModel):
+    '''deleteAllChatAPIResponse响应内容的格式'''
+    flag: bool = False
+    log: str = ''

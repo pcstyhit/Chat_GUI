@@ -86,3 +86,14 @@ class UmmAPI:
         userHandler.userSql.setProxySettingsForSpecUser(userName, json.dumps(data))
         await userHandler.chat.updateHttpx(userHandler.httpxp)
         return True
+
+    @classmethod
+    async def deleteAllChatAPI(cls, userName) -> bool:
+        '''修改用户的默认参数, 目前只有代理的信息'''
+        userHandler = UserManage.getUserHandle(userName)
+        chatCidList = userHandler.userSql.getAllChatHistory(userName)
+        print("?????::::", chatCidList)
+        for chatCidTuple in chatCidList:
+            userHandler.userSql.deleteChatInfoForSpecUser(userName, chatCidTuple[0])
+            userHandler.chatSql.deleteSpecTable(userName, chatCidTuple[0])
+        return True

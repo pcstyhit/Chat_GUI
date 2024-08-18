@@ -1,6 +1,6 @@
 {
   "host": "127.0.0.1",
-  "port": 5001,
+  "port": 10088,
   "isLoginByTokenKey": false,
   "tokenKey": "",
   "isUseProxy": false,
@@ -13,14 +13,15 @@
         "apiKey": "xxx",
         "endPoint": "xxx",
         "deployment": "xxx",
-        "maxToken": "xxx",
+        "maxTokens": "xxx",
         "apiVersion": "xxx"
       },
       "model-name-xxx-02": {
         "serviceType": "openai",
         "modelType": "xxx",
         "baseUrl": "xxx",
-        "apiKey": "xxx"
+        "apiKey": "xxx",
+        "maxTokens": "xxx"
       }
     },
     "expiredTime": 1721020364

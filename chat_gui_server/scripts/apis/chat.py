@@ -287,7 +287,7 @@ async def uploadChatHistoryAPI(item: UploadChatHistoryRequest, user: str = fasta
 async def newGhostChatAPI(item: NewGhostChatRequest, user: str = fastapi.Depends(authenticateUser)):
     rea = NewGhostChatResponse()
     handle = UserManage.getChatHandle(user)
-    rea.chatCid, rea.chatParams, rea.tokens = await handle.newGhostChat(item.data)
+    rea.chatCid, rea.chatParams, rea.tokens = await handle.newGhostChat(item.name, item.template)
     rea.flag = True
     return rea
 

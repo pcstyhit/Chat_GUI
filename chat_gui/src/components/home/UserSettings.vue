@@ -117,9 +117,9 @@
               <el-input
                 class="input-middle"
                 v-model="chatParams.maxResponseTokens"
-                @input="validateRange('maxResponseTokens', 1, 8192)"
+                @input="validateRange('maxResponseTokens', 1, 4096)"
               />
-              <el-text class="c-input-tips">value range: 1~8192</el-text>
+              <el-text class="c-input-tips">value range: 1~4096</el-text>
             </div>
             <div class="item">
               <div class="item-label">
@@ -225,6 +225,15 @@
               </div>
               <el-input class="input-fit" v-model="userSettings.proxyURL" />
             </div>
+            <div class="item">
+              <div class="item-label">
+                <div class="tips" v-html="SVGS.tipsIcon" />
+                <el-text class="text">Delete all chat: </el-text>
+              </div>
+              <el-button class="c-dangerous-button" @click="onDeleteAllChat">
+                Delete all chat
+              </el-button>
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -246,8 +255,11 @@
 import { computed, watch, ref } from "vue";
 import { useStore } from "vuex";
 import * as SVGS from "../../assets/styles/home/svgs.js";
-import { showMessage } from "../../helper/customMessage.js";
-import { confirmUserSettings } from "../../helper/user/common.js";
+import { showMessage, showMessageBox } from "../../helper/customMessage.js";
+import {
+  deleteAllChat,
+  confirmUserSettings,
+} from "../../helper/user/common.js";
 import {
   getPromptByRole,
   handleChatPrompts,
@@ -323,13 +335,23 @@ const onLogout = () => {
 /** onConfirmSetting 点击保存用户的设置 */
 const onConfirmSetting = async () => {
   var flag = await confirmUserSettings(chatParams.value, userSettings.value);
-  if (flag) showMessage("success", "设置用户的参数成功! 😀");
+  if (flag) showMessage("success", "设置用户的参数成功 再次新建对话生效! 😀");
   onCloseUserSettingOverlay();
 };
 
 /** onCloseUserSettingOverlay 关掉用户设置的overlay */
 const onCloseUserSettingOverlay = () => {
   store.commit("SET_USER_SHOWSETTINGUI", false);
+};
+
+/** 删除全部的对话 也要保证界面回到新建对话的状态 */
+const onDeleteAllChat = async () => {
+  const flag = await showMessageBox(`确定删除全部的对话吗? 操作不可逆!`);
+  if (!flag) return;
+  const res = await deleteAllChat();
+  if (res) {
+    store.commit("SET_CHATCID", "");
+  }
 };
 </script>
 

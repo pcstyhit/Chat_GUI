@@ -223,6 +223,15 @@ watch(
       Object.keys(store.state.chat.chatParams).forEach((key) => {
         chatParams.value[key] = store.state.chat.chatParams[key];
       });
+
+      // 幽灵对话隐藏设置
+      if (chatParams.value.isGhost) {
+        isOpenSettingDialog.value = false;
+        showMessage("info", `幽灵对话不支持修改设置 ❌`);
+        await onCancleSettings();
+        return;
+      }
+
       // 更新对应的 chat prompt的值
       chatSysPrompt.value = getPromptByRole(chatParams.value, "system");
       chatUserPrompt.value = getPromptByRole(chatParams.value, "user");

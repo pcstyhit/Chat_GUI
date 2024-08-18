@@ -103,7 +103,7 @@ export const downloadSpecChatMsgs = async (chatCid) => {
 
 /** newGhostChat 新建一个Ghost对话的辅助函数 */
 export const newGhostChat = async (item) => {
-  var rea = await newGhostChatAPI(item.type);
+  var rea = await newGhostChatAPI(item.name, item.template);
   if (!rea.flag) {
     showMessage("error", `新建一个幽灵对话失败! 【${rea.log}】 😫`);
     return;

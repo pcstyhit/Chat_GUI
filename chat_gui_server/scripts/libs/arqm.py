@@ -71,7 +71,8 @@ class UploadChatHistoryRequest(BaseModel):
 
 class NewGhostChatRequest(BaseModel):
     '''newGhostChatAPI请求体的格式'''
-    data: str  # 具体的模板是什么
+    name: str  # 这个幽灵对话的名称
+    template: str  # 具体的模板是什么
 
 
 class ChatAudioRequest(BaseModel):

@@ -2,8 +2,10 @@ import StoreHelper from "../storeHelper";
 import { isEqual } from "lodash";
 import { initChatPage } from "../chat/common.js";
 import { showMessage } from "../customMessage.js";
+import { getChatParamsAPI } from "../../apis/chat.js";
 import {
   loginAPI,
+  deleteAllChatAPI,
   getUserSettingAPI,
   setUserSettingAPI,
   setUserChatParamsAPI,
@@ -73,4 +75,23 @@ export const confirmUserSettings = async (chatParams, userSettings) => {
     }
     StoreHelper.setUserSettings(userSettings);
   }
+
+  //  如果是新建对话的界面 同步一下设置到store的缓存
+  if (StoreHelper.getChatCid() == "") {
+    let rea = await getChatParamsAPI("");
+    if (rea.flag) StoreHelper.setChatParams(rea.data);
+  }
+
+  return true;
+};
+
+/** 用户点击删除全部对话的操作 */
+export const deleteAllChat = async () => {
+  const res = await deleteAllChatAPI();
+  if (res.flag) {
+    StoreHelper.setChatNameList([]);
+    showMessage("success", "对话已经删除. 😀");
+    return true;
+  }
+  return false;
 };

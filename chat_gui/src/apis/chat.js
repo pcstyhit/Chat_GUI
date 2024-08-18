@@ -63,8 +63,8 @@ export const uploadChatHistory = (jsonData) =>
   apiRequest("post", "/chat/uploadChatHistory", { data: jsonData });
 
 /** 👻 新建一个幽灵对话 */
-export const newGhostChatAPI = (data) =>
-  apiRequest("post", "/chat/newGhostChat", { data });
+export const newGhostChatAPI = (name, template) =>
+  apiRequest("post", "/chat/newGhostChat", { name, template });
 
 /** 🔊 对话的语音播报 */
 export const chatAudioAPI = (data) =>

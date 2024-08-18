@@ -21,3 +21,6 @@ export const setUserSettingAPI = (params) =>
 /** ⚙️ 获得用户的默认设置 */
 export const getUserSettingAPI = () =>
   apiRequest("get", "/user/getUserSetting");
+
+/** ❌ 删除用户的全部对话 */
+export const deleteAllChatAPI = () => apiRequest("post", "/user/deleteAllChat");

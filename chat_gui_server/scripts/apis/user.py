@@ -74,3 +74,15 @@ async def setUserSettingAPI(item: SetUserSettingAPIRequest, user: str = fastapi.
     rea = SetUserSettingResponse()
     rea.flag = await UmmAPI.setUserSettingsAPI(user, item.data)
     return rea
+
+
+# ==================================================
+# ❌ deleteAllChatAPI 删除用户全部的对话
+# ==================================================
+
+
+@USER_ROUTE.post('/user/deleteAllChat')
+async def deleteAllChatAPI(user: str = fastapi.Depends(authenticateUser)):
+    rea = deleteAllChatAPIResponse()
+    rea.flag = await UmmAPI.deleteAllChatAPI(user)
+    return rea

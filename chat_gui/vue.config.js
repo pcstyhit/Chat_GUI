@@ -7,7 +7,7 @@ module.exports = defineConfig({
     port: 10090,
     proxy: {
       "/": {
-        target: "http://127.0.0.1:5001",
+        target: "http://127.0.0.1:10088",
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: "127.0.0.1",

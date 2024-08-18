@@ -53,12 +53,12 @@ import { uploadJsonFile } from "../../helper/user/files.js";
 
 const ghostTemplate = {
   translate: {
-    type: `translate`,
+    template: `translate`,
     msg: `好的, 我是一个中英互译助手, 请开始输入中文或者英文，我会为你进行翻译并列出翻译中的关键 😎`,
     name: `👻 中英互译助手`,
   },
   gitCommitHelper: {
-    type: `gitCommitHelper`,
+    template: `gitCommitHelper`,
     msg: `好的, 我是一个git commit定制化的助手, 请开始输入你的commit 👻`,
     name: `👏 git commit 助手`,
   },

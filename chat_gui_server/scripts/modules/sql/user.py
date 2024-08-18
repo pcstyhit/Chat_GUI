@@ -281,6 +281,12 @@ class UserSQL:
         result = self.cursor.fetchone()
         return result[0]
 
+    def getAllChatHistory(self, userName: str) -> List[Tuple[str,]]:
+        '''根据用户名称 获得全部的对话'''
+        self.cursor.execute("SELECT chatCid FROM users_chats_table WHERE userName = ?", (userName,))
+        rows = self.cursor.fetchall()
+        return rows
+
     def releaseCursor(self):
         '''释放游标，关闭资源'''
         self.cursor.close()

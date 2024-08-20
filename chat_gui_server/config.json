@@ -1,10 +1,11 @@
 {
   "host": "127.0.0.1",
   "port": 10088,
-  "isLoginByTokenKey": false,
-  "tokenKey": "",
+  "isEncryptedApiParamsList": false,
+  "encryptData": "",
   "isUseProxy": false,
   "proxyURL": "",
+  "apiDefaultService": "openai",
   "apiServiceList": {
     "modelList": {
       "model-name-xxx-01": {

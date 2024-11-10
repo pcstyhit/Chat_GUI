@@ -27,8 +27,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { isExeEnvAPI } from "../../apis/user.js";
 import { login } from "../../helper/user/common.js";
-import { showMessage } from "@/helper/customMessage";
+import { showMessage } from "../../helper/customMessage";
 
 const router = useRouter();
 
@@ -38,10 +39,18 @@ const isLoading = ref(false);
 
 /** ====================== 下面定义函数 ====================== */
 onMounted(async () => {
-  var flag = await login();
+  const res = await isExeEnvAPI();
+
+  const flag = res.flag
+    ? await login(res.userName, res.userName)
+    : await login();
+
   if (flag) {
     router.push({
-      path: userName.value == "admin" ? "/admin" : "/chat",
+      path:
+        (res.flag ? res.userName : userName.value) === "admin"
+          ? "/admin"
+          : "/chat",
     });
   }
 });

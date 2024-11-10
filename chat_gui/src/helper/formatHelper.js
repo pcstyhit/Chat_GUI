@@ -57,10 +57,10 @@ const marked = new MarkdownIt({
     return `
       <div class="text code-block">
         <div class="copy-header">
-          <el-text class="lang">${lang ? lang : "plaintext"}</el-text>
+          <div class="lang">${lang ? lang : "plaintext"}</div>
           <button class="copy-button" onclick="copyToClipboard(this)">
             ${SVGS.copyCodeIcon}
-            <el-text class="copy-text">Copy code</el-text>
+            <div class="copy-text">Copy code</div>
           </button>
         </div> 
         <pre class="text code-block hljs"><code>${codeContent}</code></pre>

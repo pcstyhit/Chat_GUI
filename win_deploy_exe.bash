@@ -1,57 +1,74 @@
 #!/bin/bash
 
-# 定义虚拟环境路径变量, 修改为自身Windows系统的虚拟环境的路径
-VENV_PATH="/d/PyEnv/openai"
-
-PROJECT_PATH="./chat_gui_server"
-WIN_WEBVIEW_PY="win_webview_pack"
-DEST_DIR="./dist/$WIN_WEBVIEW_PY/_internal"
-
-# 虚拟环境激活脚本路径
-VENV_ACTIVE_PATH="$VENV_PATH/Scripts/activate"
-
-# 检查虚拟环境激活脚本是否存在
-if [ ! -f "$VENV_ACTIVE_PATH" ]; then
-  echo "Virtual environment activation script not found: $VENV_ACTIVE_PATH"
-  exit 1
-fi
-
-# 激活虚拟环境
-source "$VENV_ACTIVE_PATH"
-
-# 检查虚拟环境是否已激活
-if [[ "$VIRTUAL_ENV" != "" ]]; then
-    echo "Virtual environment activated."
+# 检测操作系统类型
+OS_TYPE=$(uname)
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    echo "Operating System: Linux"
+elif [[ "$OS_TYPE" == "MINGW64_NT"* || "$OS_TYPE" == "CYGWIN_NT"* ]]; then
+    echo "Operating System: Windows 10"
 else
-    echo "Failed to activate virtual environment."
+    echo "Operating System: Unknown. Exit!"
     exit 1
 fi
 
-# 进入到chat_gui_server的目录
-cd "$PROJECT_PATH"
-
-# 开始build出spec文件
-pyinstaller "$WIN_WEBVIEW_PY.py" -y
-
-# 开始build出exe文件
-pyinstaller "$WIN_WEBVIEW_PY.spec" -y
-
-# 定义源文件夹和目标文件夹
-SRC_DIR="$VENV_PATH/Lib/site-packages"
-# 检查源文件夹是否存在
-if [ ! -d "$SRC_DIR" ]; then
-  echo "Source directory does not exist: $SRC_DIR"
-  exit 1
+# 检查是否在虚拟环境中
+if [ -z "$VIRTUAL_ENV" ]; then
+    echo "You are not in a virtual environment."
+    echo "Please activate your virtual environment before running this script. Exit!"
+    exit 1
+else
+    echo "You are currently in the virtual environment: $VIRTUAL_ENV"
 fi
 
-# 检查目标文件夹是否存在
-if [ ! -d "$DEST_DIR" ]; then
-  echo "Destination directory does not exist: $DEST_DIR"
-  exit 1
+# 检查是否安装了Node.js并输出其路径
+printf "Environment check [1/3]: "
+NODE_PATH=$(which node || echo "Node.js is not installed.")
+if [ "$NODE_PATH" == "Node.js is not installed. Failed!" ]; then
+    echo "$NODE_PATH Please install Node.js and try again. Exit!"
+    exit 1
+else
+    echo "Node.js is installed at: $NODE_PATH"
 fi
 
-cp -r "./.dbpath" "$DEST_DIR"
-cp -r "./statics" "$DEST_DIR"
-cp "./config.json" "$DEST_DIR"
+# 检查是否安装了npm并输出其路径
+printf "Environment check [2/3]: "
+NPM_PATH=$(which npm || echo "npm is not installed.")
+if [ "$NPM_PATH" == "npm is not installed. Failed!" ]; then
+    echo "$NPM_PATH Please install npm and try again. Exit!"
+    exit 1
+else
+    echo "npm is installed at: $NPM_PATH"
+fi
 
-echo "Files copied successfully."
+# 检查虚拟环境中的Python是否安装了PyInstaller并输出其路径
+printf "Environment check [3/3]: "
+PYINSTALLER_PATH=$(which pyinstaller || echo "PyInstaller is not installed.")
+if [ "$PYINSTALLER_PATH" == "PyInstaller is not installed. Failed!" ]; then
+    echo "$PYINSTALLER_PATH Please install PyInstaller with 'pip install pyinstaller' and try again. Exit!"
+    exit 1
+else
+    echo "PyInstaller is installed at: $PYINSTALLER_PATH"
+fi
+
+# 提示用户确认是否继续
+read -p "Do you want to continue with the current virtual environment? (y/N): " confirm
+confirm=${confirm,,}  # 将输入转换为小写
+
+if [[ "$confirm" != "y" ]]; then
+    echo "Exiting the script."
+    exit 1
+fi
+
+# 脚本继续执行...
+echo "Continuing with the script execution..."
+
+
+cd chat_gui_server
+
+pyinstaller win_pyinstaller.spec
+
+rm -r build
+
+mv dist ../.app
+
+echo "Build sccess! See app in .app folder."

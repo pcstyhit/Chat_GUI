@@ -42,7 +42,6 @@ class AzureChatClient(BaseChatClient):
                                                                        max_tokens=max_tokens,
                                                                        temperature=temperature,
                                                                        top_p=top_p,
-                                                                       stop=stop,
                                                                        frequency_penalty=frequency_penalty,
                                                                        presence_penalty=presence_penalty)
         return response
@@ -63,7 +62,6 @@ class OpenAIChatClient(BaseChatClient):
                                                                        max_tokens=max_tokens,
                                                                        temperature=temperature,
                                                                        top_p=top_p,
-                                                                       stop=stop,
                                                                        frequency_penalty=frequency_penalty,
                                                                        presence_penalty=presence_penalty)
         return response

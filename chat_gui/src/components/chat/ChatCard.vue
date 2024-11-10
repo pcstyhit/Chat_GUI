@@ -76,6 +76,19 @@
         {{ tokens }}/{{ chatParams.maxTokens }} tokens to be sent
       </el-text>
     </div>
+
+    <div class="chat-sticker" v-if="!isShowRoleCard">
+      <div
+        class="sticker-button"
+        v-html="SVGS.chatToTopIcon"
+        @click="setScrollToTop"
+      ></div>
+      <div
+        class="sticker-button"
+        v-html="SVGS.chatToBottomIcon"
+        @click="setScrollToBottom"
+      ></div>
+    </div>
   </div>
   <!-- item editor ovelay -->
   <TextEditor />
@@ -177,13 +190,18 @@ const stopRequestTime = () => {
 
 /**
  * 默认显示最新的内容，拖拉条滚动到最底部
- * Element-plus】如何让滚动条永远在最底部（支持在线演示）
+ * Element-plus 如何让滚动条永远在最底部（支持在线演示）
  * https://blog.csdn.net/qq_42203909/article/details/133816286
  */
 const setScrollToBottom = async () => {
   await nextTick();
   const max = innerRef.value.clientHeight;
   scrollbarRef.value.setScrollTop(max);
+};
+
+const setScrollToTop = async () => {
+  await nextTick();
+  scrollbarRef.value.setScrollTop(0);
 };
 
 /** 显示对话的编辑弹窗 chat-settings-overlay */

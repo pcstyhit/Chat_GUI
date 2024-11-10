@@ -5,7 +5,7 @@ import { isEqual } from "lodash";
 import { showMessage } from "../customMessage.js";
 import { setChatParamsAPI } from "../../apis/chat.js";
 
-const imageModel = ["gpt-4o", "gpt-4o-mini", "gpt-4-tubo"];
+const imageModel = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"];
 
 /** getPromptByRole 定义一个函数来获取指定角色的提示内容
  *   ⭐⭐⭐ 目前的prompts不支持放入图像, 所以不用考虑有图像的情况 */

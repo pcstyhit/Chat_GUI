@@ -5,6 +5,7 @@
 - 以及这个对话里面的对话历史, 这样就不需要频繁访问数据库获取内容
 封装成类, 方便支持多个user使用
 '''
+import os
 import copy
 import json
 import tiktoken
@@ -15,6 +16,9 @@ from dataclasses import asdict
 from scripts.libs import CONF
 from scripts.libs.bms import *
 from scripts.libs.consts import ChatMessageType
+
+TIKTOKEN_MODEL_PATH = CONF.getAbsPath('.model')
+os.environ["TIKTOKEN_CACHE_DIR"] = TIKTOKEN_MODEL_PATH
 
 
 class Params:

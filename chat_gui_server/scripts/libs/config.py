@@ -41,7 +41,8 @@ class ProjectConfig:
         # ⭐⭐⭐用户配置项目的默认参数的文件, 下面的都是它的参数, 并且有必须要判断的条件
         self.userConfigFileName: str = 'config.json'
         self.host: str = '127.0.0.1'                    # 项目运行的Host address
-        self.port: int = 10080                          # 项目运行的port号
+        self.port: int = 10088                          # 项目运行的port号
+        self.isExeEnv: bool = False                     # 特殊参数是exe打包的程序, 不用登录
         self.dataBasePath: str = '.dbpath'              # 数据库相对项目的路径
         self.cachePath: str = '.cache'                  # 缓存文件夹路径
         self.staticsPath: str = 'statics'               # 静态资源相对项目的路径

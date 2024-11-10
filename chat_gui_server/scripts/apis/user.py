@@ -7,6 +7,19 @@ from scripts.libs.arsm import *
 USER_ROUTE = fastapi.APIRouter()
 
 
+@USER_ROUTE.get('/isExeEnv')
+async def isExeEnvAPI():
+    '''判断环境 直接返回用户名'''
+    from scripts.libs import CONF
+    if CONF.isExeEnv:
+        import os
+        response = fastapi.responses.JSONResponse(content={'flag': True, 'userName': os.getlogin()})
+        return response
+    else:
+        response = fastapi.responses.JSONResponse(content={'flag': False, 'userName': ''})
+    return response
+
+
 @USER_ROUTE.post('/login')
 async def loginAPI(user: str = fastapi.Depends(authenticateUser)):
     '''插件模式 fastapi.Deepends添加对身份信息的验证

@@ -1,6 +1,7 @@
 {
   "host": "127.0.0.1",
   "port": 10088,
+  "isExeEnv": true,
   "isEncryptedApiParamsList": false,
   "encryptData": "",
   "isUseProxy": false,
